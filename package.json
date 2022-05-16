@@ -1,7 +1,7 @@
 {
   "name": "react-thermals",
   "description": "Simple and extensible way to manage shared state in React",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.2",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -40,8 +40,5 @@
     "prettier": "^2.6.2",
     "react": "^18.1.0",
     "react-dom": "^18.1.0"
-  },
-  "dependencies": {
-    "is-promise": "^4.0.0"
   }
 }

@@ -1,5 +1,3 @@
-const isPromise = require('is-promise');
-
 module.exports = {
   fieldSetter,
   fieldListSetter,
@@ -16,13 +14,10 @@ module.exports = {
  * @return {Function}  A function suitable for passing to store.setState()
  */
 function fieldSetter(propName) {
-  return async function merger(newValue) {
+  return function merger(newValue) {
     this.mergeState(async old => {
       if (typeof newValue === 'function') {
-        newValue = newValue(old[propName]);
-        if (isPromise(newValue)) {
-          newValue = await newValue;
-        }
+        newValue = await newValue(old[propName]);
       }
       return { [propName]: newValue };
     });
@@ -34,20 +29,11 @@ function fieldSetter(propName) {
  * @return {Function}  A function suitable for passing to store.setState()
  */
 function fieldListSetter(propNames) {
-  return async function merger(...newValues) {
-    this.mergeState(async old => {
-      const toAwait = [];
-      for (let i = 0, len = propNames.length; i < len; i++) {
-        if (typeof newValues[i] === 'function') {
-          toAwait.push(newValues[i](old[propNames[i]]));
-        } else {
-          toAwait.push(newValues[i]);
-        }
-      }
-      const awaited = await Promise.all(toAwait);
+  return function merger(...newValues) {
+    this.mergeState(() => {
       const toMerge = {};
       for (let i = 0, len = propNames.length; i < len; i++) {
-        toMerge[propNames[i]] = awaited[i];
+        toMerge[propNames[i]] = newValues[i];
       }
       return toMerge;
     });
@@ -62,8 +48,8 @@ function fieldToggler(propName) {
   };
 }
 
-function fieldAdder(propName) {
-  return function merger(amount) {
+function fieldAdder(propName, amount) {
+  return function merger() {
     return this.mergeState(old => ({
       [propName]: old[propName] + amount,
     }));

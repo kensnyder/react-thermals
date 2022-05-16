@@ -1,5 +1,4 @@
 const Emitter = require('../Emitter/Emitter.js');
-const isPromise = require('is-promise');
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -240,10 +239,7 @@ function createStore({
     let updater;
     if (typeof newState === 'function') {
       updater = async old => {
-        let partial = newState(old);
-        if (isPromise(partial)) {
-          partial = await partial;
-        }
+        const partial = await newState(old);
         return { ...old, ...partial };
       };
     } else {
@@ -352,10 +348,7 @@ function createStore({
       }
       const updatedState = _updateQueue.shift();
       if (typeof updatedState === 'function') {
-        nextState = updatedState(nextState);
-        if (isPromise(nextState)) {
-          nextState = await nextState;
-        }
+        nextState = await updatedState(nextState);
       } else {
         nextState = updatedState;
       }
