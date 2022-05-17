@@ -51,10 +51,12 @@ function createStore({
     idx: storeIdx++,
     // set the state and rerender all components that use this store
     setState,
-    // set the state without rerendering
+    // set partial state without re-rendering
     mergeSync,
-    // set partial state
+    // set the state without re-rendering
     setSync,
+    // process all batched state changes immediately
+    flushSync,
     // set partial state without updating components
     mergeState,
     // // create a new store with the same initial state and options
@@ -381,7 +383,6 @@ function createStore({
       _updateQueue.length = 0;
       return;
     }
-    // try {
     const nextState = await _getNextState();
     const event2 = store.emit('BeforeUpdate', nextState);
     if (event2.defaultPrevented) {
@@ -389,7 +390,13 @@ function createStore({
       return;
     }
     // save final state result (a handler may have altered the final result)
-    _state = event2.data;
+    // then notify affected components
+    _notifyComponents(prevState, event2.data);
+  }
+
+  function _notifyComponents(prevState, data) {
+    // save final state result
+    _state = data;
     // update components with no selector or with matching selector
     _setters.forEach(_updateAffectedComponents(prevState, _state));
     // resolve all `await store.nextState()` calls
@@ -398,6 +405,60 @@ function createStore({
     _nextStateResolvers.length = 0;
     // announce the final state
     store.emit('AfterUpdate', { prev: prevState, next: _state });
+  }
+
+  function _getNextStateSync() {
+    let nextState = _state;
+    // process all updates or update functions
+    // use while and shift in case setters trigger more setting
+    let failsafe = _updateQueue.length + 100;
+    while (_updateQueue.length > 0) {
+      if (--failsafe === 0) {
+        /* istanbul ignore next */
+        throw new Error(
+          `react-thermals: Too many setState calls in queue; probably an infinite loop.`
+        );
+      }
+      const updatedState = _updateQueue.shift();
+      if (typeof updatedState === 'function') {
+        const maybeNext = updatedState(nextState);
+        if (typeof maybeNext?.then === 'function') {
+          maybeNext.then(store.setState);
+        } else {
+          nextState = maybeNext;
+        }
+      } else {
+        nextState = updatedState;
+      }
+    }
+    return nextState;
+  }
+
+  function flushSync() {
+    const prevState = _state;
+    const event1 = store.emit('BeforeSet', prevState);
+    if (event1.defaultPrevented) {
+      // handler wants to block running state updaters
+      _updateQueue.length = 0;
+      return;
+    }
+    let nextState;
+    try {
+      nextState = _getNextStateSync();
+    } catch (err) {
+      store.emit('SetterException', err);
+      return;
+    }
+    const event2 = store.emit('BeforeUpdate', nextState);
+    if (event2.defaultPrevented) {
+      // handler wants to block saving new state
+      return;
+    }
+    // save final state result (a handler may have altered the final result)
+    // then notify affected components
+    _notifyComponents(prevState, event2.data);
+    // _notifyComponents sets _state
+    return _state;
   }
 }
 

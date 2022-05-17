@@ -12,6 +12,10 @@ function observable() {
     // store.unsubscribe = function (observer) {
     //   store.off('AfterUpdate', ?);
     // };
+    // store.on('AfterLastUnmount', () => {
+    //   observer.complete();?
+    // })
+    // asObserveable?
   };
 }
 
