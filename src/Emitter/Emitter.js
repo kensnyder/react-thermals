@@ -1,6 +1,6 @@
-const PreventableEvent = require('../PreventableEvent/PreventableEvent.js');
+import PreventableEvent from '../PreventableEvent/PreventableEvent.js';
 
-class Emitter {
+export default class Emitter {
   constructor(context = null) {
     this._handlers = {};
     this._context = context;
@@ -42,5 +42,3 @@ class Emitter {
     return event;
   }
 }
-
-module.exports = Emitter;

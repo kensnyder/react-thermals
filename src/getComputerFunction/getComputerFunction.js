@@ -1,4 +1,4 @@
-function getComputerFunction(computer) {
+export default function getComputerFunction(computer) {
   if (typeof computer === 'string') {
     return state => {
       if (Array.isArray(state)) {
@@ -11,9 +11,5 @@ function getComputerFunction(computer) {
   } else if (typeof computer === 'function') {
     return computer;
   }
-  throw new Error(
-    'react-thermals: "computer" must be a String or Function.'
-  );
+  throw new Error('react-thermals: "computer" must be a String or Function.');
 }
-
-module.exports = getComputerFunction;

@@ -1,4 +1,4 @@
-const {
+import {
   fieldSetter,
   fieldListSetter,
   fieldToggler,
@@ -6,7 +6,7 @@ const {
   fieldAppender,
   fieldRemover,
   fieldMapper,
-} = require('./createSetter.js');
+} from './createSetter.js';
 
 describe('The createSetter function', () => {
   let state;

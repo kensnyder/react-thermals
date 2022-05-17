@@ -1,19 +1,9 @@
-module.exports = {
-  fieldSetter,
-  fieldListSetter,
-  fieldToggler,
-  fieldAdder,
-  fieldAppender,
-  fieldRemover,
-  fieldMapper,
-};
-
 /**
  * Helper function to create a mergeState function that directly sets one property
  * @param {String|Number} propName  The name of the property to merge
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldSetter(propName) {
+export function fieldSetter(propName) {
   return function merger(newValue) {
     this.mergeState(async old => {
       if (typeof newValue === 'function') {
@@ -28,7 +18,7 @@ function fieldSetter(propName) {
  * @param {String[]|Number[]} propNames  The name of the property to merge
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldListSetter(propNames) {
+export function fieldListSetter(propNames) {
   return function merger(...newValues) {
     this.mergeState(() => {
       const toMerge = {};
@@ -45,7 +35,7 @@ function fieldListSetter(propNames) {
  * @param {String|Number} propName  The name of the property to toggle
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldToggler(propName) {
+export function fieldToggler(propName) {
   return function merger() {
     return this.mergeState(old => ({
       [propName]: !old[propName],
@@ -59,7 +49,7 @@ function fieldToggler(propName) {
  * @param {String|Number} propName  The name of the property to toggle
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldAdder(propName, amount) {
+export function fieldAdder(propName, amount) {
   return function merger() {
     return this.mergeState(old => ({
       [propName]: old[propName] + amount,
@@ -72,7 +62,7 @@ function fieldAdder(propName, amount) {
  * @param {String|Number} propName  The name of the array property to append to
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldAppender(propName) {
+export function fieldAppender(propName) {
   return function merger(...newItems) {
     return this.mergeState(old => ({
       [propName]: [...old[propName], ...newItems],
@@ -85,7 +75,7 @@ function fieldAppender(propName) {
  * @param {String|Number} propName  The name of the array property to remove from
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldRemover(propName) {
+export function fieldRemover(propName) {
   return function merger(...itemsToRemove) {
     return this.mergeState(old => ({
       [propName]: old[propName].filter(val => !itemsToRemove.includes(val)),
@@ -98,7 +88,7 @@ function fieldRemover(propName) {
  * @param {String|Number} propName  The name of the array property to map
  * @return {Function}  A function suitable for passing to store.setState()
  */
-function fieldMapper(propName) {
+export function fieldMapper(propName) {
   return function merger(mapper) {
     return this.mergeState(old => ({
       [propName]: old[propName].map(mapper),

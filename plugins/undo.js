@@ -2,7 +2,7 @@
 // TO USE:
 // store.plugin(undoable({ maxSize: 100 }));
 //
-function undoable({ maxSize = 100 }) {
+export default function undoable({ maxSize = 100 }) {
   return function plugin(store) {
     let currIndex = 0;
     const history = [];
@@ -45,5 +45,3 @@ function undoable({ maxSize = 100 }) {
     }
   };
 }
-
-module.exports = undoable;

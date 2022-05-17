@@ -1,12 +1,9 @@
-/**
- * @jest-environment jsdom
- */
 import React, { useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState.js';
 import { fieldSetter, fieldListSetter } from '../createSetter/createSetter.js';
-const createStore = require('./createStore.js');
+import createStore from './createStore.js';
 
 describe('createStore()', () => {
   it('should have required properties', () => {

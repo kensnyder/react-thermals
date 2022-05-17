@@ -1,4 +1,4 @@
-class PreventableEvent {
+export default class PreventableEvent {
   constructor(target, type, data) {
     this.target = target;
     this.type = type;
@@ -19,5 +19,3 @@ class PreventableEvent {
     return this.propagationStopped;
   }
 }
-
-module.exports = PreventableEvent;

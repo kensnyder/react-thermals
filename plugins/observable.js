@@ -2,7 +2,7 @@
 // .subscribe()
 // call next(newState)
 //
-function observable() {
+export default function observable() {
   return function plugin(store) {
     store.subscribe = function (observer) {
       store.on('AfterUpdate', event => {
@@ -18,5 +18,3 @@ function observable() {
     // asObserveable?
   };
 }
-
-module.exports = observable;

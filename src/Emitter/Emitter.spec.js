@@ -1,5 +1,5 @@
-const Emitter = require('./Emitter.js');
-const PreventableEvent = require('../PreventableEvent/PreventableEvent.js');
+import Emitter from "./Emitter.js";
+import PreventableEvent from "../PreventableEvent/PreventableEvent.js";
 
 describe('Emitter', () => {
   it('should have methods', () => {

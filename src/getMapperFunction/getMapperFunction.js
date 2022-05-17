@@ -1,6 +1,6 @@
 const identity = state => state;
 
-function getMapperFunction(mapState) {
+export default function getMapperFunction(mapState) {
   if (typeof mapState === 'string' || typeof mapState === 'number') {
     return state => state[mapState];
   } else if (Array.isArray(mapState)) {
@@ -21,4 +21,3 @@ function getMapperFunction(mapState) {
     );
   }
 }
-module.exports = getMapperFunction;

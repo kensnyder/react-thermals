@@ -1,7 +1,7 @@
-const createStore = require('./src/createStore/createStore.js');
-const useStoreSelector = require('./src/useStoreSelector/useStoreSelector.js');
-const useStoreState = require('./src/useStoreState/useStoreState.js');
-const {
+import createStore from './src/createStore/createStore.js';
+import useStoreSelector from './src/useStoreSelector/useStoreSelector.js';
+import useStoreState from './src/useStoreState/useStoreState.js';
+import {
   fieldSetter,
   fieldListSetter,
   fieldToggler,
@@ -9,9 +9,9 @@ const {
   fieldAppender,
   fieldRemover,
   fieldMapper,
-} = require('./src/createSetter/createSetter.js');
+} from './src/createSetter/createSetter.js';
 
-module.exports = {
+export {
   createStore,
   useStoreSelector,
   useStoreState,

@@ -2,7 +2,7 @@
 // TO USE:
 // store.plugin(persistState(localStorage));
 //
-function persistState(storage) {
+export default function persistState(storage) {
   if (
     typeof storage.getItem !== 'function' ||
     typeof storage.setItem !== 'function'
@@ -20,5 +20,3 @@ function persistState(storage) {
     });
   };
 }
-
-module.exports = persistState;

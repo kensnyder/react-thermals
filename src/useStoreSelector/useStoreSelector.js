@@ -1,6 +1,6 @@
-const { useState, useEffect, useMemo } = require('react');
-const defaultEqualityFn = require('../defaultEqualityFn/defaultEqualityFn.js');
-const getMapperFunction = require('../getMapperFunction/getMapperFunction.js');
+import { useState, useEffect, useMemo } from 'react';
+import defaultEqualityFn from '../defaultEqualityFn/defaultEqualityFn.js';
+import getMapperFunction from '../getMapperFunction/getMapperFunction.js';
 
 /**
  * @param {Object} store - A store created with createStore()
@@ -12,7 +12,11 @@ const getMapperFunction = require('../getMapperFunction/getMapperFunction.js');
  * @property {Function} reset - function to reset the store's state to its initial value
  * @property {Function} nextState - function that returns a Promise that resolves on next state value
  */
-function useStoreSelector(store, mapState = null, equalityFn = null) {
+export default function useStoreSelector(
+  store,
+  mapState = null,
+  equalityFn = null
+) {
   // derive and cache the mapState and equalityFn
   const [map, isEqual] = useMemo(() => {
     return [getMapperFunction(mapState), equalityFn || defaultEqualityFn];
@@ -46,5 +50,3 @@ function useStoreSelector(store, mapState = null, equalityFn = null) {
   // return that slice or whole bit of state
   return partialState;
 }
-
-module.exports = useStoreSelector;

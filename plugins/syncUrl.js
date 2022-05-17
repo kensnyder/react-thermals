@@ -2,7 +2,7 @@
 // TO USE:
 // store.plugin(syncUrl({ fields: ['term', 'sort'] }));
 //
-function syncUrl({ fields = null, replace = false }) {
+export default function syncUrl({ fields = null, replace = false }) {
   return function plugin(store) {
     store.on('BeforeInitialState', () => {
       store.mergeSync(readUrl());
@@ -41,7 +41,7 @@ function syncUrl({ fields = null, replace = false }) {
   function clearUrl() {
     const params = new URLSearchParams(window.location.search);
     for (const field of fields || params.keys()) {
-      params.remove(field, params.get(field));
+      params.delete(field);
     }
     const search = '?' + params.toString();
     if (replace) {

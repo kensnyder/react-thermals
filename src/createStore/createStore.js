@@ -1,4 +1,4 @@
-const Emitter = require('../Emitter/Emitter.js');
+import Emitter from '../Emitter/Emitter.js';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -25,7 +25,7 @@ let storeIdx = 1;
  * @property {Function} store._unsubscribe - A method to remove a setState callback
  * @property {Number} store._usedCount - The number of components that have ever used this store
  */
-function createStore({
+export default function createStore({
   state: initialState = {},
   actions = {},
   options: _options = {},
@@ -423,7 +423,9 @@ function createStore({
       if (typeof updatedState === 'function') {
         const maybeNext = updatedState(nextState);
         if (typeof maybeNext?.then === 'function') {
-          maybeNext.then(store.setState);
+          maybeNext
+            .then(store.setState)
+            .catch(err => store.emit('SetterException', err));
         } else {
           nextState = maybeNext;
         }
@@ -461,5 +463,3 @@ function createStore({
     return _state;
   }
 }
-
-module.exports = createStore;

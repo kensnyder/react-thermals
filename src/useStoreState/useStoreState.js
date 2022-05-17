@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo } = require('react');
+import { useState, useEffect, useMemo } from 'react';
 
 /**
  * @param {Object} store - A store created with createStore()
@@ -8,7 +8,7 @@ const { useState, useEffect, useMemo } = require('react');
  * @property {Function} reset - function to reset the store's state to its initial value
  * @property {Function} nextState - function that returns a Promise that resolves on next state value
  */
-function useStoreState(store) {
+export default function useStoreState(store) {
   // derive the initial state, in case plugins are injecting initial state
   const initialState = useMemo(() => {
     if (store.getMountCount() === 0) {
@@ -29,5 +29,3 @@ function useStoreState(store) {
   // return the current state
   return state;
 }
-
-module.exports = useStoreState;

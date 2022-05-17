@@ -15,7 +15,7 @@ const directlyCompariable = [
  * @param {*} next - The next value of the state
  * @return {Boolean} - True if values are shallowly equal
  */
-function defaultEqualityFn(prev, next) {
+export default function defaultEqualityFn(prev, next) {
   // handle null specially since typeof null === 'object'
   if (prev === null && next === null) {
     // both null
@@ -65,5 +65,3 @@ function defaultEqualityFn(prev, next) {
   /* istanbul ignore next */
   return false;
 }
-
-module.exports = defaultEqualityFn;

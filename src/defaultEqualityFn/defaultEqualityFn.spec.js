@@ -1,4 +1,4 @@
-const isEqual = require('./defaultEqualityFn.js');
+import isEqual from "./defaultEqualityFn.js";
 
 describe('defaultEqualityFn', () => {
   it('should consider nulls to be equal', () => {

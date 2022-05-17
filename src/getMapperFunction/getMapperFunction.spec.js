@@ -1,4 +1,4 @@
-const getMapperFunction = require('./getMapperFunction.js');
+import getMapperFunction from "./getMapperFunction.js";
 
 describe('getMapperFunction', () => {
   it('should pass through functions', () => {
