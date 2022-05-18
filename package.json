@@ -24,7 +24,8 @@
     "test": "npx jest",
     "test-watch": "npx jest --watch",
     "coverage": "npx jest --collectCoverage",
-    "view-coverage": "open ./coverage/lcov-report/index.html"
+    "view-coverage": "open ./coverage/lcov-report/index.html",
+    "generate-types": "sh scripts/generate-types.sh"
   },
   "peerDependencies": {
     "react": ">=16.8.0"
