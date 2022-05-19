@@ -23,7 +23,8 @@ describe('createStore()', () => {
     expect(typeof setAge).toBe('function');
     expect(typeof setName).toBe('function');
     setAge(15);
-    await store.nextState();
+    const awaited = await store.nextState();
+    expect(awaited).toEqual({ age: 15 });
     expect(store.getState()).toEqual({ age: 15 });
     setName('John', 'Doe');
     await store.nextState();
@@ -115,7 +116,7 @@ describe('createStore()', () => {
   });
 });
 
-describe('createStore(specs)', () => {
+describe('createStore() with autoReset', () => {
   // define store before each test
   let store;
   let ListComponent;
@@ -203,5 +204,50 @@ describe('createStore(specs)', () => {
     });
     expect(before).toBe(true);
     expect(after).toBe(false);
+  });
+});
+
+describe('createStore() flushSync', () => {
+  // define store before each test
+  let store;
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    const actions = {
+      // setPage: page => {
+      //   store.mergeState({ page });
+      // },
+      setPage: fieldSetter('page'),
+      setSort: fieldSetter('sort'),
+    };
+    store = createStore({
+      state,
+      actions,
+    });
+  });
+  it('flushSync with values', () => {
+    store.actions.setPage(2);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(2);
+  });
+  it('flushSync with values and functions', () => {
+    store.actions.setPage(2);
+    store.actions.setPage(old => old + 2);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(4);
+  });
+  it('flushSync with 1 function', () => {
+    store.actions.setPage(old => old + 1);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(2);
+  });
+  it('flushSync with 2 functions', () => {
+    store.actions.setPage(old => old + 1);
+    store.actions.setPage(old => old + 1);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(3);
   });
 });

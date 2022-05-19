@@ -36,8 +36,6 @@ export default function createStore({
   let _state = initialState;
   // list of setState functions for Components that use this store
   const _setters = [];
-  // list of resolve functions for awaiting nextState
-  const _nextStateResolvers = [];
   // list of functions that will manipulate state in the next tick
   const _updateQueue = [];
 
@@ -118,7 +116,9 @@ export default function createStore({
    */
   function nextState() {
     return new Promise(resolve => {
-      _nextStateResolvers.push(resolve);
+      store.once('AfterUpdate', () => {
+        resolve(_state);
+      });
     });
   }
 
@@ -240,17 +240,17 @@ export default function createStore({
   function mergeState(newState) {
     let updater;
     if (typeof newState === 'function') {
-      updater = async old => {
-        const partial = await newState(old);
+      updater = old => {
+        const partial = newState(old);
+        if (typeof partial?.then === 'function') {
+          return partial.then(promisedState => ({ ...old, ...promisedState }));
+        }
         return { ...old, ...partial };
       };
     } else {
       updater = old => ({ ...old, ...newState });
     }
-    _updateQueue.push(updater);
-    if (_updateQueue.length === 1) {
-      _scheduleUpdates();
-    }
+    this.setState(updater);
   }
 
   /**
@@ -384,14 +384,17 @@ export default function createStore({
       return;
     }
     const nextState = await _getNextState();
-    const event2 = store.emit('BeforeUpdate', nextState);
+    const event2 = store.emit('BeforeUpdate', {
+      prev: prevState,
+      next: nextState,
+    });
     if (event2.defaultPrevented) {
       // handler wants to block saving new state
       return;
     }
     // save final state result (a handler may have altered the final result)
     // then notify affected components
-    _notifyComponents(prevState, event2.data);
+    _notifyComponents(prevState, event2.data.next);
   }
 
   function _notifyComponents(prevState, data) {
@@ -399,10 +402,6 @@ export default function createStore({
     _state = data;
     // update components with no selector or with matching selector
     _setters.forEach(_updateAffectedComponents(prevState, _state));
-    // resolve all `await store.nextState()` calls
-    _nextStateResolvers.forEach(resolver => resolver(_state));
-    // clear out list of those awaiting
-    _nextStateResolvers.length = 0;
     // announce the final state
     store.emit('AfterUpdate', { prev: prevState, next: _state });
   }
@@ -451,15 +450,19 @@ export default function createStore({
       store.emit('SetterException', err);
       return;
     }
-    const event2 = store.emit('BeforeUpdate', nextState);
+    const event2 = store.emit('BeforeUpdate', {
+      prev: prevState,
+      next: nextState,
+    });
     if (event2.defaultPrevented) {
       // handler wants to block saving new state
       return;
     }
     // save final state result (a handler may have altered the final result)
     // then notify affected components
-    _notifyComponents(prevState, event2.data);
+    _notifyComponents(prevState, event2.data.next);
     // _notifyComponents sets _state
+    // and we return it here for convenience
     return _state;
   }
 }

@@ -5,12 +5,11 @@
  */
 export function fieldSetter(propName) {
   return function merger(newValue) {
-    this.mergeState(async old => {
-      if (typeof newValue === 'function') {
-        newValue = await newValue(old[propName]);
-      }
-      return { [propName]: newValue };
-    });
+    if (typeof newValue === 'function') {
+      this.setState(old => ({ ...old, [propName]: newValue(old[propName]) }));
+      return;
+    }
+    this.mergeState({ [propName]: newValue });
   };
 }
 /**
