@@ -11,10 +11,13 @@ import { useState, useEffect, useMemo } from 'react';
 export default function useStoreState(store) {
   // derive the initial state, in case plugins are injecting initial state
   const initialState = useMemo(() => {
+    const initialState = store.getState();
     if (store.getMountCount() === 0) {
-      store.emit('BeforeInitialState');
+      const event = store.emit('BeforeInitialState', initialState);
+      store.setSync(event.data);
+      return event.data;
     }
-    return store.getState();
+    return initialState;
   }, [store]);
 
   // use useState to get a method for triggering rerenders in consumer components

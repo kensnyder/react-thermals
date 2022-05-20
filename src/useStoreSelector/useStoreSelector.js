@@ -25,11 +25,14 @@ export default function useStoreSelector(
 
   // derive the initial state, if different because of mapState or equalityFn
   const initialState = useMemo(() => {
-    if (store.getMountCount() === 0) {
-      store.emit('BeforeInitialState');
-    }
     const fullInitialState = store.getState();
-    return map ? map(fullInitialState) : fullInitialState;
+    if (store.getMountCount() === 0) {
+      const event = store.emit('BeforeInitialState', fullInitialState);
+      const mapped = map(event.data);
+      store.setSync(mapped);
+      return mapped;
+    }
+    return map(fullInitialState);
   }, [store, map]);
 
   // use useState to get a method for triggering rerenders in consumer components

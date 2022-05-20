@@ -4,11 +4,15 @@
 //
 export default function syncUrl({ fields = null, replace = false }) {
   return function plugin(store) {
-    store.on('BeforeInitialState', () => {
-      store.mergeSync(readUrl());
+    store.on('BeforeInitialState', evt => {
+      const urlData = readUrl();
+      if (urlData) {
+        evt.data = urlData;
+      }
+      writeUrl(evt.data);
     });
     store.on('AfterUpdate', ({ data: { next } }) => {
-      writeUrl(next);
+      navigate(next);
     });
     store.on('AfterLastUnmount', () => {
       clearUrl();
@@ -17,20 +21,23 @@ export default function syncUrl({ fields = null, replace = false }) {
   function readUrl() {
     const params = new URLSearchParams(window.location.search);
     const data = {};
+    let hasData = false;
     for (const field of fields || params.keys()) {
       if (params.has(field)) {
         data[field] = params.get(field);
+        hasData = true;
       }
     }
-    return data;
+    return hasData ? data : null;
   }
 
   function writeUrl(fullState) {
-    const params = new URLSearchParams(window.location.search);
-    for (const field of fields || params.keys()) {
-      params.set(field, fullState[field]);
-    }
-    const search = '?' + params.toString();
+    const search = _getNewSearch(fullState);
+    window.location.search = search;
+  }
+
+  function navigate(fullState) {
+    const search = _getNewSearch(fullState);
     if (replace) {
       window.history.replaceState({}, document.title, search);
     } else {
@@ -49,6 +56,15 @@ export default function syncUrl({ fields = null, replace = false }) {
     } else {
       window.history.pushState({}, document.title, search);
     }
+  }
+
+  function _getNewSearch(fullState) {
+    const params = new URLSearchParams(window.location.search);
+    for (const field of fields || params.keys()) {
+      params.set(field, fullState[field]);
+    }
+    params.sort();
+    return '?' + params.toString();
   }
 }
 
