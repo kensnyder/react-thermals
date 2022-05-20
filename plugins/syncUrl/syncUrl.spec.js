@@ -93,19 +93,32 @@ describe('syncUrl()', () => {
       '?foo=baz&page=21&sort=-modified',
     ]);
   });
-  it('should use schema number', async () => {
-    window.location.search = '?page=17&sort=-modified&answer=42';
-    store.plugin(syncUrl({ schema: { page: 'number', sort: 'string' } }));
-    const { getByText } = render(<Component />);
-    await act(() => {
-      fireEvent.click(getByText('Next'));
-    });
-    expect(getByText('page=18')).toBeInTheDocument();
-    expect(getByText('sort=-modified')).toBeInTheDocument();
-    expect(getByText('foo=')).toBeInTheDocument();
-    expect(window.history.pushState.mock.calls).toEqual([
-      [{}, 'My Page', '?answer=42&page=18&sort=-modified'],
-    ]);
-    expect(store.getState()).toEqual({ page: 18, sort: '-modified' });
+  it('should cast from schema number', async () => {
+    store.setSync({ rating: 16 });
+    window.location.search = '?rating=17';
+    store.plugin(syncUrl({ schema: { rating: 'number' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ rating: 17 });
+  });
+  it('should cast from schema number[]', async () => {
+    store.setSync({ ids: [1, 2] });
+    window.location.search = '?ids=3,4';
+    store.plugin(syncUrl({ schema: { ids: 'number[]' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ ids: [3, 4] });
+  });
+  it('should cast from schema string', async () => {
+    store.setSync({ hello: 'world' });
+    window.location.search = '?hello=there';
+    store.plugin(syncUrl({ schema: { hello: 'string' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ hello: 'there' });
+  });
+  it('should cast from schema string[]', async () => {
+    store.setSync({ letters: ['a', 'b'] });
+    window.location.search = '?letters=d,e';
+    store.plugin(syncUrl({ schema: { letters: 'string[]' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ letters: ['d', 'e'] });
   });
 });

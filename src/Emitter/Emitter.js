@@ -2,7 +2,9 @@ import PreventableEvent from '../PreventableEvent/PreventableEvent.js';
 
 export default class Emitter {
   constructor(context = null) {
-    this._handlers = {};
+    this._handlers = {
+      '*': [],
+    };
     this._context = context;
   }
 
@@ -29,11 +31,15 @@ export default class Emitter {
   }
 
   emit(type, data = null) {
-    if (!this._handlers[type] || this._handlers[type].length === 0) {
+    if (
+      (!this._handlers[type] || this._handlers[type].length === 0) &&
+      this._handlers['*'].length === 0
+    ) {
       return { type, data };
     }
     const event = new PreventableEvent(this._context, type, data);
-    for (const handler of this._handlers[type]) {
+    const handlers = [...this._handlers['*'], ...(this._handlers[type] || [])];
+    for (const handler of handlers) {
       handler.call(this._context, event);
       if (event.propagationStopped) {
         break;

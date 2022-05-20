@@ -1,5 +1,5 @@
-import Emitter from "./Emitter.js";
-import PreventableEvent from "../PreventableEvent/PreventableEvent.js";
+import Emitter from './Emitter.js';
+import PreventableEvent from '../PreventableEvent/PreventableEvent.js';
 
 describe('Emitter', () => {
   it('should have methods', () => {
@@ -80,6 +80,14 @@ describe('Emitter', () => {
       emitter.off('test', handler);
     };
     expect(remove).not.toThrowError();
+  });
+  it('should allow subscribing to *', () => {
+    const emitter = new Emitter();
+    let numCalls = 0;
+    emitter.on('*', () => numCalls++);
+    emitter.emit('foo');
+    emitter.emit('bar');
+    expect(numCalls).toBe(2);
   });
   it('should stop propagation', () => {
     const emitter = new Emitter();
