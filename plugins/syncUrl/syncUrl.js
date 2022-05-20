@@ -2,7 +2,14 @@
 // TO USE:
 // store.plugin(syncUrl({ fields: ['term', 'sort'] }));
 //
-export default function syncUrl({ fields = null, replace = false }) {
+export default function syncUrl({
+  fields = null,
+  replace = false,
+  schema = null,
+}) {
+  if (!fields && schema) {
+    fields = Object.keys(schema);
+  }
   return function plugin(store) {
     store.on('BeforeInitialState', evt => {
       const urlData = readUrl();
@@ -33,7 +40,7 @@ export default function syncUrl({ fields = null, replace = false }) {
 
   function writeUrl(fullState) {
     const search = _getNewSearch(fullState);
-    window.location.search = search;
+    window.history.replaceState({}, document.title, search);
   }
 
   function navigate(fullState) {

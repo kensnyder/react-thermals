@@ -9,6 +9,7 @@ describe('syncUrl()', () => {
   // define store before each test
   let store, Component;
   beforeEach(() => {
+    document.title = 'My Page';
     const state = { page: 1, sort: '-date' };
     const actions = {
       setPage: page => store.mergeState({ page }),
@@ -37,7 +38,9 @@ describe('syncUrl()', () => {
     expect(getByText('page=1')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect(window.location.search).toBe('?page=1&sort=-date');
+    expect(window.history.replaceState.mock.calls).toEqual([
+      [{}, 'My Page', '?page=1&sort=-date'],
+    ]);
   });
   it('should handle no initial state with existing window.location.search', () => {
     window.location.search = '?answer=42';
@@ -46,7 +49,9 @@ describe('syncUrl()', () => {
     expect(getByText('page=1')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect(window.location.search).toBe('?answer=42&page=1&sort=-date');
+    expect(window.history.replaceState.mock.calls).toEqual([
+      [{}, 'My Page', '?answer=42&page=1&sort=-date'],
+    ]);
   });
   it('should override initial state', () => {
     window.location.search = '?page=2&sort=-modified&foo=bar';
@@ -72,19 +77,20 @@ describe('syncUrl()', () => {
       [{}, 'My Page', '?foo=bar&page=3&sort=-modified'],
     ]);
   });
-  it('should write replace history', async () => {
-    document.title = 'My Page';
-    window.location.search = '?page=2&sort=-modified&foo=bar';
+  it('should replace history', async () => {
+    window.location.search = '?page=20&sort=-modified&foo=baz';
     store.plugin(syncUrl({ fields: ['page', 'sort'], replace: true }));
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
     });
-    expect(getByText('page=3')).toBeInTheDocument();
+    expect(getByText('page=21')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect(window.history.replaceState.mock.calls).toEqual([
-      [{}, 'My Page', '?foo=bar&page=3&sort=-modified'],
+    expect(window.history.replaceState.mock.calls[1]).toEqual([
+      {},
+      'My Page',
+      '?foo=baz&page=21&sort=-modified',
     ]);
   });
 });
