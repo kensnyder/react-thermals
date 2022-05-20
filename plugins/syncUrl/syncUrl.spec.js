@@ -93,4 +93,19 @@ describe('syncUrl()', () => {
       '?foo=baz&page=21&sort=-modified',
     ]);
   });
+  it('should use schema number', async () => {
+    window.location.search = '?page=17&sort=-modified&answer=42';
+    store.plugin(syncUrl({ schema: { page: 'number', sort: 'string' } }));
+    const { getByText } = render(<Component />);
+    await act(() => {
+      fireEvent.click(getByText('Next'));
+    });
+    expect(getByText('page=18')).toBeInTheDocument();
+    expect(getByText('sort=-modified')).toBeInTheDocument();
+    expect(getByText('foo=')).toBeInTheDocument();
+    expect(window.history.pushState.mock.calls).toEqual([
+      [{}, 'My Page', '?answer=42&page=18&sort=-modified'],
+    ]);
+    expect(store.getState()).toEqual({ page: 18, sort: '-modified' });
+  });
 });
