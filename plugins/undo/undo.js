@@ -1,18 +1,32 @@
 //
 // TO USE:
-// store.plugin(undoable({ maxSize: 100 }));
+// store.plugin(undo({ maxSize: 100 }));
 //
-export default function undoable({ maxSize = 100 }) {
+export default function undo({ maxSize = 100 }) {
   return function plugin(store) {
     let currIndex = 0;
+    let isUpdating = false;
     const history = [];
     store.undo = undo;
     store.redo = redo;
     store.jump = jump;
     store.jumpTo = jumpTo;
+    store.on('AfterFirstMount', () => {
+      history.push(store.getState());
+    });
+    store.on('AfterLastUnmount', () => {
+      history.length = 0;
+      currIndex = 0;
+    });
     store.on('AfterUpdate', ({ data: { next } }) => {
-      if (currIndex !== history.length) {
-        history.length = currIndex;
+      if (isUpdating) {
+        isUpdating = false;
+        return;
+      }
+      if (currIndex < history.length - 1) {
+        // if we get a new state after an undo, delete all
+        // the future stale states
+        history.length = currIndex + 1;
       }
       history.push(next);
       if (history.length === maxSize) {
@@ -38,10 +52,12 @@ export default function undoable({ maxSize = 100 }) {
       if (toIndex < 0 || toIndex >= history.length) {
         const idx = Number(toIndex);
         throw new Error(
-          `react-thermals: undoable plugin invalid history index ${idx}; history size is ${history.length}.`
+          `react-thermals: undo plugin - invalid history index ${idx}; history size is ${history.length}.`
         );
       }
       store.setState(history[toIndex]);
+      isUpdating = true;
+      currIndex = toIndex;
     }
   };
 }
