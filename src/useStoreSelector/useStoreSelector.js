@@ -29,7 +29,9 @@ export default function useStoreSelector(
     if (store.getMountCount() === 0) {
       const event = store.emit('BeforeInitialState', fullInitialState);
       const mapped = map(event.data);
-      store.setSync(mapped);
+      if (event.data !== fullInitialState) {
+        store.mergeSync(mapped);
+      }
       return mapped;
     }
     return map(fullInitialState);

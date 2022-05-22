@@ -229,6 +229,11 @@ export default function createStore({
     if (typeof newState === 'function') {
       newState = newState(_state);
     }
+    if (typeof newState?.then === 'function') {
+      throw new Error(
+        'react-thermals: Error - setSync may not return a promise'
+      );
+    }
     _state = newState;
   }
 
@@ -261,6 +266,11 @@ export default function createStore({
   function mergeSync(newState) {
     if (typeof newState === 'function') {
       newState = newState(_state);
+    }
+    if (typeof newState?.then === 'function') {
+      throw new Error(
+        'react-thermals: Error - mergeSync may not return a promise'
+      );
     }
     _state = { ..._state, ...newState };
   }

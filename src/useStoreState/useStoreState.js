@@ -14,7 +14,9 @@ export default function useStoreState(store) {
     const initialState = store.getState();
     if (store.getMountCount() === 0) {
       const event = store.emit('BeforeInitialState', initialState);
-      store.setSync(event.data);
+      if (event.data !== initialState) {
+        store.setSync(event.data);
+      }
       return event.data;
     }
     return initialState;

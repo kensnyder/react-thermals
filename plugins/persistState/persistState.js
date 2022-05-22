@@ -15,10 +15,10 @@ export default function persistState(storage) {
     );
   }
   return function plugin(store) {
-    store.on('BeforeInitialState', () => {
+    store.on('BeforeInitialState', evt => {
       const initial = storage.getItem(store.id);
       if (initial) {
-        store.setSync(initial);
+        evt.data = initial;
       }
     });
     store.on('AfterUpdate', ({ data: { next } }) => {

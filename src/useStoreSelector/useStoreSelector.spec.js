@@ -17,7 +17,8 @@ describe('useStoreSelector(mapState)', () => {
     const state = { planet: 'Jupiter', rocket: 12, seats: ['a', 'b', 'c'] };
     const actions = {
       visit(planet) {
-        store.setState(old => ({ ...old, planet }));
+        store.mergeState({ planet });
+        // store.setState(old => ({ ...old, planet }));
       },
       upgradeRocket() {
         store.mergeState(old => ({ rocket: old.rocket + 1 }));
@@ -44,7 +45,7 @@ describe('useStoreSelector(mapState)', () => {
         <div className="Planet">
           <button onClick={() => visit('Mars')}>Visit Mars</button>
           <button onClick={() => visit('Saturn')}>Visit Saturn</button>
-          <span>planet={planet}</span>
+          <span title="planet">{planet}</span>
         </div>
       );
     };
@@ -56,7 +57,7 @@ describe('useStoreSelector(mapState)', () => {
         <div className="Rocket">
           <button onClick={upgradeRocket}>Upgrade Rocket</button>
           <button onClick={() => pwn('hacked')}>Hack it</button>
-          <span>rocket={rocket}</span>
+          <span title="rocket">{rocket}</span>
         </div>
       );
     };
@@ -65,8 +66,8 @@ describe('useStoreSelector(mapState)', () => {
       const state = useStoreState(store);
       return (
         <div className="Trip">
-          <span>trip on {state.rocket}</span>
-          <span>trip to {state.planet}</span>
+          <span title="trip on">{state.rocket}</span>
+          <span title="trip to">{state.planet}</span>
         </div>
       );
     };
@@ -75,29 +76,29 @@ describe('useStoreSelector(mapState)', () => {
       const state = useStoreSelector(store, null, (prev, next) => true);
       return (
         <div className="TripWithEqualityFnComponent">
-          <span>trip2 on {state.rocket}</span>
-          <span>trip2 to {state.planet}</span>
+          <span title="trip2 on">{state.rocket}</span>
+          <span title="trip2 to">{state.planet}</span>
         </div>
       );
     };
   });
   it('should have initial state', () => {
-    const { getByText } = render(<TripComponent />);
-    expect(getByText('trip on 12')).toBeInTheDocument();
-    expect(getByText('trip to Jupiter')).toBeInTheDocument();
+    const { getByTitle } = render(<TripComponent />);
+    expect(getByTitle('trip on')).toHaveTextContent('12');
+    expect(getByTitle('trip to')).toHaveTextContent('Jupiter');
     expect(renderCounts.planet).toBe(0);
     expect(renderCounts.rocket).toBe(0);
     expect(renderCounts.trip).toBe(1);
   });
   it('should have initial state mapped', () => {
-    const { getByText } = render(<PlanetComponent />);
-    expect(getByText('planet=Jupiter')).toBeInTheDocument();
+    const { getByTitle } = render(<PlanetComponent />);
+    expect(getByTitle('planet')).toHaveTextContent('Jupiter');
     expect(renderCounts.planet).toBe(1);
     expect(renderCounts.rocket).toBe(0);
     expect(renderCounts.trip).toBe(0);
   });
   it('should rerender only selected components', async () => {
-    const { getByText, findByText } = render(
+    const { getByText, getByTitle } = render(
       <>
         <PlanetComponent />
         <RocketComponent />
@@ -109,14 +110,17 @@ describe('useStoreSelector(mapState)', () => {
     expect(renderCounts.rocket).toBe(1);
     expect(renderCounts.trip).toBe(1);
     expect(renderCounts.trip2).toBe(1);
-    fireEvent.click(getByText('Visit Mars'));
-    await findByText('trip to Mars');
+    await act(() => {
+      fireEvent.click(getByText('Visit Mars'));
+    });
+    await new Promise(r => setTimeout(r, 500));
+    // await findByText('Mars');
     expect(renderCounts.trip).toBe(2);
     expect(renderCounts.planet).toBe(2);
     expect(renderCounts.rocket).toBe(1);
     expect(renderCounts.trip2).toBe(1);
-    expect(getByText('planet=Mars')).toBeInTheDocument();
-    expect(getByText('trip2 to Jupiter')).toBeInTheDocument();
+    expect(getByTitle('planet')).toHaveTextContent('Mars');
+    expect(getByTitle('trip2 to')).toHaveTextContent('Jupiter');
   });
   it('should allow non-function updaters', async () => {
     const { getByText } = render(<RocketComponent />);
@@ -183,8 +187,9 @@ describe('store.on(type, handler)', () => {
     };
   });
   it('should allow modifying initial state', () => {
-    store.on('BeforeInitialState', () => {
-      store.mergeSync({ target: 'Venus' });
+    store.on('BeforeInitialState', evt => {
+      // store.mergeSync({ target: 'Venus' });
+      Object.assign(evt.data, { target: 'Venus' });
     });
     const { getByText } = render(<TelescopeComponent />);
     expect(getByText('current target=Venus')).toBeInTheDocument();
