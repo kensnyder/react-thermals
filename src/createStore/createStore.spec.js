@@ -126,6 +126,11 @@ describe('createStore() with autoReset', () => {
     const actions = {
       setPage: fieldSetter('page'),
       setSort: fieldSetter('sort'),
+      thrower() {
+        store.setState(old => {
+          throw new Error('my error');
+        });
+      },
     };
     store = createStore({
       state,
@@ -134,11 +139,12 @@ describe('createStore() with autoReset', () => {
     });
     ListComponent = () => {
       const state = useStoreState(store);
-      const { setPage } = store.actions;
+      const { setPage, thrower } = store.actions;
       return (
         <div className="List">
           <span>page={state.page}</span>
-          <span onClick={() => setPage(old => old + 1)}>Next</span>
+          <button onClick={() => setPage(old => old + 1)}>Next</button>
+          <button onClick={thrower}>Throw</button>
         </div>
       );
     };
@@ -204,6 +210,16 @@ describe('createStore() with autoReset', () => {
     });
     expect(before).toBe(true);
     expect(after).toBe(false);
+  });
+  it('should fire SetterException', async () => {
+    let error;
+    store.on('SetterException', evt => (error = evt.data));
+    const { getByText } = render(<ListComponent />);
+    await act(() => {
+      fireEvent.click(getByText('Throw'));
+    });
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('my error');
   });
 });
 
