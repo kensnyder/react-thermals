@@ -1,11 +1,11 @@
-import { castFromStrings, castToStrings } from './cast.js';
+import { castFromStrings, castToStrings } from './libs/cast.js';
 import {
   parse as defaultParse,
   stringify as defaultStringify,
-} from './searchParams.js';
-import isEmpty from './isEmpty.js';
-import { omitUnknown, omitKnown } from './omit.js';
-import { pushState, replaceState } from './windowHistory.js';
+} from './libs/searchParams.js';
+import isEmpty from './libs/isEmpty.js';
+import { omitUnknown, omitKnown } from './libs/omit.js';
+import { pushState, replaceState } from './libs/windowHistory.js';
 
 //
 // TO USE:
