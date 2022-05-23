@@ -24,7 +24,7 @@ describe('persistState()', () => {
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
-    store.plugin(persistState(storage));
+    store.plugin(persistState({ storage }));
     Component = () => {
       const state = useStoreState(store);
       const { setPage } = store.actions;
@@ -60,6 +60,60 @@ describe('persistState()', () => {
     expect(getByText('sort=-date')).toBeInTheDocument();
   });
 });
+describe('persistState() with fields', () => {
+  // define store before each test
+  let store, storage, Component;
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    const actions = {
+      setPage: page => store.mergeState({ page }),
+      setSort: sort => store.mergeState({ sort }),
+    };
+    store = createStore({
+      state,
+      actions,
+    });
+    storage = {
+      value: null,
+      getItem: jest.fn(id => storage.value),
+      setItem: jest.fn((id, val) => (storage.value = val)),
+    };
+    store.plugin(persistState({ storage, key: 'myKey', fields: ['page'] }));
+    Component = () => {
+      const state = useStoreState(store);
+      const { setPage } = store.actions;
+      return (
+        <div className="Pagination">
+          <span>page={state.page}</span>
+          <span>sort={state.sort}</span>
+          <span onClick={() => setPage(state.page + 1)}>Next</span>
+        </div>
+      );
+    };
+  });
+  it('should handle no initial state', () => {
+    const { getByText } = render(<Component />);
+    expect(getByText('page=1')).toBeInTheDocument();
+    expect(getByText('sort=-date')).toBeInTheDocument();
+    expect(storage.getItem).toHaveBeenCalledWith('myKey');
+  });
+  it('should override initial state', () => {
+    storage.value = { page: 2 };
+    const { getByText } = render(<Component />);
+    expect(getByText('page=2')).toBeInTheDocument();
+    expect(getByText('sort=-date')).toBeInTheDocument();
+    expect(storage.getItem).toHaveBeenCalledWith('myKey');
+  });
+  it('should save state', async () => {
+    const { getByText } = render(<Component />);
+    await act(() => {
+      fireEvent.click(getByText('Next'));
+    });
+    expect(storage.value).toEqual({ page: 2 });
+    expect(getByText('page=2')).toBeInTheDocument();
+    expect(getByText('sort=-date')).toBeInTheDocument();
+  });
+});
 describe('persistState() plugin error', () => {
   // define store before each test
   let store, storage, Component;
@@ -72,14 +126,12 @@ describe('persistState() plugin error', () => {
     store = createStore({
       state,
       actions,
-      id: 'myStore',
     });
     storage = {
       value: null,
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
-    store.plugin(persistState(storage));
     Component = () => {
       const state = useStoreState(store);
       const { setPage } = store.actions;
@@ -95,7 +147,7 @@ describe('persistState() plugin error', () => {
   it('should throw on strings', () => {
     const store = createStore({});
     const shouldThrow = () => {
-      store.plugin(persistState('foo'));
+      store.plugin(persistState({ storage: 'foo' }));
     };
     expect(shouldThrow).toThrowError();
   });
@@ -107,9 +159,21 @@ describe('persistState() plugin error', () => {
     expect(shouldThrow).toThrowError();
   });
   it('should throw on empty objects', () => {
-    const store = createStore({});
+    const store = createStore({ storage: {} });
     const shouldThrow = () => {
       store.plugin(persistState({}));
+    };
+    expect(shouldThrow).toThrowError();
+  });
+  it('should throw on non-array fields', () => {
+    const storage = {
+      value: null,
+      getItem: jest.fn(id => storage.value),
+      setItem: jest.fn((id, val) => (storage.value = val)),
+    };
+    const store = createStore({});
+    const shouldThrow = () => {
+      store.plugin(persistState({ storage, fields: 'foo' }));
     };
     expect(shouldThrow).toThrowError();
   });

@@ -122,3 +122,17 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ letters: ['d', 'e'] });
   });
 });
+describe('syncUrl() error', () => {
+  it('should throw when both fields and schema are given', async () => {
+    const store = createStore({});
+    const toThrow = () => {
+      store.plugin(
+        syncUrl({
+          fields: ['hi'],
+          schema: { hi: 'string' },
+        })
+      );
+    };
+    expect(toThrow).toThrowError();
+  });
+});
