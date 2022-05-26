@@ -42,6 +42,8 @@ describe('undo()', () => {
           <button onClick={() => addMinutes(5)}>+5 minutes</button>
           <button onClick={store.undo}>undo</button>
           <button onClick={store.redo}>redo</button>
+          <button onClick={() => store.jumpTo(1)}>jumpTo(1)</button>
+          <button onClick={() => store.jump(-2)}>jump(-2)</button>
         </div>
       );
     };
@@ -51,7 +53,7 @@ describe('undo()', () => {
     };
   });
   it('should handle a undo, redo and branch', async () => {
-    store.plugin(undo({ maxSize: 5 }));
+    store.plugin(undo());
     const { getByTitle, getByText } = render(<KeyboardComponent />);
     expect(getByTitle('output')).toHaveTextContent(/^output=$/);
     await act(() => {
@@ -80,5 +82,57 @@ describe('undo()', () => {
       fireEvent.click(getByText('o'));
     });
     expect(getByTitle('output')).toHaveTextContent(/^output=hello$/);
+    expect(store.getHistory()).toEqual([
+      { keys: [], minutes: 60 },
+      { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
+    ]);
+    await act(() => {
+      fireEvent.click(getByText('jumpTo(1)'));
+    });
+    expect(getByTitle('output')).toHaveTextContent(/^output=h$/);
+    expect(store.getHistory()).toEqual([
+      { keys: [], minutes: 60 },
+      { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
+    ]);
+    await act(() => {
+      fireEvent.click(getByText('redo'));
+    });
+    await act(() => {
+      fireEvent.click(getByText('jump(-2)'));
+    });
+    expect(getByTitle('output')).toHaveTextContent(/^output=$/);
+    expect(store.getHistory()).toEqual([
+      { keys: [], minutes: 60 },
+      { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
+    ]);
+  });
+  it('should respect maxSize option', async () => {
+    store.plugin(undo({ maxSize: 2 }));
+    const { getByTitle, getByText } = render(<KeyboardComponent />);
+    expect(getByTitle('output')).toHaveTextContent(/^output=$/);
+    await act(() => {
+      fireEvent.click(getByText('h'));
+    });
+    await act(() => {
+      fireEvent.click(getByText('i'));
+    });
+    await act(() => {
+      fireEvent.click(getByText('p'));
+    });
+    expect(getByTitle('output')).toHaveTextContent(/^output=hip$/);
+    expect(store.getHistory()).toEqual([
+      { keys: ['h', 'i'], minutes: 60 },
+      { keys: ['h', 'i', 'p'], minutes: 60 },
+    ]);
+  });
+  it('should throw error if jumping to a bad index', async () => {
+    store.plugin(undo());
+    const thrower = () => {
+      store.jumpTo(2);
+    };
+    expect(thrower).toThrowError();
   });
 });

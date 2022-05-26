@@ -63,4 +63,72 @@ describe('observable()', () => {
     unmount();
     expect(observer.complete).toHaveBeenCalled();
   });
+  it('should allow passing 3 functions', async () => {
+    const next = jest.fn();
+    const error = jest.fn();
+    const complete = jest.fn();
+    store.subscribe(next, error, complete);
+    const { getByText, getByTitle, unmount } = render(<CountComponent />);
+    await act(() => {
+      fireEvent.click(getByText('+1'));
+    });
+    expect(store.getState()).toBe(1);
+    expect(next).toHaveBeenCalledWith(1);
+    expect(getByTitle('count')).toHaveTextContent(/^1$/);
+    await act(() => {
+      fireEvent.click(getByText('throw'));
+    });
+    expect(error.mock.calls[0][0].message).toBe('my error');
+    unmount();
+    expect(complete).toHaveBeenCalled();
+  });
+  it('should allow passing 2 functions', async () => {
+    const next = jest.fn();
+    const error = jest.fn();
+    store.subscribe(next, error);
+    const { getByText, getByTitle, unmount } = render(<CountComponent />);
+    await act(() => {
+      fireEvent.click(getByText('+1'));
+    });
+    expect(store.getState()).toBe(1);
+    expect(next).toHaveBeenCalledWith(1);
+    expect(getByTitle('count')).toHaveTextContent(/^1$/);
+    await act(() => {
+      fireEvent.click(getByText('throw'));
+    });
+    expect(error.mock.calls[0][0].message).toBe('my error');
+    unmount();
+  });
+  it('should allow passing 1 function', async () => {
+    const next = jest.fn();
+    store.subscribe(next);
+    const { getByText, getByTitle, unmount } = render(<CountComponent />);
+    await act(() => {
+      fireEvent.click(getByText('+1'));
+    });
+    expect(store.getState()).toBe(1);
+    expect(next).toHaveBeenCalledWith(1);
+    expect(getByTitle('count')).toHaveTextContent(/^1$/);
+    await act(() => {
+      fireEvent.click(getByText('throw'));
+    });
+    unmount();
+  });
+  it('should allow unsubscribing', async () => {
+    const next = jest.fn();
+    const sub = store.subscribe(next);
+    sub.unsubscribe();
+    const { getByText } = render(<CountComponent />);
+    await act(() => {
+      fireEvent.click(getByText('+1'));
+    });
+    expect(store.getState()).toBe(1);
+    expect(next).not.toHaveBeenCalled();
+  });
+  it('should error when passing non-observer', async () => {
+    const thrower = () => {
+      store.subscribe(null);
+    };
+    expect(thrower).toThrowError();
+  });
 });

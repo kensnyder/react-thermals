@@ -28,10 +28,16 @@ export default function observable() {
       } else {
         observer = args[0];
       }
+      if (typeof observer?.next !== 'function') {
+        throw new Error(
+          'react-thermals: observable plugin requires that observer.next be a function'
+        );
+      }
       observers.push(observer);
       const subscription = {
         unsubscribe() {
           const idx = observers.indexOf(observer);
+          /* istanbul ignore next */
           if (idx > -1) {
             observers.splice(idx, 1);
           }

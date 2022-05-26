@@ -2,7 +2,7 @@
 // TO USE:
 // store.plugin(undo({ maxSize: 100 }));
 //
-export default function undo({ maxSize = 100 }) {
+export default function undo({ maxSize = 100 } = {}) {
   return function plugin(store) {
     let currIndex = 0;
     let isUpdating = false;
@@ -11,6 +11,7 @@ export default function undo({ maxSize = 100 }) {
     store.redo = redo;
     store.jump = jump;
     store.jumpTo = jumpTo;
+    store.getHistory = () => history;
     store.on('AfterFirstMount', () => {
       history.push(store.getState());
     });
@@ -29,7 +30,7 @@ export default function undo({ maxSize = 100 }) {
         history.length = currIndex + 1;
       }
       history.push(next);
-      if (history.length === maxSize) {
+      if (history.length > maxSize) {
         history.shift();
       } else {
         currIndex++;

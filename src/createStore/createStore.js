@@ -16,6 +16,7 @@ let storeIdx = 1;
  * @property {Object} store.actions - Methods that can be called to affect state
  * @property {Function} store.setState - function to set a new state value
  * @property {Function} store.mergeState - function to set a new state value
+ * @property {Function} store.getUseCount - The number of components that have ever used this store
  * @property {Function<Promise>} store.nextState - function that returns a Promise that resolves on next state value
  * @property {Function} store.reset - Reset the store's state to its original value
  * @property {Function} store.plugin - Pass a plugin to extend the store's functionality
@@ -23,7 +24,6 @@ let storeIdx = 1;
  * @property {Number} store.idx - The index order of the store in order of definition
  * @property {Function} store._subscribe - A method to add a setState callback that should be notified on changes
  * @property {Function} store._unsubscribe - A method to remove a setState callback
- * @property {Number} store._usedCount - The number of components that have ever used this store
  */
 export default function createStore({
   state: initialState = {},
@@ -34,6 +34,10 @@ export default function createStore({
 }) {
   // the current state value
   let _state = initialState;
+  // A count of the number of times this store has ever been used
+  let _usedCount = 0;
+  // true if BeforeInitialState has been fired before
+  let _hasInitialized = false;
   // list of setState functions for Components that use this store
   const _setters = [];
   // list of functions that will manipulate state in the next tick
@@ -65,20 +69,18 @@ export default function createStore({
     nextState,
     // get the number of mounted components using this state
     getMountCount,
+    getUsedCount: () => _usedCount,
+    hasInitialized: () => _hasInitialized,
     // set options that a component can pass to store without causing a re-render
     getOptions,
     // a function that sets any options
     setOptions,
     // register a plugin
     plugin,
-    // number of components that are currently using this store
-    mountCount: 0,
     // private: allows components to subscribe to all store changes
     _subscribe,
     // private: allows components to unsubscribe from changes
     _unsubscribe,
-    // private: A count of the number of times this store has ever been used
-    _usedCount: 0,
   };
 
   // mixin on, off, once, emit
@@ -89,6 +91,8 @@ export default function createStore({
   store.off = emitter.off;
   store.once = emitter.once;
   store.emit = emitter.emit;
+
+  store.once('BeforeInitialState', () => (_hasInitialized = true));
 
   store.actions = {};
   for (const [name, fn] of Object.entries(actions)) {
@@ -128,7 +132,7 @@ export default function createStore({
    * @private
    */
   function _subscribe(setState) {
-    if (store._usedCount++ === 0) {
+    if (_usedCount++ === 0) {
       store.emit('AfterFirstUse');
     }
     if (_setters.length === 0) {

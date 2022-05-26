@@ -26,7 +26,7 @@ export default function useStoreSelector(
   // derive the initial state, if different because of mapState or equalityFn
   const initialState = useMemo(() => {
     const fullInitialState = store.getState();
-    if (store.getMountCount() === 0) {
+    if (!store.hasInitialized()) {
       const event = store.emit('BeforeInitialState', fullInitialState);
       const mapped = map(event.data);
       if (event.data !== fullInitialState) {

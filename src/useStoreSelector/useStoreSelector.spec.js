@@ -18,7 +18,6 @@ describe('useStoreSelector(mapState)', () => {
     const actions = {
       visit(planet) {
         store.mergeState({ planet });
-        // store.setState(old => ({ ...old, planet }));
       },
       upgradeRocket() {
         store.mergeState(old => ({ rocket: old.rocket + 1 }));
@@ -129,6 +128,13 @@ describe('useStoreSelector(mapState)', () => {
     });
     expect(store.getState()).toBe('hacked');
   });
+  it('should allow overwrite part of initial state', () => {
+    store.on('BeforeInitialState', evt => {
+      evt.data = { ...evt.data, planet: 'Neptune' };
+    });
+    const { getByTitle } = render(<PlanetComponent />);
+    expect(getByTitle('planet')).toHaveTextContent(/^Neptune$/);
+  });
 });
 describe('store.on(type, handler)', () => {
   // define store before each test
@@ -188,8 +194,7 @@ describe('store.on(type, handler)', () => {
   });
   it('should allow modifying initial state', () => {
     store.on('BeforeInitialState', evt => {
-      // store.mergeSync({ target: 'Venus' });
-      Object.assign(evt.data, { target: 'Venus' });
+      evt.data = { ...evt.data, target: 'Venus' };
     });
     const { getByText } = render(<TelescopeComponent />);
     expect(getByText('current target=Venus')).toBeInTheDocument();

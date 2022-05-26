@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorBoundary from '../../jest-setup/ErrorBoundary.js';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import createStore from '../../src/createStore/createStore.js';
@@ -66,7 +67,7 @@ describe('syncUrl()', () => {
     document.title = 'My Page';
     window.location.search = '?page=2&sort=-modified&foo=bar';
     store.plugin(syncUrl({ fields: ['page', 'sort'] }));
-    const { getByText } = render(<Component />);
+    const { getByText, unmount } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
     });
@@ -75,6 +76,12 @@ describe('syncUrl()', () => {
     expect(getByText('foo=')).toBeInTheDocument();
     expect(window.history.pushState.mock.calls).toEqual([
       [{}, 'My Page', '?foo=bar&page=3&sort=-modified'],
+    ]);
+    await act(unmount);
+    expect(window.history.pushState.mock.calls[1]).toEqual([
+      {},
+      'My Page',
+      '?foo=bar',
     ]);
   });
   it('should replace history', async () => {
@@ -94,11 +101,11 @@ describe('syncUrl()', () => {
     ]);
   });
   it('should cast from schema number', async () => {
-    store.setSync({ rating: 16 });
+    store.setSync({ rating: 16, food: 'fruit' });
     window.location.search = '?rating=17';
     store.plugin(syncUrl({ schema: { rating: 'number' } }));
     render(<Component />);
-    expect(store.getState()).toEqual({ rating: 17 });
+    expect(store.getState()).toEqual({ rating: 17, food: 'fruit' });
   });
   it('should cast from schema number[]', async () => {
     store.setSync({ ids: [1, 2] });
@@ -120,6 +127,53 @@ describe('syncUrl()', () => {
     store.plugin(syncUrl({ schema: { letters: 'string[]' } }));
     render(<Component />);
     expect(store.getState()).toEqual({ letters: ['d', 'e'] });
+  });
+  it('should cast from schema boolean', async () => {
+    store.setSync({ isValid: false });
+    window.location.search = '?isValid=true';
+    store.plugin(syncUrl({ schema: { isValid: 'boolean' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ isValid: true });
+  });
+  it('should cast from schema boolean[]', async () => {
+    store.setSync({ flags: [false, false] });
+    window.location.search = '?flags=true,false';
+    store.plugin(syncUrl({ schema: { flags: 'boolean[]' } }));
+    render(<Component />);
+    expect(store.getState()).toEqual({ flags: [true, false] });
+  });
+  it('should cast from schema date', async () => {
+    store.setSync({ start: '2022-05-23' });
+    window.location.search = '?start=2022-05-24';
+    store.plugin(syncUrl({ schema: { start: 'date' } }));
+    render(<Component />);
+    expect(store.getState().start).toBeInstanceOf(Date);
+    expect(store.getState().start.toJSON()).toBe('2022-05-24T00:00:00.000Z');
+  });
+  it('should cast from schema date[]', async () => {
+    store.setSync({ range: ['2022-05-20', '2022-05-21'] });
+    window.location.search = '?range=2022-05-23,2022-05-24';
+    store.plugin(syncUrl({ schema: { range: 'date[]' } }));
+    render(<Component />);
+    expect(store.getState().range[0]).toBeInstanceOf(Date);
+    expect(store.getState().range[1]).toBeInstanceOf(Date);
+    expect(JSON.stringify(store.getState().range)).toBe(
+      '["2022-05-23T00:00:00.000Z","2022-05-24T00:00:00.000Z"]'
+    );
+  });
+  it('should throw when casting unknown type', async () => {
+    const spy = jest.spyOn(console, 'error');
+    spy.mockImplementation(() => {});
+    store.setSync({ age: 14 });
+    window.location.search = '?age=15';
+    store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
+    const { getByTitle } = render(
+      <ErrorBoundary>
+        <Component />
+      </ErrorBoundary>
+    );
+    expect(getByTitle('error-boundary')).toHaveTextContent('NOT_A_THING');
+    spy.mockRestore();
   });
 });
 describe('syncUrl() error', () => {
