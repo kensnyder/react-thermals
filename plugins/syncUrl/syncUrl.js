@@ -81,4 +81,4 @@ export default function syncUrl({
   }
 }
 
-module.exports = syncUrl;
+syncUrl.name = 'syncUrl';

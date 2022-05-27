@@ -12,13 +12,13 @@ let storeIdx = 1;
  * @property {Boolean} [config.autoReset] - If true, reset the store when all consumer components unmount
  * @property {String} [config.id] - The id string for debugging
  * @return {Object} store - Info and methods for working with the store
+ * @property {Function<Promise>} store.nextState - function that returns a Promise that resolves on next state value
  * @property {Function} store.getState - Return the current state value
  * @property {Object} store.actions - Methods that can be called to affect state
  * @property {Function} store.setState - function to set a new state value
  * @property {Function} store.mergeState - function to set a new state value
- * @property {Function} store.getUseCount - The number of components that have ever used this store
- * @property {Function<Promise>} store.nextState - function that returns a Promise that resolves on next state value
  * @property {Function} store.reset - Reset the store's state to its original value
+ * @property {Function} store.getUsedCount - The number of components that have ever used this store
  * @property {Function} store.plugin - Pass a plugin to extend the store's functionality
  * @property {String} store.id - The id or number of the store
  * @property {Number} store.idx - The index order of the store in order of definition
@@ -36,12 +36,14 @@ export default function createStore({
   let _state = initialState;
   // A count of the number of times this store has ever been used
   let _usedCount = 0;
-  // true if BeforeInitialState has been fired before
+  // true if BeforeInitialState has ever been fired before
   let _hasInitialized = false;
   // list of setState functions for Components that use this store
   const _setters = [];
   // list of functions that will manipulate state in the next tick
   const _updateQueue = [];
+  // List of all plugin initialization functions
+  const _plugins = [];
 
   // define the store object,
   // which should normally not be consumed directly
@@ -61,16 +63,18 @@ export default function createStore({
     flushSync,
     // set partial state without updating components
     mergeState,
-    // // create a new store with the same initial state and options
-    // clone,
+    // create a new store with the same initial state and options
+    clone,
     // A store's state can be reset to its original value
     reset,
     // return a Promise that will resolve on next state change
     nextState,
     // get the number of mounted components using this state
     getMountCount,
-    getUsedCount: () => _usedCount,
-    hasInitialized: () => _hasInitialized,
+    // get the number of components that have ever used this store
+    getUsedCount,
+    // Returns true if BeforeInitialState has ever been fired before
+    hasInitialized,
     // set options that a component can pass to store without causing a re-render
     getOptions,
     // a function that sets any options
@@ -163,22 +167,28 @@ export default function createStore({
     }
   }
 
-  // function clone() {
-  //   // create a new store with the current values and options
-  //   const copy = createStore({
-  //     state: _state,
-  //     actions,
-  //     autoReset,
-  //     id,
-  //   });
-  //   // re-attach all handlers
-  //   for (const [type, handlers] of Object.entries(store._handlers)) {
-  //     handlers.map(h => copy.on(type, h));
-  //   }
-  //   // TODO: copy options??
-  //   // return the copy
-  //   return copy;
-  // }
+  /**
+   * Create a new store with this store's current values, options and plugins
+   * @return {Object}
+   */
+  function clone(overrides = {}) {
+    const cloned = createStore({
+      state: { ..._state },
+      actions,
+      autoReset,
+      id,
+      ...overrides,
+    });
+    // copy options
+    store.setOptions({ ..._options });
+    // Add in all plugins
+    for (const initializer of _plugins) {
+      cloned.plugin(initializer);
+    }
+    // DO NOT include handlers (except maybe plugins added handlers above)
+    // return the copy
+    return cloned;
+  }
 
   /**
    * Reset the store to the initial value
@@ -204,9 +214,24 @@ export default function createStore({
   }
 
   /**
+   * Get number of components that have ever used this store
+   * @return {Number}
+   */
+  function getUsedCount() {
+    return _usedCount;
+  }
+
+  /**
+   * Returns true if BeforeInitialState has ever been fired before
+   * @return {Boolean}
+   */
+  function hasInitialized() {
+    return _hasInitialized;
+  }
+
+  /**
    * Get the number of mounted components who use this store
-   * @return {number}
-   * @private
+   * @return {Number}
    */
   function getMountCount() {
     return _setters.length;
@@ -215,7 +240,6 @@ export default function createStore({
   /**
    * Set the store's state and notify each affected component
    * @param {*} newState A value to set or a function that accepts old state and returns new state
-   * @private
    */
   function setState(newState) {
     _updateQueue.push(newState);
@@ -311,6 +335,7 @@ export default function createStore({
       return store;
     }
     initializer(store);
+    _plugins.push(initializer);
     store.emit('AfterPlugin', initializer);
     return store;
   }

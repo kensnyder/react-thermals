@@ -62,3 +62,5 @@ export default function undo({ maxSize = 100 } = {}) {
     }
   };
 }
+
+undo.name = 'undo';

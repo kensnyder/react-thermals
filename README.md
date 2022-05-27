@@ -30,7 +30,7 @@ npm install react-thermals
 1. Stores are included by only the components that need them
 1. Stores can persist data even if all consumers unmount
 1. Stores allow for natural code splitting
-1. Less than 3kb gzipped
+1. Less than 4kb gzipped
 
 ## Example usage
 
@@ -399,6 +399,12 @@ store.on('BeforeUpdate', evt => {
 });
 ```
 
+### Event description & Cancelability
+
+The following events fire during the life cycle of the store. Some events allow you use
+`event.preventDefault()` to block the next step. For example, canceling the BeforeSet event
+will block all pending state updates.
+
 | Event              | Description                                                 | Cancelable? |
 | ------------------ | ----------------------------------------------------------- | ----------- |
 | BeforeInitialState | Can alter initial state for first component that uses state | No          |
@@ -412,8 +418,32 @@ store.on('BeforeUpdate', evt => {
 | BeforeUpdate       | Fires before newly calculated state is propagated           | Yes         |
 | AfterUpdate        | Fires after state is finalized but before React re-renders  | Yes         |
 | BeforeReset        | Fires before state is reset (by reset() or by autoReset)    | Yes         |
+| AfterReset         | Fires after state is reset (by reset() or by autoReset)     | Yes         |
 | BeforePlugin       | Fires before a plugin is registered                         | Yes         |
 | AfterPlugin        | Fires after a plugin is registered                          | No          |
+
+### Event data
+
+Each event comes with a `data` property. Below is the available data for each event that carries some.
+Note the "Editable?" column which indicates events where altering event.data or its sub properties
+will affect what happens next
+
+| Event              | event.data property                                        | Editable?  |
+| ------------------ | ---------------------------------------------------------- | ---------- |
+| BeforeInitialState | The initial state (used by plugins to load persisted data) | data       |
+| AfterFirstUse      | null                                                       | N/A        |
+| AfterFirstMount    | null                                                       | N/A        |
+| AfterMount         | null                                                       | N/A        |
+| AfterUnmount       | null                                                       | N/A        |
+| AfterLastUnmount   | null                                                       | N/A        |
+| SetterException    | The Error object                                           | No         |
+| BeforeSet          | Previous state                                             | No         |
+| BeforeUpdate       | { prev, next } => previous state and next state            | data.next  |
+| AfterUpdate        | { prev, next } => previous state and next state            | No         |
+| BeforeReset        | { before, after } => state before and after the reset      | data.after |
+| AfterReset         | { before, after } => state before and after the reset      | No         |
+| BeforePlugin       | The plugin's initializer function (with name property)     | No         |
+| AfterPlugin        | The plugin's initializer function (with name property)     | No         |
 
 ## Plugins
 

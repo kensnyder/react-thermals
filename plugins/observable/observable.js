@@ -62,3 +62,5 @@ export default function observable() {
     });
   };
 }
+
+observable.name = 'observable';
