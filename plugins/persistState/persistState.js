@@ -10,6 +10,7 @@
 // or another object that implements getItem and setItem
 //
 export default function persistState({ storage, fields = [], key = null }) {
+  // validate options
   if (
     !storage ||
     typeof storage.getItem !== 'function' ||
@@ -24,6 +25,7 @@ export default function persistState({ storage, fields = [], key = null }) {
       'react-thermals: persistState plugin fields must be an array'
     );
   }
+  // return the actual plugin
   return function plugin(store) {
     if (!key) {
       key = store.id;
@@ -39,6 +41,7 @@ export default function persistState({ storage, fields = [], key = null }) {
     });
     store.on('AfterUpdate', evt => write(evt.data.next));
   };
+  // some helper functions
   function write(newValue) {
     if (fields.length > 0) {
       newValue = deriveSubset(newValue);
