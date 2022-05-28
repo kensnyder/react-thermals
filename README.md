@@ -350,18 +350,10 @@ functions with state values they affect.
 The `createStore()` function takes an object with the following properties:
 
 - {Object} state - The store's initial state. It can be of any type.
-- {Object} actions - Named functions that can be dispatched by name and
-  arguments.
+- {Object} actions - Named functions that can be dispatched by name and arguments.
 - {Boolean} autoReset - If true, reset the store when all consumer components
   unmount
-- {Function} onFirstUse - Callback the very first time a component calls
-  useStore()
-- {Function} afterFirstMount - Callback when a consumer component mounts when
-  no other are mounted
-- {Function} afterEachMount - Callback every time a component first calls
-  useStore()
-- {Function} afterEachUnmount - Callback when any consumer component unmounts
-- {Function} afterLastUnmount - Callback when all consumer components unmount
+- {String} id - An identifier that could be used by plugins or event listeners
 
 All callbacks receive the store as a parameter.
 
@@ -403,7 +395,8 @@ store.on('BeforeUpdate', evt => {
 
 The following events fire during the life cycle of the store. Some events allow you use
 `event.preventDefault()` to block the next step. For example, canceling the BeforeSet event
-will block all pending state updates.
+will block all pending state updates. Handlers can also call `event.stopImmediatePropagation()`
+to block other handlers from firing this particular event.
 
 | Event              | Description                                                 | Cancelable? |
 | ------------------ | ----------------------------------------------------------- | ----------- |

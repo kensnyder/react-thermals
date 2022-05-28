@@ -131,6 +131,12 @@ describe('createStore() with autoReset', () => {
           throw new Error('my error');
         });
       },
+      syncThrower() {
+        store.setState(old => {
+          throw new Error('my sync error');
+        });
+        store.flushSync();
+      },
     };
     store = createStore({
       state,
@@ -139,12 +145,13 @@ describe('createStore() with autoReset', () => {
     });
     ListComponent = () => {
       const state = useStoreState(store);
-      const { setPage, thrower } = store.actions;
+      const { setPage, thrower, syncThrower } = store.actions;
       return (
         <div className="List">
           <span>page={state.page}</span>
           <button onClick={() => setPage(old => old + 1)}>Next</button>
           <button onClick={thrower}>Throw</button>
+          <button onClick={syncThrower}>syncThrow</button>
         </div>
       );
     };
@@ -221,6 +228,16 @@ describe('createStore() with autoReset', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe('my error');
   });
+  it('should fire SetterException on flushSync', async () => {
+    let error;
+    store.on('SetterException', evt => (error = evt.data));
+    const { getByText } = render(<ListComponent />);
+    await act(() => {
+      fireEvent.click(getByText('syncThrow'));
+    });
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('my sync error');
+  });
 });
 
 describe('createStore() flushSync', () => {
@@ -229,41 +246,155 @@ describe('createStore() flushSync', () => {
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     const actions = {
-      // setPage: page => {
-      //   store.mergeState({ page });
-      // },
       setPage: fieldSetter('page'),
-      setSort: fieldSetter('sort'),
+      pwn: () => store.setState({ pwned: 42 }),
+      promise: () => {
+        store.setState(() => {
+          return new Promise(resolve => {
+            setTimeout(() => resolve({ page: 17, sort: 'date' }), 15);
+          });
+        });
+      },
+      promiseError: () => {
+        store.setState(() => {
+          return new Promise(resolve => {
+            throw new Error('Scooby Doo');
+          });
+        });
+      },
+      setSyncError: () => {
+        store.setSync(() => Promise.resolve(42));
+      },
+      mergeSyncError: () => {
+        store.mergeSync(() => Promise.resolve(42));
+      },
     };
     store = createStore({
       state,
       actions,
     });
   });
-  it('flushSync with values', () => {
+  it('should flushSync with values', () => {
     store.actions.setPage(2);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(2);
   });
-  it('flushSync with values and functions', () => {
+  it('should flushSync with state replacement', () => {
+    store.actions.pwn();
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState()).toEqual({ pwned: 42 });
+  });
+  it('should flushSync with values and functions', () => {
     store.actions.setPage(2);
     store.actions.setPage(old => old + 2);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(4);
   });
-  it('flushSync with 1 function', () => {
+  it('should flushSync with 1 function', () => {
     store.actions.setPage(old => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(2);
   });
-  it('flushSync with 2 functions', () => {
+  it('should flushSync with 2 functions', () => {
     store.actions.setPage(old => old + 1);
     store.actions.setPage(old => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(3);
+  });
+  it('should handle promise in flushSync', async () => {
+    store.actions.promise();
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(1);
+    await new Promise(r => setTimeout(r, 30));
+    expect(store.getState().page).toBe(17);
+  });
+  it('should handle promise error in flushSync', async () => {
+    let sawError;
+    store.on('SetterException', err => (sawError = err.data));
+    store.actions.promiseError();
+    store.flushSync();
+    expect(store.getState().page).toBe(1);
+    await new Promise(r => setTimeout(r, 30));
+    expect(sawError).toBeInstanceOf(Error);
+    expect(store.getState().page).toBe(1);
+  });
+  it('should handle BeforeSet with preventDefault in flushSync', () => {
+    store.on('BeforeSet', evt => {
+      evt.preventDefault();
+    });
+    store.actions.setPage(old => old + 1);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(1);
+  });
+  it('should handle BeforeUpdate with preventDefault in flushSync', () => {
+    store.on('BeforeUpdate', evt => {
+      evt.preventDefault();
+    });
+    store.actions.setPage(old => old + 1);
+    expect(store.getState().page).toBe(1);
+    store.flushSync();
+    expect(store.getState().page).toBe(1);
+  });
+  it('should error if setSync function returns Promise', () => {
+    const thrower = () => {
+      store.actions.setSyncError();
+    };
+    expect(thrower).toThrowError();
+    expect(store.getState().page).toBe(1);
+  });
+  it('should error if mergeSync function returns Promise', () => {
+    const thrower = () => {
+      store.actions.mergeSyncError();
+    };
+    expect(thrower).toThrowError();
+    expect(store.getState().page).toBe(1);
+  });
+});
+describe('createStore() cloning', () => {
+  // define store before each test
+  let store;
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    const actions = {
+      setPage: fieldSetter('page'),
+      setSort: fieldSetter('sort'),
+    };
+    store = createStore({
+      state,
+      actions,
+      autoReset: true,
+      id: 'foo',
+    });
+    store.plugin(function plugin1() {});
+    store.plugin(function plugin2() {});
+  });
+  it('should clone with overrides', () => {
+    const cloned = store.clone({ id: 'foo2' });
+    expect(Object.keys(cloned.actions)).toEqual(['setPage', 'setSort']);
+    expect(cloned.id).toBe('foo2');
+    expect(cloned.getPlugins().map(p => p.name)).toEqual([
+      'plugin1',
+      'plugin2',
+    ]);
+    expect(cloned.getState()).not.toBe(store.getState());
+    expect(cloned.getState()).toEqual(store.getState());
+  });
+  it('should clone with no overrides', () => {
+    const cloned = store.clone();
+    expect(Object.keys(cloned.actions)).toEqual(['setPage', 'setSort']);
+    expect(cloned.id).toBe('foo');
+    expect(cloned.getPlugins().map(p => p.name)).toEqual([
+      'plugin1',
+      'plugin2',
+    ]);
+    expect(cloned.getState()).not.toBe(store.getState());
+    expect(cloned.getState()).toEqual(store.getState());
   });
 });

@@ -81,6 +81,8 @@ export default function createStore({
     setOptions,
     // register a plugin
     plugin,
+    // get the list of registered plugins
+    getPlugins,
     // private: allows components to subscribe to all store changes
     _subscribe,
     // private: allows components to unsubscribe from changes
@@ -185,7 +187,7 @@ export default function createStore({
     for (const initializer of _plugins) {
       cloned.plugin(initializer);
     }
-    // DO NOT include handlers (except maybe plugins added handlers above)
+    // DO NOT re-apply handlers (except maybe plugins added handlers above)
     // return the copy
     return cloned;
   }
@@ -341,6 +343,15 @@ export default function createStore({
   }
 
   /**
+   * Get the list of initializer functions that were plugged in
+   * Note that each plugin will have a "name" property
+   * @return {Function[]}
+   */
+  function getPlugins() {
+    return _plugins;
+  }
+
+  /**
    *
    * @param {*} prev  The previous value of state (needed by useSelector and possibly event handlers)
    * @param {*} next  The newly updated state value
@@ -356,12 +367,6 @@ export default function createStore({
         if (!setter.equalityFn(prevSelected, nextSelected)) {
           // the slice of state is not equal so rerender component
           setter(nextSelected);
-        }
-      } else if (typeof setter.equalityFn === 'function') {
-        // component wants updates when equalityFn returns false
-        /* istanbul ignore next */
-        if (!setter.equalityFn(prev, next)) {
-          setter(next);
         }
       } else {
         // no mapState; always rerender component
@@ -381,8 +386,8 @@ export default function createStore({
     // use while and shift in case setters trigger more setting
     let failsafe = _updateQueue.length + 100;
     while (_updateQueue.length > 0) {
+      /* istanbul ignore next */
       if (--failsafe === 0) {
-        /* istanbul ignore next */
         throw new Error(
           `react-thermals: Too many setState calls in queue; probably an infinite loop.`
         );
@@ -451,8 +456,8 @@ export default function createStore({
     // use while and shift in case setters trigger more setting
     let failsafe = _updateQueue.length + 100;
     while (_updateQueue.length > 0) {
+      /* istanbul ignore next */
       if (--failsafe === 0) {
-        /* istanbul ignore next */
         throw new Error(
           `react-thermals: Too many setState calls in queue; probably an infinite loop.`
         );

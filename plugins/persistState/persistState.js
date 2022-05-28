@@ -53,5 +53,3 @@ export default function persistState({ storage, fields = [], key = null }) {
     return subset;
   }
 }
-
-persistState.name = 'persistState';

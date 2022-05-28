@@ -6,6 +6,11 @@ describe('Emitter', () => {
     const emitter = new Emitter();
     expect(typeof emitter.emit).toBe('function');
   });
+  it('should be chainable', () => {
+    const emitter = new Emitter();
+    const context = emitter.on('foo', () => {});
+    expect(context).toBe(emitter);
+  });
   it('should pass events with the correct context', () => {
     const foo = {};
     const emitter = new Emitter(foo);

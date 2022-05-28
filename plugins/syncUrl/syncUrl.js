@@ -80,5 +80,3 @@ export default function syncUrl({
     return '?' + stringify(next);
   }
 }
-
-syncUrl.name = 'syncUrl';

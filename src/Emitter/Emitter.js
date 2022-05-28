@@ -5,7 +5,7 @@ export default class Emitter {
     this._handlers = {
       '*': [],
     };
-    this._context = context;
+    this._context = context || this;
   }
 
   on(type, handler) {
@@ -13,6 +13,7 @@ export default class Emitter {
       this._handlers[type] = [];
     }
     this._handlers[type].push(handler);
+    return this._context;
   }
 
   off(type, handler) {
@@ -20,6 +21,7 @@ export default class Emitter {
       this._handlers[type] = [];
     }
     this._handlers[type] = this._handlers[type].filter(h => h !== handler);
+    return this._context;
   }
 
   once(type, handler) {
@@ -28,6 +30,7 @@ export default class Emitter {
       handler.call(this._context, event);
     };
     this.on(type, onceHandler);
+    return this._context;
   }
 
   emit(type, data = null) {
@@ -38,6 +41,7 @@ export default class Emitter {
       return { type, data };
     }
     const event = new PreventableEvent(this._context, type, data);
+    // run callbacks registered to both "*" and "type"
     const handlers = [...this._handlers['*'], ...(this._handlers[type] || [])];
     for (const handler of handlers) {
       handler.call(this._context, event);

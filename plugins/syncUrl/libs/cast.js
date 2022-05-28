@@ -38,11 +38,13 @@ function _castToString(schema, field, value) {
     case 'boolean[]':
       return value.map(v => (v ? 'true' : 'false'));
     default:
+      /* istanbul ignore next */
       throw new Error(`react-thermals: unknown schema type "${toType}"`);
   }
 }
 function _castFromString(schema, field, value) {
   const toType = schema[field];
+  /* istanbul ignore next */
   if (!toType) {
     return value;
   }

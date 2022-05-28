@@ -293,6 +293,16 @@ describe('store.on(type, handler)', () => {
     await new Promise(r => setTimeout(r, 1000));
     expect(caught).toBe('foobar');
   });
+  it('should return used count', async () => {
+    render(
+      <>
+        <TelescopeComponent />
+        <TelescopeComponent />
+        <TelescopeComponent />
+      </>
+    );
+    expect(store.getUsedCount()).toBe(3);
+  });
   it('should fire before set', async () => {
     const { getByText } = render(
       <>
