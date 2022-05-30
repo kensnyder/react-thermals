@@ -1,3 +1,5 @@
+import { tryParse, tryStringify } from './parseAndStringify.js';
+
 //
 // TO USE:
 // store.plugin(persistState({
@@ -9,7 +11,13 @@
 // where storage is localStorage, sessionStorage,
 // or another object that implements getItem and setItem
 //
-export default function persistState({ storage, fields = [], key = null }) {
+export default function persistState({
+  storage,
+  fields = [],
+  key = null,
+  parse = null,
+  stringify = null,
+}) {
   // validate options
   if (
     !storage ||
@@ -25,17 +33,26 @@ export default function persistState({ storage, fields = [], key = null }) {
       'react-thermals: persistState plugin fields must be an array'
     );
   }
+  if (typeof stringify !== 'function') {
+    stringify = JSON.stringify;
+  }
+  if (typeof parse !== 'function') {
+    parse = JSON.parse;
+  }
   // return the actual plugin
   return function plugin(store) {
     if (!key) {
       key = store.id;
     }
     store.on('BeforeInitialState', evt => {
-      const initial = storage.getItem(key) || evt.data;
-      if (fields.length === 0) {
-        evt.data = initial;
-      } else {
-        evt.data = { ...evt.data, ...initial };
+      const item = storage.getItem(key);
+      const initial = item ? tryParse(parse, item) : evt.data;
+      if (initial !== undefined) {
+        if (fields.length === 0) {
+          evt.data = initial;
+        } else {
+          evt.data = { ...evt.data, ...initial };
+        }
       }
       write(evt.data);
     });
@@ -46,7 +63,7 @@ export default function persistState({ storage, fields = [], key = null }) {
     if (fields.length > 0) {
       newValue = deriveSubset(newValue);
     }
-    storage.setItem(key, newValue);
+    storage.setItem(key, tryStringify(stringify, newValue));
   }
   function deriveSubset(obj) {
     const subset = {};

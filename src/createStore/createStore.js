@@ -433,7 +433,7 @@ export default function createStore({
       next: nextState,
     });
     if (event2.defaultPrevented) {
-      // handler wants to block saving new state
+      // handler wants to block setting new state
       return;
     }
     // save final state result (a handler may have altered the final result)

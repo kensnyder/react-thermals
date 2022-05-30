@@ -20,7 +20,7 @@ describe('persistState()', () => {
       id: 'myStore',
     });
     storage = {
-      value: null,
+      value: undefined,
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
@@ -44,7 +44,7 @@ describe('persistState()', () => {
     expect(storage.getItem).toHaveBeenCalledWith('myStore');
   });
   it('should override initial state', () => {
-    storage.value = { page: 2, sort: '-date' };
+    storage.value = JSON.stringify({ page: 2, sort: '-date' });
     const { getByText } = render(<Component />);
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('persistState()', () => {
     await act(() => {
       fireEvent.click(getByText('Next'));
     });
-    expect(storage.value).toEqual({ page: 2, sort: '-date' });
+    expect(storage.value).toEqual(JSON.stringify({ page: 2, sort: '-date' }));
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
   });
@@ -74,7 +74,7 @@ describe('persistState() with fields', () => {
       actions,
     });
     storage = {
-      value: null,
+      value: undefined,
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
@@ -98,7 +98,7 @@ describe('persistState() with fields', () => {
     expect(storage.getItem).toHaveBeenCalledWith('myKey');
   });
   it('should override initial state', () => {
-    storage.value = { page: 2 };
+    storage.value = JSON.stringify({ page: 2 });
     const { getByText } = render(<Component />);
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('persistState() with fields', () => {
     await act(() => {
       fireEvent.click(getByText('Next'));
     });
-    expect(storage.value).toEqual({ page: 2 });
+    expect(storage.value).toEqual(JSON.stringify({ page: 2 }));
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe('persistState() plugin error', () => {
       actions,
     });
     storage = {
-      value: null,
+      value: undefined,
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
@@ -167,7 +167,7 @@ describe('persistState() plugin error', () => {
   });
   it('should throw on non-array fields', () => {
     const storage = {
-      value: null,
+      value: undefined,
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
@@ -176,5 +176,111 @@ describe('persistState() plugin error', () => {
       store.plugin(persistState({ storage, fields: 'foo' }));
     };
     expect(shouldThrow).toThrowError();
+  });
+});
+describe('persistState() JSON errors', () => {
+  // define store before each test
+  let spy, store, storage, Component;
+  beforeEach(() => {
+    spy = jest.spyOn(console, 'error');
+    spy.mockImplementation(() => {});
+    const state = { page: 1, sort: '-date' };
+    store = createStore({
+      state,
+    });
+    storage = {
+      value: null,
+      getItem: jest.fn(id => storage.value),
+      setItem: jest.fn((id, val) => (storage.value = val)),
+    };
+    Component = () => {
+      const state = useStoreState(store);
+      return (
+        <div className="Pagination">
+          <span>page={state.page}</span>
+          <span>sort={state.sort}</span>
+        </div>
+      );
+    };
+  });
+  afterEach(() => {
+    spy.mockRestore();
+  });
+  it('should error on invalid JSON', () => {
+    store.plugin(persistState({ storage, key: 'hello' }));
+    storage.value = '{"a",1';
+    render(<Component />);
+    expect(spy.mock.calls[0][0]).toContain('react-thermals');
+    expect(spy.mock.calls[0][0]).toContain('parse');
+    expect(store.getState()).toEqual({ page: 1, sort: '-date' });
+    expect(storage.setItem.mock.calls).toEqual([
+      ['hello', JSON.stringify({ page: 1, sort: '-date' })],
+    ]);
+  });
+  it('should error on invalid JSON', () => {
+    store.plugin(persistState({ storage, key: 'hi', fields: ['page'] }));
+    storage.value = '{"page",3';
+    render(<Component />);
+    expect(spy.mock.calls[0][0]).toContain('react-thermals');
+    expect(spy.mock.calls[0][0]).toContain('parse');
+    expect(store.getState()).toEqual({ page: 1, sort: '-date' });
+    expect(storage.setItem.mock.calls).toEqual([
+      ['hi', JSON.stringify({ page: 1 })],
+    ]);
+  });
+  it('should not error on non-object JSON', () => {
+    storage.value = '5';
+    render(<Component />);
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it('should error on JSON.stringify error', () => {
+    const cyclic = { a: 1 };
+    cyclic.self = cyclic;
+    store.setSync(cyclic);
+    store.plugin(persistState({ storage, key: 'food' }));
+    render(<Component />);
+    expect(spy.mock.calls[0][0]).toContain('react-thermals');
+    expect(spy.mock.calls[0][0]).toContain('stringify');
+    expect(store.getState()).toBe(cyclic);
+    expect(storage.setItem.mock.calls).toEqual([['food', '']]);
+  });
+});
+describe('persistState() with custom parse and stringify', () => {
+  // define store before each test
+  let store, storage, Component, parse, stringify;
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    store = createStore({
+      state,
+    });
+    storage = {
+      value: null,
+      getItem: jest.fn(id => storage.value),
+      setItem: jest.fn((id, val) => (storage.value = val)),
+    };
+    parse = query => {
+      return Object.fromEntries(new URLSearchParams(query).entries());
+    };
+    stringify = value => {
+      return new URLSearchParams(value).toString();
+    };
+    store.plugin(persistState({ storage, parse, stringify, key: 'params' }));
+    Component = () => {
+      const state = useStoreState(store);
+      return (
+        <div className="Pagination">
+          <span>page={state.page}</span>
+          <span>sort={state.sort}</span>
+        </div>
+      );
+    };
+  });
+  it('should use custom functions', () => {
+    storage.value = 'page=2&sort=-date';
+    render(<Component />);
+    expect(store.getState()).toEqual({ page: '2', sort: '-date' });
+    expect(storage.setItem.mock.calls).toEqual([
+      ['params', 'page=2&sort=-date'],
+    ]);
   });
 });

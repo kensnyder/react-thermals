@@ -1,8 +1,8 @@
 # React Thermals
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.4)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.4)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.4)](https://opensource.org/licenses/ISC)
+[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.5)](https://ci.appveyor.com/project/kensnyder/react-thermals)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.5)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.5)](https://opensource.org/licenses/ISC)
 
 Simple and extensible way to manage shared state in React
 
@@ -19,26 +19,34 @@ npm install react-thermals
    1. [Simple example](#simple-example)
    2. [Complex example](#complex-example)
 3. [Writing Actions](#writing-actions)
-4. [All Store Options](#all-store-options)
-5. [Suggested File Structure](#suggested-file-structure)
-6. [Events](#events)
-7. [Plugins](#plugins)
+4. [Actions Helpers](#actions-helpers)
+   1. [fieldSetter](#fieldsetter)
+   2. [fieldListSetter](#fieldlistsetter)
+   3. [fieldToggler](#fieldtoggler)
+   4. [fieldAdder](#fieldadder)
+   5. [fieldAppender](#fieldappender)
+   6. [fieldRemover](#fieldremover)
+5. [All Store Options](#all-store-options)
+6. [Suggested File Structure](#suggested-file-structure)
+7. [Events](#events)
+8. [Plugins](#plugins)
    1. [consoleLogger](#consolelogger)
    2. [observable](#observable)
    3. [persistState](#persistState)
    4. [syncUrl](#syncUrl)
    5. [undo](#undo)
-8. [Credits](#credits)
+   6. [How to write plugins](#how-to-write-plugins)
+9. [Credits](#credits)
 
 ## Features
 
 1. Instead of reducers or observables, define simple action functions with no boilerplate
-2. Store actions are easily testable
-3. Stores can respond to component lifecycle events including unmount
+2. Components only re-render when relevant store state changes
+3. Store actions are easily testable
+4. Stores can respond to component lifecycle events including unmount
    (e.g. to abort fetching data)
-4. A store can be used by one component or many components
-5. Stores are included by only the components that need them
-6. Components only re-render when relevant store state changes
+5. A store can be used by one component or many components
+6. Stores are included by only the components that need them
 7. Stores can optionally persist data even if all consumers unmount
 8. Stores allow for worry-free code splitting
 9. Less than 4kb gzipped
@@ -111,6 +119,10 @@ export function PlusTwo() {
   );
 }
 ```
+
+_Also note that you can shorten
+`adderStore.useSelector(state => state.count);` to
+`adderStore.useSelector('count');`._
 
 In src/stores/adder/adderStore.spec.js
 
@@ -247,6 +259,9 @@ export default function StoryItem({ story }) {
 
 ## Writing actions
 
+For many actions, you can use helpers as defined in the
+[next section](#actions-helpers).
+
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
 with the partial state passed to mergeState.
@@ -265,6 +280,129 @@ split. In React Thermals, code splitting happens naturally because components mu
 
 React Thermals are useful for global state, state that goes across components
 or even state that is local to a single component.
+
+## Actions Helpers
+
+Actions that get, set, and append state values can be generated automatically.
+
+### fieldSetter
+
+Set a single field.
+
+```jsx harmony
+import { createStore, fieldSetter } from 'react-thermals';
+const store = createStore({
+   state: { query: '', page: 1, sort: 'relevance' },
+   actions: {
+       setPage: fieldSetter('page')
+   }
+});
+// Then in Component:
+const { setPage } = store.actions;
+<button onClick={() => setPage(1)}>
+  First Page
+</button>
+<button onClick={() => setPage(old => old.page + 1)}>
+  Next Page
+</button>
+```
+
+### fieldListSetter
+
+Set a list of fields.
+
+```jsx harmony
+import { createStore, fieldListSetter } from 'react-thermals';
+const store = createStore({
+  state: { fname: '', lname: '' },
+  actions: {
+    setName: fieldListSetter(['fname', 'lname']),
+  },
+});
+// Then in Component:
+const { setName } = store.actions;
+<button onClick={() => setName('George', 'Jetson')}>
+  Change name to George Jetson
+</button>;
+```
+
+### fieldToggler
+
+Set a list of fields.
+
+```jsx harmony
+import { createStore, fieldToggler } from 'react-thermals';
+const store = createStore({
+  state: { showStats: false },
+  actions: {
+    toggleStats: fieldToggler('showStats'),
+  },
+});
+// Then in Component:
+const { toggleStats } = store.actions;
+<button onClick={toggleStats}>Show/Hide stats</button>;
+```
+
+### fieldAdder
+
+Set a list of fields.
+
+```jsx harmony
+import { createStore, fieldAdder } from 'react-thermals';
+const store = createStore({
+  state: { x: 0, y: 0 },
+  actions: {
+    moveUp: fieldAdder('y', 1),
+    moveDown: fieldAdder('y', -1),
+    moveRight: fieldAdder('x', 1),
+    moveLeft: fieldAdder('x', -1),
+  },
+});
+// Then in Component:
+const { moveUp, moveDown, moveRight, moveLeft } = store.actions;
+<button onClick={moveUp}>⬆︎</button>;
+<button onClick={moveDown}>⬇︎︎</button>;
+<button onClick={moveRight}>➡︎</button>;
+<button onClick={moveLeft}>⬅︎</button>;
+```
+
+### fieldAppender
+
+Add an item to an array.
+
+```jsx harmony
+import { createStore, fieldAppender } from 'react-thermals';
+const store = createStore({
+  state: { todos: [] },
+  actions: {
+    addTodo: fieldAppender('todos'),
+  },
+});
+// Then in Component:
+const { addTodo } = store.actions;
+<button onClick={() => addTodo({ text: 'Wash the Car', done: false })}>
+  Wash the Car
+</button>;
+```
+
+### fieldRemover
+
+Remove an item from an array.
+
+```jsx harmony
+import { createStore, fieldRemover } from 'react-thermals';
+const store = createStore({
+  state: { todos: ['Eat more pie'] },
+  actions: {
+    deleteTodo: fieldRemover('todos'),
+  },
+});
+// Then in Component:
+const { addTodo } = store.actions;
+<button onClick={() => deleteTodo('Eat more pie')}>
+  Delete "Eat more pie"
+</button>;
+```
 
 ## All Store Options
 
@@ -463,6 +601,31 @@ store.plugin(undo({ maxSize: 20 }));
 store.undo();
 store.redo();
 store.jumpTo(5);
+```
+
+## How to write plugins
+
+Here is an example plugin that loads and saves user settings.
+
+```js
+export default function syncUserSettings({ baseUrl }) {
+  return function plugin(store) {
+    store.on('AfterFirstMount', evt => {
+      fetch(`${baseUrl}/api/user/settings`)
+        .then(r => r.json())
+        .then(settings => {
+          store.mergeState({ settings });
+        });
+    });
+    store.on('BeforeUpdate', evt => {
+      fetch({
+        method: 'POST',
+        url: `${baseUrl}/api/user/settings`,
+        data: evt.data.next.settings,
+      });
+    });
+  };
+}
 ```
 
 ## Credits
