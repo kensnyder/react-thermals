@@ -1,8 +1,8 @@
 # React Thermals
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.7)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.7)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.7)](https://opensource.org/licenses/ISC)
+[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.8)](https://ci.appveyor.com/project/kensnyder/react-thermals)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.8)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.8)](https://opensource.org/licenses/ISC)
 
 Simple and extensible way to manage shared state in React
 
