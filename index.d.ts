@@ -91,61 +91,9 @@ declare module "src/useStoreState/useStoreState" {
      */
     export default function useStoreState(store: any): any;
 }
-declare module "src/createSetter/createSetter" {
-    /**
-     * Helper function to create a mergeState function that directly sets one property
-     * @param {String|Number} propName  The name of the property to merge
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldSetter(propName: string | number): Function;
-    /**
-     * Helper function to create a mergeState function that directly sets one or more properties
-     * @param {String[]|Number[]} propNames  The name of the property to merge
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldListSetter(propNames: string[] | number[]): Function;
-    /**
-     * Helper function to create a mergeState function that directly toggles one property
-     * @param {String|Number} propName  The name of the property to toggle
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldToggler(propName: string | number): Function;
-    /**
-     * Helper function to create a mergeState function that adds the given amount to one property
-     * e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
-     * @param {String|Number} propName  The name of the property to toggle
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldAdder(propName: string | number, amount: any): Function;
-    /**
-     * Helper function to create a mergeState function that appends and item to an array property
-     * @param {String|Number} propName  The name of the array property to append to
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldAppender(propName: string | number): Function;
-    /**
-     * Helper function to create a mergeState function that removes the given item from an array property
-     * @param {String|Number} propName  The name of the array property to remove from
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldRemover(propName: string | number): Function;
-    /**
-     * Helper function to create a mergeState function that runs a mapping against an array property
-     * @param {String|Number} propName  The name of the array property to map
-     * @return {Function}  A function suitable for passing to store.setState()
-     */
-    export function fieldMapper(propName: string | number): Function;
-}
 declare module "index" {
     import createStore from "src/createStore/createStore";
     import useStoreSelector from "src/useStoreSelector/useStoreSelector";
     import useStoreState from "src/useStoreState/useStoreState";
-    import { fieldSetter } from "src/createSetter/createSetter";
-    import { fieldListSetter } from "src/createSetter/createSetter";
-    import { fieldToggler } from "src/createSetter/createSetter";
-    import { fieldAdder } from "src/createSetter/createSetter";
-    import { fieldAppender } from "src/createSetter/createSetter";
-    import { fieldRemover } from "src/createSetter/createSetter";
-    import { fieldMapper } from "src/createSetter/createSetter";
-    export { createStore, useStoreSelector, useStoreState, fieldSetter, fieldListSetter, fieldToggler, fieldAdder, fieldAppender, fieldRemover, fieldMapper };
+    export { createStore, useStoreSelector, useStoreState };
 }
