@@ -1,25 +1,3 @@
-import createStore from './src/createStore/createStore.js';
-import useStoreSelector from './src/useStoreSelector/useStoreSelector.js';
-import useStoreState from './src/useStoreState/useStoreState.js';
-import {
-  fieldSetter,
-  fieldListSetter,
-  fieldToggler,
-  fieldAdder,
-  fieldAppender,
-  fieldRemover,
-  fieldMapper,
-} from './src/createSetter/createSetter.js';
-
-export {
-  createStore,
-  useStoreSelector,
-  useStoreState,
-  fieldSetter,
-  fieldListSetter,
-  fieldToggler,
-  fieldAdder,
-  fieldAppender,
-  fieldRemover,
-  fieldMapper,
-};
+export createStore from './src/createStore/createStore.js';
+export useStoreSelector from './src/useStoreSelector/useStoreSelector.js';
+export useStoreState from './src/useStoreState/useStoreState.js';

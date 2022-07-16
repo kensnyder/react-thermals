@@ -19,7 +19,7 @@ npm install react-thermals
    1. [Simple example](#simple-example)
    2. [Complex example](#complex-example)
 3. [Writing Actions](#writing-actions)
-4. [Actions Helpers](#actions-helpers)
+4. [Action Creators](#action-creators)
    1. [fieldSetter](#fieldsetter)
    2. [fieldListSetter](#fieldlistsetter)
    3. [fieldToggler](#fieldtoggler)
@@ -260,7 +260,7 @@ export default function StoryItem({ story }) {
 ## Writing actions
 
 For many actions, you can use helpers as defined in the
-[next section](#actions-helpers).
+[next section](#action-creators).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
@@ -281,7 +281,7 @@ split. In React Thermals, code splitting happens naturally because components mu
 React Thermals are useful for global state, state that goes across components
 or even state that is local to a single component.
 
-## Actions Helpers
+## Action Creators
 
 Actions that get, set, and append state values can be generated automatically.
 
@@ -290,14 +290,18 @@ Actions that get, set, and append state values can be generated automatically.
 Set a single field.
 
 ```jsx harmony
-import { createStore, fieldSetter } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldSetter } from 'react-thermals/actions/fieldSetter';
+
 const store = createStore({
-   state: { query: '', page: 1, sort: 'relevance' },
+   state: {
+      page: 1,
+   },
    actions: {
        setPage: fieldSetter('page')
    }
 });
-// Then in Component:
+// Then in Component.jsx
 const { setPage } = store.actions;
 <button onClick={() => setPage(1)}>
   First Page
@@ -307,12 +311,58 @@ const { setPage } = store.actions;
 </button>
 ```
 
-### fieldListSetter
+### fieldSetterSync
+
+Set a single field synchronously.
+
+```jsx harmony
+import { createStore, useStoreSelector } from 'react-thermals';
+import { fieldSetterSync } from 'react-thermals/actions/fieldSetter';
+
+const store = createStore({
+  state: {
+    search: '',
+  },
+  actions: {
+    setSearch: fieldSetterSync('search'),
+  },
+});
+// Then in Component.jsx
+const { setSearch } = store.setSearch;
+const search = useStoreSelector(store, 'search');
+<input value={search} onChange={evt => setSearch(evt.target.value)} />;
+```
+
+### fieldSetterInput
+
+Set a single field synchronously from an input's onChange event.
+
+```jsx harmony
+import { createStore, useStoreSelector } from 'react-thermals';
+import { fieldSetterInput } from 'react-thermals/actions/fieldSetter';
+
+const store = createStore({
+  state: {
+    search: '',
+  },
+  actions: {
+    setSearch: fieldSetterInput('search'),
+  },
+});
+// Then in Component.jsx
+const { setSearch } = store.setSearch;
+const search = useStoreSelector(store, 'search');
+<input value={search} onChange={fieldSetterInput} />;
+```
+
+### fieldListSetter & fieldListSetterSync
 
 Set a list of fields.
 
 ```jsx harmony
-import { createStore, fieldListSetter } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldListSetter } from 'react-thermals/actions/fieldListSetter';
+
 const store = createStore({
   state: { fname: '', lname: '' },
   actions: {
@@ -326,12 +376,14 @@ const { setName } = store.actions;
 </button>;
 ```
 
-### fieldToggler
+### fieldToggler & fieldTogglerSync
 
 Set a list of fields.
 
 ```jsx harmony
-import { createStore, fieldToggler } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldToggler } from 'react-thermals/actions/fieldToggler';
+
 const store = createStore({
   state: { showStats: false },
   actions: {
@@ -343,12 +395,14 @@ const { toggleStats } = store.actions;
 <button onClick={toggleStats}>Show/Hide stats</button>;
 ```
 
-### fieldAdder
+### fieldAdder & fieldAdderSync
 
-Set a list of fields.
+Add or subtract from a given field.
 
 ```jsx harmony
-import { createStore, fieldAdder } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldAdder } from 'react-thermals/actions/fieldAdder';
+
 const store = createStore({
   state: { x: 0, y: 0 },
   actions: {
@@ -366,12 +420,35 @@ const { moveUp, moveDown, moveRight, moveLeft } = store.actions;
 <button onClick={moveLeft}>⬅︎</button>;
 ```
 
-### fieldAppender
+Or allow handler to add or subtract from a given field.
+
+```jsx harmony
+import { createStore } from 'react-thermals';
+import { fieldAdder } from 'react-thermals/actions/fieldAdder';
+
+const store = createStore({
+  state: { x: 0, y: 0 },
+  actions: {
+    vertical: fieldAdder('y'),
+    horizontal: fieldAdder('x'),
+  },
+});
+// Then in Component:
+const { moveUp, moveDown, moveRight, moveLeft } = store.actions;
+<button onClick={() => vertical(-1)}>⬆︎</button>;
+<button onClick={() => vertical(1)}>⬇︎︎</button>;
+<button onClick={() => horizontal(1)}>➡︎</button>;
+<button onClick={() => horizontal(-1)}>⬅︎</button>;
+```
+
+### fieldAppender & fieldAppenderSync
 
 Add an item to an array.
 
 ```jsx harmony
-import { createStore, fieldAppender } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldAppender } from 'react-thermals/actions/fieldAppender';
+
 const store = createStore({
   state: { todos: [] },
   actions: {
@@ -385,12 +462,14 @@ const { addTodo } = store.actions;
 </button>;
 ```
 
-### fieldRemover
+### fieldRemover & fieldRemoverSync
 
 Remove an item from an array.
 
 ```jsx harmony
-import { createStore, fieldRemover } from 'react-thermals';
+import { createStore } from 'react-thermals';
+import { fieldRemover } from 'react-thermals/actions/fieldRemover';
+
 const store = createStore({
   state: { todos: ['Eat more pie'] },
   actions: {
@@ -398,7 +477,7 @@ const store = createStore({
   },
 });
 // Then in Component:
-const { addTodo } = store.actions;
+const { deleteTodo } = store.actions;
 <button onClick={() => deleteTodo('Eat more pie')}>
   Delete "Eat more pie"
 </button>;
@@ -514,10 +593,10 @@ store.plugin(consoleLogger({ eventTypes: ['AfterUpdate'] }));
 Turn the store into an observable to observe state changes.
 
 ```js
-import observable from 'react-thermals/plugins/observable';
+import makeObservable from 'react-thermals/plugins/observable';
 const store = createStore(/*...*/);
 // turn store into an observable
-store.plugin(observable());
+store.plugin(makeObservable());
 store.subscribe(observer);
 // observer.next(newState) called AfterUpdate
 // observer.error() called on SetterException
@@ -537,10 +616,10 @@ When state is updated, save state or partial state to localStorage.
 ```js
 import persistState from 'react-thermals/plugins/persistState';
 const store = createStore({
-  state: { query: '', page: 1, sort: 'name' },
+  state: { query: '', sort: 'name' },
   // ...
 });
-// turn store into an observable
+// persist "sort" value to localStorage
 store.plugin(
   persistState({
     storage: localStorage,
@@ -558,7 +637,9 @@ When first component mounts, load state or partial state from the URL.
 When state is updated, save state or partial state to the URL.
 
 ```js
+import qs from 'qs';
 import syncUrl from 'react-thermals/plugins/syncUrl';
+
 const store = createStore({
   state: { query: '', page: 1, sort: 'name' },
   // ...
@@ -572,6 +653,7 @@ store.plugin(
       query: 'String',
       page: 'Number', // when pulling from URL, parse as Number
     },
+    // OPTIONAL:
     // override the default use of URLSearchParams for serializing
     // and deserializing
     parse: qs.parse,
@@ -582,14 +664,15 @@ store.plugin(
 
 Valid schema types:
 
-- String and String[]
-- Number and Number[]
-- Date and Date[]
-- Boolean and Boolean[]
+- `String and String[]`
+- `Number` and `Number[]`
+- `Date` and `Date[]`
+- `Boolean` and `Boolean[]`
 
 ### undo
 
-Maintain an undo history and add .undo() and .redo() methods to the store.
+Maintain an undo history and
+add .undo(), .redo(), .jump(), .jumpTo() methods to the store.
 
 ```js
 import undo from 'react-thermals/plugins/undo';
@@ -617,7 +700,7 @@ export default function syncUserSettings({ baseUrl }) {
           store.mergeState({ settings });
         });
     });
-    store.on('BeforeUpdate', evt => {
+    store.on('AfterUpdate', evt => {
       fetch({
         method: 'POST',
         url: `${baseUrl}/api/user/settings`,

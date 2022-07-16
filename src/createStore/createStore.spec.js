@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState.js';
-import { fieldSetter, fieldListSetter } from '../createSetter/createSetter.js';
+import { fieldSetter } from '../../actions/fieldSetter.js';
+import { fieldListSetter } from '../../actions/fieldListSetter.js';
 import createStore from './createStore.js';
 
 describe('createStore()', () => {

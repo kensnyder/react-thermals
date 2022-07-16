@@ -2,7 +2,7 @@
 // Usage:
 // store.plugin(observable());
 //
-// Add subscribe method to the state:
+// Adds a `subscribe()` method to the state:
 // .subscribe(observer) OR
 // .subscribe(next, error, complete)
 //
