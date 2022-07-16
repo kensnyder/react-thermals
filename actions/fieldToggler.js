@@ -1,3 +1,5 @@
+import withFlushSync from './withFlushSync.js';
+
 /**
  * Helper function to create a mergeState function that directly toggles one property
  * @param {String|Number} propName  The name of the property to toggle
@@ -16,10 +18,4 @@ export function fieldToggler(propName) {
  * @param {String|Number} propName  The name of the property to toggle
  * @return {Function}  A function suitable for a store action
  */
-export function fieldTogglerSync(propName) {
-  return function updater() {
-    return this.mergeSync(old => ({
-      [propName]: !old[propName],
-    }));
-  };
-}
+export const fieldTogglerSync = withFlushSync(fieldToggler);

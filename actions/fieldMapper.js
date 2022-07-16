@@ -1,3 +1,5 @@
+import withFlushSync from './withFlushSync.js';
+
 /**
  * Helper function to create a mergeState function that runs a mapping against an array property
  * @param {String|Number} propName  The name of the array property to map
@@ -16,10 +18,4 @@ export function fieldMapper(propName) {
  * @param {String|Number} propName  The name of the array property to map
  * @return {Function}  A function suitable for a store action
  */
-export function fieldMapperSync(propName) {
-  return function updater(mapper) {
-    return this.mergeSync(old => ({
-      [propName]: old[propName].map(mapper),
-    }));
-  };
-}
+export const fieldMapperSync = withFlushSync(fieldMapper);

@@ -1,3 +1,5 @@
+import withFlushSync from './withFlushSync.js';
+
 /**
  * Helper function to create a mergeState function that directly sets one property
  * @param {String|Number} propName  The name of the property to merge
@@ -18,18 +20,7 @@ export function fieldSetter(propName) {
  * @param {String|Number} propName  The name of the property to merge
  * @return {Function}  A function suitable for a store action
  */
-export function fieldSetterSync(propName) {
-  return function updater(newValue) {
-    if (typeof newValue === 'function') {
-      this.setSync(old => ({
-        ...old,
-        [propName]: newValue(old[propName]),
-      }));
-    } else {
-      this.mergeSync({ [propName]: newValue });
-    }
-  };
-}
+export const fieldSetterSync = withFlushSync(fieldSetter);
 
 /**
  * Helper function to create a mergeSync function that directly sets one property synchronously

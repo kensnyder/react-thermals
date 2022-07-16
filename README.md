@@ -1,8 +1,8 @@
 # React Thermals
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.6)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.6)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.6)](https://opensource.org/licenses/ISC)
+[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.7)](https://ci.appveyor.com/project/kensnyder/react-thermals)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.7)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.7)](https://opensource.org/licenses/ISC)
 
 Simple and extensible way to manage shared state in React
 
@@ -291,7 +291,7 @@ Set a single field.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldSetter } from 'react-thermals/actions/fieldSetter';
+import { fieldSetter } from 'react-thermals/actions';
 
 const store = createStore({
    state: {
@@ -317,7 +317,7 @@ Set a single field synchronously.
 
 ```jsx harmony
 import { createStore, useStoreSelector } from 'react-thermals';
-import { fieldSetterSync } from 'react-thermals/actions/fieldSetter';
+import { fieldSetterSync } from 'react-thermals/actions';
 
 const store = createStore({
   state: {
@@ -339,7 +339,7 @@ Set a single field synchronously from an input's onChange event.
 
 ```jsx harmony
 import { createStore, useStoreSelector } from 'react-thermals';
-import { fieldSetterInput } from 'react-thermals/actions/fieldSetter';
+import { fieldSetterInput } from 'react-thermals/actions';
 
 const store = createStore({
   state: {
@@ -361,7 +361,7 @@ Set a list of fields.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldListSetter } from 'react-thermals/actions/fieldListSetter';
+import { fieldListSetter } from 'react-thermals/actions';
 
 const store = createStore({
   state: { fname: '', lname: '' },
@@ -382,7 +382,7 @@ Set a list of fields.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldToggler } from 'react-thermals/actions/fieldToggler';
+import { fieldToggler } from 'react-thermals/actions';
 
 const store = createStore({
   state: { showStats: false },
@@ -401,7 +401,7 @@ Add or subtract from a given field.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldAdder } from 'react-thermals/actions/fieldAdder';
+import { fieldAdder } from 'react-thermals/actions';
 
 const store = createStore({
   state: { x: 0, y: 0 },
@@ -424,7 +424,7 @@ Or allow handler to add or subtract from a given field.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldAdder } from 'react-thermals/actions/fieldAdder';
+import { fieldAdder } from 'react-thermals/actions';
 
 const store = createStore({
   state: { x: 0, y: 0 },
@@ -447,7 +447,7 @@ Add an item to an array.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldAppender } from 'react-thermals/actions/fieldAppender';
+import { fieldAppender } from 'react-thermals/actions';
 
 const store = createStore({
   state: { todos: [] },
@@ -468,7 +468,7 @@ Remove an item from an array.
 
 ```jsx harmony
 import { createStore } from 'react-thermals';
-import { fieldRemover } from 'react-thermals/actions/fieldRemover';
+import { fieldRemover } from 'react-thermals/actions';
 
 const store = createStore({
   state: { todos: ['Eat more pie'] },

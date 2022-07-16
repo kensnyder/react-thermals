@@ -1,3 +1,5 @@
+import withFlushSync from './withFlushSync.js';
+
 /**
  * Helper function to create a mergeState function that appends and item to an array property
  * @param {String|Number} propName  The name of the array property to append to
@@ -16,10 +18,4 @@ export function fieldAppender(propName) {
  * @param {String|Number} propName  The name of the array property to append to
  * @return {Function}  A function suitable for a store action
  */
-export function fieldAppenderSync(propName) {
-  return function updater(...newItems) {
-    return this.mergeSync(old => ({
-      [propName]: [...old[propName], ...newItems],
-    }));
-  };
-}
+export const fieldAppenderSync = withFlushSync(fieldAppender);

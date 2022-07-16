@@ -1,3 +1,5 @@
+import withFlushSync from './withFlushSync.js';
+
 /**
  * Helper function to create a mergeState function that removes the given item from an array property
  * @param {String|Number} propName  The name of the array property to remove from
@@ -16,10 +18,4 @@ export function fieldRemover(propName) {
  * @param {String|Number} propName  The name of the array property to remove from
  * @return {Function}  A function suitable for a store action
  */
-export function fieldRemoverSync(propName) {
-  return function updater(...itemsToRemove) {
-    return this.mergeSync(old => ({
-      [propName]: old[propName].filter(val => !itemsToRemove.includes(val)),
-    }));
-  };
-}
+export const fieldRemoverSync = withFlushSync(fieldRemover);
