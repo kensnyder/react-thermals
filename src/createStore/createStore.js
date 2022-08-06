@@ -1,4 +1,5 @@
 import Emitter from '../Emitter/Emitter.js';
+import shallowCopy from '../shallowCopy/shallowCopy.js';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -175,7 +176,7 @@ export default function createStore({
    */
   function clone(overrides = {}) {
     const cloned = createStore({
-      state: { ..._state },
+      state: shallowCopy(_state),
       actions,
       autoReset,
       id,
@@ -194,15 +195,15 @@ export default function createStore({
 
   /**
    * Reset the store to the initial value
-   * @param {Object} withOverrides  An object with values to override the initial state
+   * @param {Object} [withOverrides]  An object with values to override the initial state
    * @return {Object}  This store
    * @chainable
    */
-  function reset(withOverrides = {}) {
+  function reset(withOverrides = undefined) {
     const current = _state;
     const event = store.emit('BeforeReset', {
       before: current,
-      after: { ...initialState, ...withOverrides },
+      after: shallowOverride(initialState, withOverrides),
     });
     if (event.defaultPrevented) {
       return store;
@@ -299,7 +300,7 @@ export default function createStore({
     }
     if (typeof newState?.then === 'function') {
       throw new Error(
-        'react-thermals: Error - mergeSync may not return a promise'
+        'react-thermals: Error - mergeSync handlers may not return a promise'
       );
     }
     _state = { ..._state, ...newState };
@@ -399,6 +400,7 @@ export default function createStore({
         nextState = updatedState;
       }
     }
+    // TODO: allow middleware here?
     return nextState;
   }
 
@@ -485,14 +487,14 @@ export default function createStore({
     if (event1.defaultPrevented) {
       // handler wants to block running state updaters
       _updateQueue.length = 0;
-      return;
+      return prevState;
     }
     let nextState;
     try {
       nextState = _getNextStateSync();
     } catch (err) {
       store.emit('SetterException', err);
-      return;
+      return prevState;
     }
     const event2 = store.emit('BeforeUpdate', {
       prev: prevState,
@@ -500,7 +502,7 @@ export default function createStore({
     });
     if (event2.defaultPrevented) {
       // handler wants to block saving new state
-      return;
+      return prevState;
     }
     // save final state result (a handler may have altered the final result)
     // then notify affected components
