@@ -1,5 +1,6 @@
 import Emitter from '../Emitter/Emitter.js';
 import shallowCopy from '../shallowCopy/shallowCopy.js';
+import shallowOverride from '../shallowOverride/shallowOverride.js';
 
 // an internal counter for stores
 let storeIdx = 1;

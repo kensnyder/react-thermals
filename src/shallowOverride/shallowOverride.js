@@ -1,7 +1,7 @@
 /**
  * Create a copy of the given value, shallowly overriding properties
- * @param {*} value
- * @param {*} overrides
+ * @param {*} value  The value to copy
+ * @param {*} overrides  Override values to extend the copy
  * @return {*}
  */
 export default function shallowOverride(value, overrides) {
