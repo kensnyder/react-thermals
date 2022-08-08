@@ -1,12 +1,12 @@
+<img alt="React Thermals Logo" src="./assets/glider-logotype.png" height="64" />
+
 # React Thermals
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.9)](https://ci.appveyor.com/project/kensnyder/react-thermals)
 [![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.9)](https://codecov.io/gh/kensnyder/react-thermals)
 [![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.9)](https://opensource.org/licenses/ISC)
 
-Simple and extensible way to manage shared state in React
-
-<img alt="React Thermals Logo" src="./assets/glider.png" width="64" />
+Simple and extensible way to manage state in React
 
 ```bash
 npm install react-thermals
@@ -16,8 +16,9 @@ npm install react-thermals
 
 1. [Features](#features)
 2. [Example Usage](#example-usage)
-   1. [Simple example](#simple-example)
-   2. [Complex example](#complex-example)
+   1. [Global state example](#global-state-example)
+   2. [Simple example](#simple-example)
+   3. [Complex example](#complex-example)
 3. [Writing Actions](#writing-actions)
 4. [Action Creators](#action-creators)
    1. [fieldSetter](#fieldsetter)
@@ -52,6 +53,214 @@ npm install react-thermals
 9. Less than 4kb gzipped
 
 ## Example usage
+
+### Global state example
+
+In stores/appStore/appStore.js
+
+```js
+import { createStore, useStoreSelector } from 'react-thermals';
+const appStore = createStore();
+export default appStore;
+export function useAppState(selector) {
+  return useStoreSelector(appStore, selector);
+}
+```
+
+In stores/appStore/slices/todos.js
+
+```js
+import appStore, { useAppState } from '../appStore.js';
+import persistState from 'react-thermals/plugins/persistState';
+
+appStore.plugin(
+  persistState({
+    storage: localStorage,
+    key: 'myTodos',
+    fields: ['todos'],
+  })
+);
+
+export default function useTodos() {
+  return useAppState(state => state.todos);
+}
+
+appStore.mergeSync({ todos: [] });
+
+export const todoActions = {
+  add: fieldAppender('todos'),
+  toggleComplete: arrayItemUpdater('todos', todo => ({
+    ...todo,
+    isComplete: !todo.isComplete,
+  })),
+  remove: fieldRemover('todos'),
+};
+
+appStore.addActions(todoActions);
+```
+
+In components/Header.jsx
+
+```js
+import React from 'react';
+import { useAppState } from '../appStore.js';
+export default function Header() {
+  const incompleteCount = useAppState(
+    state => state.todos.filter(todo => !todo.isComplete).length
+  );
+  return (
+    <header>
+      <h1>My App</h1>
+      <div>Tasks remaining: {incompleteCount}</div>
+    </header>
+  );
+}
+```
+
+In components/TodoList.jsx
+
+```js
+import React from 'react';
+import useTodos, { todoActions } from '../stores/appStore/slices/todos.js';
+import NewTodoForm from './NewTodoForm.jsx';
+const { toggleComplete, remove } = todoActions;
+
+export default function TodoList() {
+  const todos = useTodos();
+  return (
+    <ul>
+      {todos.map((todo, i) => (
+        <li key={i}>
+          <input
+            type="checkbox"
+            checked={todo.isComplete}
+            onClick={() => toggleComplete(todo)}
+          />
+          <span className="text">{todo.text}</span>
+          <span onClick={() => remove(todo)}>Delete</span>
+        </li>
+      ))}
+      <li>
+        <NewTodoForm />
+      </li>
+    </ul>
+  );
+}
+```
+
+In components/NewTodoForm.jsx
+
+```js
+import React, { useCallback } from 'react';
+import { todoActions } from '../stores/appStore/slices/todos.js';
+const { add } = todoActions;
+
+export default function NewTodoForm() {
+  const addTodo = useCallback(evt => {
+    const form = evt.target;
+    const data = new FormData(form);
+    const todo = Object.fromEntries(data);
+    todo.isComplete = false;
+    form.reset();
+    add(todo);
+  }, []);
+  return (
+    <form onSubmit={addTodo}>
+      <input name="text" placeholder="Enter todo..." />
+      <button>Add</button>
+    </form>
+  );
+}
+```
+
+---
+
+---
+
+In stores/appStore/slices/auth.js
+
+```js
+import appStore, { useAppState } from '../../appStore/appStore.js';
+import { fieldSetterInput } from 'react-thermals/actions';
+
+export default function useAuth() {
+  return useAppState(state => state.user);
+}
+
+appStore.mergeSync({
+  user: {
+    isLoggedIn: false,
+    isCheckingLogin: false,
+  },
+});
+
+export const authActions = {
+  async login(form) {
+    const formData = Object.fromEntries(new FormData(form));
+    appStore.mergeState({
+      user: {
+        isLoggedIn: false,
+        isCheckingLogin: true,
+      },
+    });
+    const { data } = axios.post('/api/users/login', formData);
+    localStorage.setItem('jwt', data.jwt);
+    appStore.mergeState({
+      user: {
+        ...data.user,
+        isLoggedIn: true,
+        isCheckingLogin: false,
+      },
+    });
+  },
+};
+
+appStore.addActions(authActions);
+```
+
+In components/Login/Login.jsx
+
+```js
+import useAuth from '../../stores/slices/auth.js';
+import Loader from '../Loader/Loader.jsx';
+export default function Login() {
+  const { isCheckingLogin } = useAuth();
+  const { login } = authActions;
+  return (
+    <div className="LoginComponent">
+      {isCheckingLogin ? (
+        <Loader />
+      ) : (
+        <form onSubmit={evt => login(evt.target)}>
+          <input name="email" type="input" />
+          <input name="password" type="password" />
+          <button>Submit</button>
+        </form>
+      )}
+    </div>
+  );
+}
+```
+
+In components/Header.jsx
+
+```js
+import React from 'react';
+import useAuth, { authActions } from '../../stores/slices/auth.js';
+export default function Header() {
+  const user = useAuth();
+  return (
+    <header>
+      <h1>My App</h1>
+      {user.isLoggedIn ? (
+        <span>Hello {user.name}</span>
+      ) : (
+        <a href="/login">Login</a>
+      )}
+    </header>
+  );
+}
+```
 
 ### Simple example
 

@@ -8,3 +8,4 @@ export {
   fieldSetterInput,
 } from './fieldSetter.js';
 export { fieldToggler, fieldTogglerSync } from './fieldToggler.js';
+export { arrayItemUpdater, arrayItemUpdaterSync } from './arrayItemUpdater.js';

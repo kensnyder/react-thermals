@@ -8,7 +8,7 @@ import withFlushSync from './withFlushSync.js';
 export function fieldRemover(propName) {
   return function updater(...itemsToRemove) {
     return this.mergeState(old => ({
-      [propName]: old[propName].filter(val => !itemsToRemove.includes(val)),
+      [propName]: old[propName]?.filter(val => !itemsToRemove.includes(val)),
     }));
   };
 }

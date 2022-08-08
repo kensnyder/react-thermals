@@ -33,7 +33,7 @@ export default function createStore({
   options: _options = {},
   autoReset = false,
   id = null,
-}) {
+} = {}) {
   // the current state value
   let _state = initialState;
   // A count of the number of times this store has ever been used
@@ -55,6 +55,8 @@ export default function createStore({
     id: String(id || `store-${storeIdx}`),
     // internal counter
     idx: storeIdx++,
+    // Extend the store with new actions
+    addActions,
     // set the state and rerender all components that use this store
     setState,
     // set partial state without re-rendering
@@ -103,9 +105,7 @@ export default function createStore({
   store.once('BeforeInitialState', () => (_hasInitialized = true));
 
   store.actions = {};
-  for (const [name, fn] of Object.entries(actions)) {
-    store.actions[name] = fn.bind(store);
-  }
+  addActions(actions);
 
   // return this store
   return store;
@@ -113,6 +113,19 @@ export default function createStore({
   //
   // functions only beyond this point
   //
+
+  /**
+   * Extend the store with new action functions
+   * @param {Object} actions  An object containing actions
+   * @return {Object}  This store
+   */
+  function addActions(actions) {
+    for (const [name, fn] of Object.entries(actions)) {
+      store.actions[name] = fn.bind(store);
+      actions[name] = store.actions[name];
+    }
+    return store;
+  }
 
   /**
    * Get the current state of the store
