@@ -5,7 +5,7 @@ export function arrayItemUpdater(propName, updaterFunction = undefined) {
   if (typeof updaterFunction !== 'function') {
     updaterFunction = shallowOverride;
   }
-  return function (itemToUpdate, propsToOverride) {
+  return function updater(itemToUpdate, propsToOverride) {
     this.mergeState(old => {
       const newList = old[propName]?.map(item => {
         if (item === itemToUpdate) {

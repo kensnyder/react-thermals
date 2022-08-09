@@ -4,15 +4,18 @@
  * @return {*}  A copy of the value
  */
 export default function shallowCopy(value) {
-  if (value instanceof Map) {
+  if (!value) {
+    // falsy scalar
+    return value;
+  } else if (value instanceof Map) {
     return new Map(value);
   } else if (value instanceof Set) {
     return new Set(value);
-  } else if (Array.isArray(value)) {
+  } else if (typeof value[Symbol.iterator] === 'function') {
     return [...value];
-  } else if (value && typeof value === 'object') {
+  } else if (typeof value === 'object') {
     return { ...value };
   }
-  // scalar value
+  // other scalar value
   return value;
 }
