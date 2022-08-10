@@ -15,9 +15,10 @@ describe('createStore()', () => {
   });
   it('should make setters from actions', async () => {
     const store = createStore({
+      state: { age: 14 },
       actions: {
         setAge: fieldSetter('age'),
-        setName: fieldListSetter(['fname', 'lname']),
+        setName: fieldListSetter('@', ['fname', 'lname']),
       },
     });
     const { setAge, setName } = store.actions;
@@ -167,7 +168,7 @@ describe('createStore() with autoReset', () => {
       );
     };
   });
-  it('should auto reset', async () => {
+  fit('should auto reset', async () => {
     const { getByText } = render(<PageComponent />);
     expect(store.getState().page).toBe(1);
     await act(() => {

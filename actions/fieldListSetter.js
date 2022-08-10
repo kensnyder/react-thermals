@@ -1,24 +1,28 @@
 import withFlushSync from './withFlushSync.js';
+import { deepUpdater } from './deepUpdater.js';
 
 /**
- * Helper function to create a mergeState function that directly sets one or more properties
- * @param {String[]|Number[]} propNames  The name of the properties to merge
+ * Helper function to create a setState function that directly sets one or more properties
+ * @param {String} path  The name of or path to the object with values to set
+ * @param {String[]|Number[]} fieldNames  The name of the properties to merge
  * @return {Function}  A function suitable for a store action
  */
-export function fieldListSetter(propNames) {
+export function fieldListSetter(path, fieldNames) {
+  const set = deepUpdater(path, function setter(copy, ...values) {
+    let i = 0;
+    for (const field of fieldNames) {
+      copy[field] = values[i++];
+    }
+    return copy;
+  });
   return function updater(...newValues) {
-    this.mergeState(() => {
-      const toMerge = {};
-      for (let i = 0, len = propNames.length; i < len; i++) {
-        toMerge[propNames[i]] = newValues[i];
-      }
-      return toMerge;
-    });
+    this.setState(old => set(old, ...newValues));
   };
 }
 
 /**
- * Helper function to create a mergeState function that directly sets one or more properties synchronously
+ * Run fieldListSetter and then flush pending state changes
+ * @param {String} path  The name of or path to the object with values to set
  * @param {String[]|Number[]} propNames  The name of the properties to merge
  * @return {Function}  A function suitable for a store action
  */

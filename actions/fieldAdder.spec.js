@@ -17,6 +17,17 @@ describe('fieldAdder(propName, amount)', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ likes: 0, mode: 'view' });
   });
+  it('should increment with multipath', async () => {
+    const store = getTestStore({ post: { likes: 0, mode: 'view' } });
+    const like = fieldAdder('post.likes', 1).bind(store);
+    const dislike = fieldAdder('post.likes', -1).bind(store);
+    like();
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ post: { likes: 1, mode: 'view' } });
+    dislike();
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ post: { likes: 0, mode: 'view' } });
+  });
 });
 describe('fieldAdderSync(propName, amount)', () => {
   it('should increment', () => {

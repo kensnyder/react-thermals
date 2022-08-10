@@ -1,35 +1,40 @@
 import withFlushSync from './withFlushSync.js';
+import { deepUpdater } from './deepUpdater.js';
 
 /**
- * Helper function to create a mergeState function that directly sets one property
- * @param {String|Number} propName  The name of the property to merge
+ * Helper function to create a setState function that directly sets one value
+ * @param {String} path  The name of or path to the value to merge
  * @return {Function}  A function suitable for a store action
  */
-export function fieldSetter(propName) {
+export function fieldSetter(path) {
+  const set = deepUpdater(path, null);
   return function updater(newValue) {
-    if (typeof newValue === 'function') {
-      this.setState(old => ({ ...old, [propName]: newValue(old[propName]) }));
-    } else {
-      this.mergeState({ [propName]: newValue });
-    }
+    this.setState(rootOld => {
+      return set(rootOld, deepOld => {
+        if (typeof newValue === 'function') {
+          return newValue(deepOld);
+        }
+        return newValue;
+      });
+    });
   };
 }
 
 /**
- * Helper function to create a mergeSync function that directly sets one property synchronously
- * @param {String|Number} propName  The name of the property to merge
+ * Run fieldSetter and then flush pending state changes
+ * @param {String} path  The name of or path to the value to set
  * @return {Function}  A function suitable for a store action
  */
 export const fieldSetterSync = withFlushSync(fieldSetter);
 
 /**
- * Helper function to create a mergeSync function that directly sets one property synchronously
- * given a DOM event object (setting evt.target.value as the new value)
- * @param {String|Number} propName  The name of the property to merge
+ * Run fieldSetter and then flush pending state changes
+ * using a DOM event object to set value to evt.target.value
+ * @param {String} path  The name of or path to the value to set
  * @return {Function}  A function suitable for an input's onChange handler
  */
-export function fieldSetterInput(propName) {
-  const updater = fieldSetterSync(propName);
+export function fieldSetterInput(path) {
+  const updater = fieldSetterSync(path);
   return function inputUpdater(evt) {
     updater.call(this, evt.target.value);
   };

@@ -13,6 +13,19 @@ describe('fieldMapper(propName)', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ints: [10, 20, 30] });
   });
+  it('should map values in path', async () => {
+    const store = getTestStore([
+      { ints: [5, 10, 15] },
+      { strs: ['five', 'ten', 'fifteen'] },
+    ]);
+    const mapInts = fieldMapper('@[0]ints').bind(store);
+    mapInts(n => n * 2);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual([
+      { ints: [10, 20, 30] },
+      { strs: ['five', 'ten', 'fifteen'] },
+    ]);
+  });
 });
 describe('fieldMapperSync(propName)', () => {
   it('should map values', () => {

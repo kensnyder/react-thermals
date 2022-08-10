@@ -1,21 +1,23 @@
 import withFlushSync from './withFlushSync.js';
+import { deepUpdater } from './deepUpdater.js';
 
 /**
- * Helper function to create a mergeState function that directly toggles one property
- * @param {String|Number} propName  The name of the property to toggle
+ * Helper function to create a setState function that directly toggles one value
+ * @param {String} path  The name of or path to the value to toggle
  * @return {Function}  A function suitable for a store action
  */
-export function fieldToggler(propName) {
+export function fieldToggler(path) {
+  const toggle = deepUpdater(path, function toggler(old) {
+    return !old;
+  });
   return function updater() {
-    return this.mergeState(old => ({
-      [propName]: !old[propName],
-    }));
+    return this.setState(toggle);
   };
 }
 
 /**
- * Helper function to create a mergeSync function that directly toggles one property synchronously
- * @param {String|Number} propName  The name of the property to toggle
+ * Run fieldToggler and then flush pending state changes
+ * @param {String} path  The name of or path to the value to toggle
  * @return {Function}  A function suitable for a store action
  */
 export const fieldTogglerSync = withFlushSync(fieldToggler);

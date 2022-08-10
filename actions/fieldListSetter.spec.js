@@ -8,7 +8,7 @@ function getTestStore(initialState) {
 describe('fieldListSetter(propNames)', () => {
   it('should set scalar value', async () => {
     const store = getTestStore({ title: 'Mr', fname: 'John', lname: 'Doe' });
-    const updateName = fieldListSetter(['fname', 'lname']).bind(store);
+    const updateName = fieldListSetter('@', ['fname', 'lname']).bind(store);
     updateName('Jason', 'Data');
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({
@@ -20,8 +20,12 @@ describe('fieldListSetter(propNames)', () => {
 });
 describe('fieldListSetterSync(propNames)', () => {
   it('should set scalar value', () => {
-    const store = getTestStore({ title: 'Mr', fname: 'John', lname: 'Doe' });
-    const updateName = fieldListSetterSync(['fname', 'lname']).bind(store);
+    const store = getTestStore({
+      title: 'Mr',
+      fname: 'John',
+      lname: 'Doe',
+    });
+    const updateName = fieldListSetterSync('@', ['fname', 'lname']).bind(store);
     updateName('Jason', 'Data');
     expect(store.getState()).toEqual({
       title: 'Mr',

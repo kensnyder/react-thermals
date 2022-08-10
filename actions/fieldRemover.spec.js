@@ -16,6 +16,16 @@ describe('fieldRemover(propName)', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ids: [1] });
   });
+  it('should remove one or more args in path', async () => {
+    const store = getTestStore({ ids: [[1, 2, 3, 4]] });
+    const removeId = fieldRemover('ids[0]').bind(store);
+    removeId(2);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ ids: [[1, 3, 4]] });
+    removeId(3, 4);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ ids: [[1]] });
+  });
 });
 describe('fieldRemoverSync(propName)', () => {
   it('should remove one or more args', () => {
