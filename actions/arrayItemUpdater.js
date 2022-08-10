@@ -1,23 +1,25 @@
 import withFlushSync from './withFlushSync.js';
 import shallowOverride from '../src/shallowOverride/shallowOverride.js';
+import { deepUpdater } from './deepUpdater.js';
 
-export function arrayItemUpdater(propName, updaterFunction = undefined) {
+export function arrayItemUpdater(path, updaterFunction = undefined) {
   if (typeof updaterFunction !== 'function') {
     updaterFunction = shallowOverride;
   }
-  return function updater(itemToUpdate, propsToOverride) {
-    this.mergeState(old => {
-      const newList = old[propName]?.map(item => {
+  const itemUpdate = deepUpdater(
+    path,
+    function itemUpdater(list, itemToUpdate, overrides) {
+      return list?.map(item => {
         if (item === itemToUpdate) {
-          return updaterFunction(item, propsToOverride);
+          return updaterFunction(item, overrides);
         } else {
           return item;
         }
       });
-      return {
-        [propName]: newList,
-      };
-    });
+    }
+  );
+  return function updater(itemToUpdate, propsToOverride) {
+    this.setState(old => itemUpdate(old, itemToUpdate, propsToOverride));
   };
 }
 
