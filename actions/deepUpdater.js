@@ -1,6 +1,9 @@
 import shallowCopy from '../src/shallowCopy/shallowCopy.js';
 
 export function deepUpdater(path, transform = null, ...defineTimeArgs) {
+  if (typeof path !== 'string') {
+    throw new Error('deepUpdater path must be a string');
+  }
   // split path string on dots and brackets
   // e.g. 'users[0].isActive' => ['users', '0', 'isActive']
   // e.g. '@[1].isActive' => ['1', 'isActive']

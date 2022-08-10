@@ -1,6 +1,14 @@
 import { deepUpdater } from './deepUpdater.js';
 
 describe('deepUpdater', () => {
+  it('should throw exceptions on non-string path', async () => {
+    const thrower = () => deepUpdater(5);
+    expect(thrower).toThrow(/must be a string/);
+  });
+  it('should throw exceptions on bad path', async () => {
+    const thrower = () => deepUpdater('');
+    expect(thrower).toThrow(/cannot be empty/);
+  });
   it('should handle 1 level', async () => {
     const state = { foo: 'bar' };
     const updated = deepUpdater('foo', str => str + '2')(state);
