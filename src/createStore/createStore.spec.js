@@ -168,7 +168,7 @@ describe('createStore() with autoReset', () => {
       );
     };
   });
-  fit('should auto reset', async () => {
+  it('should auto reset', async () => {
     const { getByText } = render(<PageComponent />);
     expect(store.getState().page).toBe(1);
     await act(() => {

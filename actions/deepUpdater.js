@@ -35,6 +35,8 @@ export function deepUpdater(path, transform = null, ...defineTimeArgs) {
         copy[segments[0]] = descend(copy[segments[0]], segments.slice(1), args);
       }
     }
+    // TODO: maybe something like the code below to allow
+    //   creating empty objects along the way when path doesn't yet exist
     // } else if (typeof object === 'object') {
     //   if (segments.length === 1) {
     //     copy[segments[0]] = runTransform({}, ...args);
