@@ -1,21 +1,15 @@
 import withFlushSync from './withFlushSync.js';
 import shallowOverride from '../src/shallowOverride/shallowOverride.js';
+import { deepUpdater } from './deepUpdater.js';
 
-export function sliceUpdater(propName, updaterFunction = undefined) {
+export function sliceUpdater(path, updaterFunction = undefined) {
   if (typeof updaterFunction !== 'function') {
     updaterFunction = shallowOverride;
   }
+  const sliceUpdate = deepUpdater(path, updaterFunction);
   return function updater(...moreArgs) {
-    this.mergeState(old => {
-      const newSlice = updaterFunction(old[propName], ...moreArgs);
-      if (typeof newSlice?.then === 'function') {
-        return newSlice.then(newValue => ({
-          [propName]: newValue,
-        }));
-      }
-      return {
-        [propName]: updaterFunction(old[propName], ...moreArgs),
-      };
-    });
+    this.setState(old => sliceUpdate(old, ...moreArgs));
   };
 }
+
+export const sliceUpdaterSync = withFlushSync(sliceUpdater);
