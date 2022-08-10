@@ -1,15 +1,17 @@
 import withFlushSync from './withFlushSync.js';
+import { deepUpdater } from './deepUpdater.js';
 
 /**
  * Helper function to create a mergeState function that appends and item to an array property
- * @param {String|Number} propName  The name of the array property to append to
+ * @param {String} path  The name of or path to the array property to append to
  * @return {Function}  A function suitable for a store action
  */
-export function fieldAppender(propName) {
+export function fieldAppender(path) {
+  const append = deepUpdater(path, (old, newItems) => {
+    return [...old, ...newItems];
+  });
   return function updater(...newItems) {
-    return this.mergeState(old => ({
-      [propName]: [...old[propName], ...newItems],
-    }));
+    return this.setState(old => append(old, newItems));
   };
 }
 
