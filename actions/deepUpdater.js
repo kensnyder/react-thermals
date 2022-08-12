@@ -1,6 +1,6 @@
 import shallowCopy from '../src/shallowCopy/shallowCopy.js';
 
-export function deepUpdater(path, transform = null, ...defineTimeArgs) {
+export function deepUpdater(path, transform = undefined, ...defineTimeArgs) {
   if (typeof path !== 'string') {
     throw new Error('deepUpdater path must be a string');
   }
@@ -29,7 +29,20 @@ export function deepUpdater(path, transform = null, ...defineTimeArgs) {
   // the recursive copy/update function
   function descend(object, segments, args) {
     const copy = shallowCopy(object);
-    if (typeof copy === 'object' && segments[0] in copy) {
+    if (segments[0] === '*' && Array.isArray(copy)) {
+      // we need to map over array items
+      segments.shift();
+      return copy.map(item => {
+        if (segments.length === 0) {
+          // star is at the end of path
+          return runTransform(item, ...args);
+        } else {
+          // we can recurse further
+          return descend(item, segments, args);
+        }
+      });
+    } else if (typeof copy === 'object' && segments[0] in copy) {
+      // we need to apply the transform or recurse
       if (segments.length === 1) {
         // last segment
         copy[segments[0]] = runTransform(copy[segments[0]], ...args);
@@ -37,13 +50,19 @@ export function deepUpdater(path, transform = null, ...defineTimeArgs) {
         // recurse to next level
         copy[segments[0]] = descend(copy[segments[0]], segments.slice(1), args);
       }
+    } else if (typeof copy === 'object') {
+      // When path doesn't exist, create empty objects along the way
+      if (segments.length === 1) {
+        copy[segments[0]] = runTransform(undefined, ...args);
+      } else {
+        if (segments[1] === '*') {
+          copy[segments[0]] = [];
+        } else {
+          const empty = /^(\d+)$/.test(segments[1]) ? [] : {};
+          copy[segments[0]] = descend(empty, segments.slice(1), args);
+        }
+      }
     }
-    // TODO: maybe something like the code below to allow
-    //   creating empty objects along the way when path doesn't yet exist
-    // } else if (typeof object === 'object') {
-    //   if (segments.length === 1) {
-    //     copy[segments[0]] = runTransform({}, ...args);
-    //   }
     return copy;
   }
 }
@@ -54,16 +73,16 @@ function getTransformerRunner(transform) {
     transform.every(t => typeof t === 'function')
   ) {
     // run each transform function in sequence
-    return function pipeTransforms(value, ...args) {
+    return function pipeTransforms(old, ...args) {
       for (const fn of transform) {
-        value = fn(value, ...args);
+        old = fn(old, ...args);
       }
-      return value;
+      return old;
     };
   } else if (typeof transform !== 'function') {
-    // return the value given at call time
-    return function setValue(value, ...args) {
-      return typeof args[0] === 'function' ? args[0](value) : args[0];
+    // return the given transform as a value at call time
+    return function setValue(old, newValue) {
+      return typeof newValue === 'function' ? newValue(transform) : transform;
     };
   } else {
     // must be a function: run transform directly
