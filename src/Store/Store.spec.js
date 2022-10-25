@@ -311,7 +311,8 @@ describe('new Store() flushSync', () => {
   it('should handle promise in flushSync', async () => {
     store.actions.promise();
     expect(store.getState().page).toBe(1);
-    store.flushSync();
+    const newState = store.flushSync();
+    expect(newState.page).toBe(1);
     expect(store.getState().page).toBe(1);
     await new Promise(r => setTimeout(r, 30));
     expect(store.getState().page).toBe(17);
@@ -359,7 +360,7 @@ describe('new Store() flushSync', () => {
     expect(store.getState().page).toBe(1);
   });
 });
-xdescribe('new Store() cloning', () => {
+describe('new Store() cloning', () => {
   // define store before each test
   let store;
   beforeEach(() => {

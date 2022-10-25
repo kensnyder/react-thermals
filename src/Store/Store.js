@@ -245,7 +245,8 @@ export default class Store extends Emitter {
     let nextState = this.#_state;
     // process all updates or update functions
     // use while and shift in case setters trigger more setting
-    let failsafe = this.#_updateQueue.length + 100;
+    const failsafeCascadeCount = 100;
+    let failsafe = this.#_updateQueue.length + failsafeCascadeCount;
     while (this.#_updateQueue.length > 0) {
       /* istanbul ignore next */
       if (--failsafe === 0) {
@@ -324,9 +325,12 @@ export default class Store extends Emitter {
       if (typeof updatedState === 'function') {
         const maybeNext = updatedState(nextState);
         if (typeof maybeNext?.then === 'function') {
-          throw new Error(
-            'react-thermals: Error - When using flushSync, state updaters may not return a promise'
-          );
+          // we want to call all state mutator functions synchronously
+          // but we have a mutator that returned a Promise so we need
+          // to circle back and set state after the Promise resolves
+          maybeNext
+            .then(this.setState)
+            .catch(err => this.emit('SetterException', err));
         } else {
           nextState = maybeNext;
         }

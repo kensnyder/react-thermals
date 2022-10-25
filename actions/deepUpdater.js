@@ -5,8 +5,7 @@ import shallowCopy from '../src/shallowCopy/shallowCopy.js';
  *   that will take in an object and return a copy of that object
  *   with that transform applied to the value at "path"
  * @param {String} path
- * @param {Function|Function[]|*} transform
- * @param {*} defineTimeArgs
+ * @param {Function|Function[]|undefined} transform
  * @return {Function}
  * @example
  *
@@ -30,22 +29,31 @@ import shallowCopy from '../src/shallowCopy/shallowCopy.js';
  * }
  *
  * const toggleActive = deepUpdater('users.*.isActive', isActive => !isActive);
- * toggleActive({ users: [
- *     { id: 1, isActive: false },
- *     { id: 2, isActive: true },
- * ]});
+ * toggleActive({
+ *    users: [
+ *      { id: 1, isActive: false },
+ *      { id: 2, isActive: true },
+ *    ]
+ * });
  * // result:
- * { users: [
- *     { id: 1, isActive: true },
- *     { id: 2, isActive: false },
- * ]}
+ * {
+ *    users: [
+ *      { id: 1, isActive: true },
+ *      { id: 2, isActive: false },
+ *    ]
+ * }
  *
- * const add = deepUpdater('total', (num, addend) => num + addend);
+ * const add = deepUpdater('total', (total, addend) => total + addend);
  * add({ total: 12 }, 7);
  * // result:
  * { total: 19 }
+ *
+ * const add = deepUpdater('@', (num, addend) => num + addend);
+ * add(12, 7);
+ * // result:
+ * 19
  */
-export function deepUpdater(path, transform = undefined, ...defineTimeArgs) {
+export function deepUpdater(path, transform = undefined) {
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: deepUpdater(path,transform) - path must be a string'
@@ -71,7 +79,7 @@ export function deepUpdater(path, transform = undefined, ...defineTimeArgs) {
   // and recursively creates shallow copies
   // and runs the given update function on the target segment
   return function updater(object, ...callTimeArgs) {
-    return descend(object, segments, [...defineTimeArgs, ...callTimeArgs]);
+    return descend(object, segments, callTimeArgs);
   };
   // the recursive copy/update function
   function descend(object, segments, args) {
@@ -128,18 +136,22 @@ function getTransformerRunner(transform) {
     };
   } else if (typeof transform === 'function') {
     // run transform directly
-    return function runTransform(old, newValue) {
+    return function runTransform(old, newValue, ...args) {
       if (typeof newValue === 'function') {
-        newValue = newValue(old);
+        newValue = newValue(old, ...args);
       }
-      return transform(old, newValue);
+      return transform(old, newValue, ...args);
+    };
+  } else if (transform === undefined) {
+    // transform is an object or primitive: ignore the old value and always
+    // use the new value. Or if new value is a function, use it to transform
+    // the old value
+    return function setValue(old, newValue) {
+      return typeof newValue === 'function' ? newValue(old) : newValue;
     };
   } else {
-    // transform is an object or primitive:
-    // return the given transform as a value at call time
-    return function setValue(old, newValue) {
-      console.log('transformer runner setValue', old, newValue);
-      return typeof newValue === 'function' ? newValue(transform) : newValue;
-    };
+    throw new Error(
+      'react-thermals: deepUpdater(path,transform) - transform must be a function, an array of functions or undefined'
+    );
   }
 }

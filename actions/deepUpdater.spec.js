@@ -45,8 +45,8 @@ describe('deepUpdater', () => {
   });
   it('should set multiple non-existent paths on objects', () => {
     const state = {};
-    const greetWorld = deepUpdater('math.pi.short', '3.1415926');
-    const updated = greetWorld(state);
+    const greetWorld = deepUpdater('math.pi.short');
+    const updated = greetWorld(state, '3.1415926');
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ math: { pi: { short: '3.1415926' } } });
   });
@@ -57,7 +57,7 @@ describe('deepUpdater', () => {
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ todos: [{ text: 'test' }] });
   });
-  it('should handle non-existent paths on scalar', () => {
+  it('should ignore non-existent paths on scalar', () => {
     const state = 5;
     const greetWorld = deepUpdater('hello', greeting => greeting + ' world');
     const updated = greetWorld(state);
@@ -93,8 +93,8 @@ describe('deepUpdater', () => {
   });
   it('should handle out-of-range array numbers', () => {
     const state = { todos: [{ text: 'one' }] };
-    const setText = deepUpdater('todos.[1].text', 'two');
-    const updated = setText(state);
+    const setText = deepUpdater('todos.[1].text');
+    const updated = setText(state, 'two');
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ todos: [{ text: 'one' }, { text: 'two' }] });
   });
@@ -135,5 +135,13 @@ describe('deepUpdater', () => {
     expect(updated).not.toBe(state);
     expect(updated.cart).not.toBe(state.cart);
     expect(updated).toEqual({ cart: [{ price: 1 }] });
+  });
+  it('should allow transforming with a function at run time', () => {
+    const state = { cart: [{ price: 36 }] };
+    const applyDiscount = deepUpdater('cart[0].price');
+    const updated = applyDiscount(state, old => old / 2);
+    expect(updated).not.toBe(state);
+    expect(updated.cart).not.toBe(state.cart);
+    expect(updated).toEqual({ cart: [{ price: 18 }] });
   });
 });

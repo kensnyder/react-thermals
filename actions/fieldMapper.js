@@ -7,11 +7,14 @@ import { deepUpdater } from './deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldMapper(path) {
-  const map = deepUpdater(path, function mapper(old, mapFn) {
+  // we have to use { fn: mapFn } because deepUpdater getTransformerRunner would
+  // fall into typeof transform === 'function' which interprets a passed
+  // function as a setState mutator function
+  const map = deepUpdater(path, function mapper(old, { fn: mapFn }) {
     return old?.map(mapFn);
   });
   return function updater(mapFn) {
-    return this.setState(old => map(old, mapFn));
+    return this.setState(old => map(old, { fn: mapFn }));
   };
 }
 
