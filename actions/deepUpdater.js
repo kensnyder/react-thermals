@@ -1,8 +1,55 @@
 import shallowCopy from '../src/shallowCopy/shallowCopy.js';
 
+/**
+ * Deep updater takes a path and a transformer and returns a function
+ *   that will take in an object and return a copy of that object
+ *   with that transform applied to the value at "path"
+ * @param {String} path
+ * @param {Function|Function[]|*} transform
+ * @param {*} defineTimeArgs
+ * @return {Function}
+ * @example
+ *
+ * const nextPage = deepUpdater('page', page => page + 1);
+ * nextPage({ page: 10 });
+ * // result:
+ * { page: 11 }
+ *
+ * const addTodo = deepUpdater('app.todos', (todos, newItem) => ([...todos, newItem]));
+ * const state = {
+ *    app: {
+ *        todos: ['Go shopping', 'Wash Car']
+ *    },
+ * };
+ * addTodo(state, 'Make dinner');
+ * // result:
+ * {
+ *    app: {
+ *        todos: ['Go shopping', 'Wash Car', 'Make dinner']
+ *    },
+ * }
+ *
+ * const toggleActive = deepUpdater('users.*.isActive', isActive => !isActive);
+ * toggleActive({ users: [
+ *     { id: 1, isActive: false },
+ *     { id: 2, isActive: true },
+ * ]});
+ * // result:
+ * { users: [
+ *     { id: 1, isActive: true },
+ *     { id: 2, isActive: false },
+ * ]}
+ *
+ * const add = deepUpdater('total', (num, addend) => num + addend);
+ * add({ total: 12 }, 7);
+ * // result:
+ * { total: 19 }
+ */
 export function deepUpdater(path, transform = undefined, ...defineTimeArgs) {
   if (typeof path !== 'string') {
-    throw new Error('deepUpdater path must be a string');
+    throw new Error(
+      'react-thermals: deepUpdater(path,transform) - path must be a string'
+    );
   }
   // split path string on dots and brackets
   // e.g. 'users[0].isActive' => ['users', '0', 'isActive']
@@ -79,13 +126,20 @@ function getTransformerRunner(transform) {
       }
       return old;
     };
-  } else if (typeof transform !== 'function') {
-    // return the given transform as a value at call time
-    return function setValue(old, newValue) {
-      return typeof newValue === 'function' ? newValue(transform) : transform;
+  } else if (typeof transform === 'function') {
+    // run transform directly
+    return function runTransform(old, newValue) {
+      if (typeof newValue === 'function') {
+        newValue = newValue(old);
+      }
+      return transform(old, newValue);
     };
   } else {
-    // must be a function: run transform directly
-    return transform;
+    // transform is an object or primitive:
+    // return the given transform as a value at call time
+    return function setValue(old, newValue) {
+      console.log('transformer runner setValue', old, newValue);
+      return typeof newValue === 'function' ? newValue(transform) : newValue;
+    };
   }
 }

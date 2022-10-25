@@ -35,6 +35,7 @@ export default function shallowOverride(value, overrides) {
       Object.assign(copy, overrides);
     }
     return copy;
+  } else {
+    return overrides === undefined ? value : overrides;
   }
-  return overrides === undefined ? value : overrides;
 }

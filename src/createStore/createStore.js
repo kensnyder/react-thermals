@@ -293,12 +293,14 @@ export default function createStore({
       updater = old => {
         const partial = newState(old);
         if (typeof partial?.then === 'function') {
-          return partial.then(promisedState => ({ ...old, ...promisedState }));
+          return partial.then(promisedState =>
+            shallowOverride(old, promisedState)
+          );
         }
-        return { ...old, ...partial };
+        return shallowOverride(old, partial);
       };
     } else {
-      updater = old => ({ ...old, ...newState });
+      updater = old => shallowOverride(old, newState);
     }
     this.setState(updater);
   }
@@ -317,7 +319,7 @@ export default function createStore({
         'react-thermals: Error - mergeSync handlers may not return a promise'
       );
     }
-    _state = { ..._state, ...newState };
+    _state = shallowOverride(_state, newState);
   }
 
   /**

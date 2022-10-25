@@ -7,15 +7,12 @@ import { deepUpdater } from './deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldSetter(path) {
-  const set = deepUpdater(path, null);
+  const setField = deepUpdater(path, (oldValue, newValue) => {
+    return newValue;
+  });
   return function updater(newValue) {
-    this.setState(rootOld => {
-      return set(rootOld, deepOld => {
-        if (typeof newValue === 'function') {
-          return newValue(deepOld);
-        }
-        return newValue;
-      });
+    this.setState(old => {
+      return setField(old, newValue);
     });
   };
 }

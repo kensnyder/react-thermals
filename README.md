@@ -41,13 +41,13 @@ npm install react-thermals
 
 ## Features
 
-1. Instead of reducers or observables, define simple action functions with no boilerplate
+1. Instead of dispatchers or observables, define simple action functions with no boilerplate
 2. Components only re-render when relevant store state changes
 3. Store actions are easily testable
 4. Stores can respond to component lifecycle events including unmount
    (e.g. to abort fetching data)
 5. A store can be used by one component or many components
-6. Stores are included by only the components that need them
+6. Include stores by only the components that need them
 7. Stores can optionally persist data even if all consumers unmount
 8. Stores allow for worry-free code splitting
 9. Less than 4kb gzipped
