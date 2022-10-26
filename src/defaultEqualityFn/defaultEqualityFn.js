@@ -61,7 +61,7 @@ export default function defaultEqualityFn(prev, next) {
     }
     return true;
   }
-  // some future data type we don't know about
+  // some future non-object data type we don't know about
   /* istanbul ignore next */
   return false;
 }

@@ -48,6 +48,10 @@ export default class Store extends Emitter {
     }
     return this;
   };
+  addAction = (name, action) => {
+    this.actions[name] = action.bind(this);
+    return this;
+  };
   setState = newState => {
     this.#_updateQueue.push(newState);
     if (this.#_updateQueue.length === 1) {
