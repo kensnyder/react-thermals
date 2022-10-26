@@ -1,6 +1,6 @@
 import withFlushSync from './withFlushSync.js';
 import shallowOverride from '../src/shallowOverride/shallowOverride.js';
-import { deepUpdater } from './deepUpdater.js';
+import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
 
 export function sliceUpdater(path, updaterFunction = undefined) {
   if (typeof updaterFunction !== 'function') {

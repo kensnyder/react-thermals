@@ -1,4 +1,4 @@
-import shallowCopy from '../src/shallowCopy/shallowCopy.js';
+import shallowCopy from '../shallowCopy/shallowCopy.js';
 
 /**
  * Deep updater takes a path and a transformer and returns a function
@@ -7,6 +7,7 @@ import shallowCopy from '../src/shallowCopy/shallowCopy.js';
  * @param {String} path
  * @param {Function|Function[]|undefined} transform
  * @return {Function}
+ *
  * @example
  *
  * const nextPage = deepUpdater('page', page => page + 1);

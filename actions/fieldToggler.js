@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from './deepUpdater.js';
+import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
 
 /**
  * Helper function to create a setState function that directly toggles one value
