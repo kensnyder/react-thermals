@@ -10,6 +10,7 @@ export default class Store extends Emitter {
   #_hasInitialized = false;
   #_idx;
   #_initialState;
+  #_middlewares = [];
   #_options;
   #_plugins = [];
   #_rawActions = {};
@@ -204,6 +205,34 @@ export default class Store extends Emitter {
   getPlugins = () => {
     return this.#_plugins;
   };
+  use = (...middlewares) => {
+    this.#_middlewares.push(...middlewares);
+    return this;
+  };
+  #_runMiddlewares = (context, callback) => {
+    let i = 0;
+    const next = () => {
+      if (i === this.#_middlewares.length) {
+        callback();
+      } else {
+        this.#_middlewares[i++](context, next);
+      }
+    };
+    next();
+  };
+  #_runMiddlewaresSync = context => {
+    let i = 0;
+    const timesCalled = () => i++;
+    for (const middleware of this.#_middlewares) {
+      const lastI = i;
+      middleware(context, timesCalled);
+      if (lastI === i) {
+        // middleware did not call "next"
+        return false;
+      }
+    }
+    return true;
+  };
   _subscribe = setState => {
     if (this.#_usedCount++ === 0) {
       this.emit('AfterFirstUse');
@@ -292,17 +321,22 @@ export default class Store extends Emitter {
       return;
     }
     const nextState = await this.#_getNextState();
-    const event2 = this.emit('BeforeUpdate', {
+    const context = {
       prev: prevState,
       next: nextState,
-    });
+      isAsync: true,
+      store: this,
+    };
+    const event2 = this.emit('BeforeUpdate', context);
     if (event2.defaultPrevented) {
       // handler wants to block setting new state
       return;
     }
-    // save final state result (a handler may have altered the final result)
-    // then notify affected components
-    this.#_notifyComponents(prevState, event2.data.next);
+    this.#_runMiddlewares(context, () => {
+      // save final state result (a handler may have altered the final result)
+      // then notify affected components
+      this.#_notifyComponents(prevState, context.next);
+    });
   };
   #_notifyComponents = (prevState, data) => {
     // save final state result
@@ -313,6 +347,7 @@ export default class Store extends Emitter {
     this.emit('AfterUpdate', { prev: prevState, next: this.#_state });
   };
   #_getNextStateSync = () => {
+    let prevState = this.#_state;
     let nextState = this.#_state;
     // process all updates or update functions
     // use while and shift in case setters trigger more setting
@@ -342,6 +377,17 @@ export default class Store extends Emitter {
         nextState = updatedState;
       }
     }
-    return nextState;
+    const context = {
+      prev: prevState,
+      next: nextState,
+      isAsync: false,
+      store: this,
+    };
+    const shouldContinue = this.#_runMiddlewaresSync(context);
+    if (shouldContinue) {
+      return context.next;
+    } else {
+      return prevState;
+    }
   };
 }
