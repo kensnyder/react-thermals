@@ -239,6 +239,20 @@ describe('new Store() with autoReset', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe('my sync error');
   });
+  it('should fire SetterException on rejected promise', async () => {
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.addActions({
+      promiseThatRejects: () => {
+        store.setState(() => {
+          return Promise.reject('my rejection');
+        });
+      },
+    });
+    store.actions.promiseThatRejects();
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBe('my rejection');
+  });
 });
 describe('new Store() flushSync', () => {
   // define store before each test
@@ -397,5 +411,80 @@ describe('new Store() cloning', () => {
     ]);
     expect(cloned.getState()).not.toBe(store.getState());
     expect(cloned.getState()).toEqual(store.getState());
+  });
+});
+describe('new Store() middleware', () => {
+  // define store before each test
+  let store;
+  beforeEach(() => {
+    store = new Store({
+      state: { page: 1, sort: '-date' },
+      actions: {
+        setPage: setter('page'),
+        setSort: setter('sort'),
+      },
+    });
+  });
+  it('should allow spying middleware', async () => {
+    const spy = jest.fn();
+    store.use((ctx, next) => {
+      spy(ctx);
+      next();
+    });
+    store.actions.setPage(2);
+    await store.nextState();
+    expect(store.getState().page).toBe(2);
+    expect(spy).toHaveBeenCalledWith({
+      prev: { page: 1, sort: '-date' },
+      next: { page: 2, sort: '-date' },
+      isAsync: true,
+      store,
+    });
+  });
+  it('should allow non-nexting middleware', async () => {
+    const spy = jest.fn();
+    store.use((ctx, next) => {
+      spy(ctx);
+    });
+    store.actions.setPage(2);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState().page).toBe(1);
+    expect(spy).toHaveBeenCalledWith({
+      prev: { page: 1, sort: '-date' },
+      next: { page: 2, sort: '-date' },
+      isAsync: true,
+      store,
+    });
+  });
+  it('should allow spying sync middleware', () => {
+    const spy = jest.fn();
+    store.use((ctx, next) => {
+      spy(ctx);
+      next();
+    });
+    store.actions.setPage(2);
+    store.flushSync();
+    expect(store.getState().page).toBe(2);
+    expect(spy).toHaveBeenCalledWith({
+      prev: { page: 1, sort: '-date' },
+      next: { page: 2, sort: '-date' },
+      isAsync: false,
+      store,
+    });
+  });
+  it('should allow non-nexting sync middleware', () => {
+    const spy = jest.fn();
+    store.use((ctx, next) => {
+      spy(ctx);
+    });
+    store.actions.setPage(2);
+    store.flushSync();
+    expect(store.getState().page).toBe(1);
+    expect(spy).toHaveBeenCalledWith({
+      prev: { page: 1, sort: '-date' },
+      next: { page: 2, sort: '-date' },
+      isAsync: false,
+      store,
+    });
   });
 });

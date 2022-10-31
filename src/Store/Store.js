@@ -289,8 +289,8 @@ export default class Store extends Emitter {
         if (typeof maybeNext?.then === 'function') {
           try {
             nextState = await maybeNext;
-          } catch (err) {
-            this.emit('SetterException', err);
+          } catch (rejection) {
+            this.emit('SetterException', rejection);
           }
         } else {
           nextState = maybeNext;
