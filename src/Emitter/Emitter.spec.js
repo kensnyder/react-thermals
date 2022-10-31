@@ -13,14 +13,14 @@ describe('Emitter', () => {
   });
   it('should return basic object from emit()', () => {
     const foo = {};
-    const emitter = new Emitter(foo);
+    const emitter = new Emitter();
     const evt = emitter.emit('test', foo);
     expect(evt.data).toBe(foo);
     expect(evt.type).toBe('test');
   });
   it('should return a Preventable event from emit()', () => {
     const foo = {};
-    const emitter = new Emitter(foo);
+    const emitter = new Emitter();
     emitter.on('test', () => {});
     const evt = emitter.emit('test', foo);
     expect(evt).toBeInstanceOf(PreventableEvent);
@@ -29,7 +29,7 @@ describe('Emitter', () => {
   });
   it('should return the event from emit()', () => {
     const foo = {};
-    const emitter = new Emitter(foo);
+    const emitter = new Emitter();
     const evt = emitter.emit('test', foo);
     expect(evt).toBeInstanceOf(Object);
     expect(evt.data).toBe(foo);

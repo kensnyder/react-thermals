@@ -9,7 +9,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
 export function remover(path) {
   const remove = updatePath(path, function remover(old, itemsToRemove) {
     if (!old || !Array.isArray(old)) {
-      return [];
+      return old;
     }
     return old.filter(value => !itemsToRemove.includes(value));
   });

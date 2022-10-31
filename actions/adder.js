@@ -3,8 +3,9 @@ import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that adds the given amount
- * e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
  * @param {String} path  The name of or path to the value to set
+ * @param {Number} baseAmount  A base amount to add
+ *   e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
  * @return {Function}  A function suitable for a store action
  */
 export function adder(path, baseAmount = 0) {

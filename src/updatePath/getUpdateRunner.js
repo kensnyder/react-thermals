@@ -38,6 +38,7 @@ export default function getUpdateRunner(transform) {
       return typeof newValue === 'function' ? newValue(old) : newValue;
     };
   } else {
+    /* istanbul ignore next */
     throw new Error(
       'react-thermals: updatePath(path,transform) - transform must be a function, an array of functions or undefined'
     );

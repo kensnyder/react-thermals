@@ -26,6 +26,13 @@ describe('remover(propName)', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ids: [[1]] });
   });
+  it('should change nothing if target is not an array', async () => {
+    const store = getTestStore({ ids: null });
+    const removeId = remover('ids').bind(store);
+    removeId(1);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ ids: null });
+  });
 });
 describe('removerSync(propName)', () => {
   it('should remove one or more args', () => {
