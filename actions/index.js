@@ -1,6 +1,5 @@
 export { adder, adderSync } from './adder.js';
 export { appender, appenderSync } from './appender.js';
-export { fieldListSetter, fieldListSetterSync } from './fieldListSetter.js';
 export { fieldRemover, fieldRemoverSync } from './fieldRemover.js';
 export { setter, setterSync, setterInput } from './setter.js';
 export { toggler, togglerSync } from './toggler.js';

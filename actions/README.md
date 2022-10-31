@@ -10,9 +10,8 @@ Actions that get, set, and append state values can be generated automatically.
    3. [appender](#fieldappender) - Append an item to a list
    4. [fieldRemover](#fieldremover) - Remove an item from a list
    5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
-   6. [fieldListSetter](#fieldlistsetter) - Set a group of field values
-   7. [adder](#fieldadder) - Add or subtract from a field value
-   8. [fieldMerger](#fieldmerger) - Merge values into an object
+   6. [adder](#adder) - Add or subtract from a field value
+   7. [fieldMerger](#fieldmerger) - Merge values into an object
 
 ## Introduction
 
@@ -172,60 +171,6 @@ export default function PostsSearch() {
 }
 ```
 
-### fieldListSetter
-
-Set a list of fields.
-
-#### Equivalent code
-
-```jsx
-const [state, setState] = useState({});
-const setField = useCallback(
-  (names, values) => {
-    setState(old => {
-      const next = { ...old };
-      for (let i = 0; i < names.length; i++) {
-        next[names[i]] = values[i];
-      }
-      return next;
-    });
-  },
-  [setState]
-);
-```
-
-```jsx
-import { Store } from 'react-thermals';
-import { fieldListSetter } from 'react-thermals/actions';
-
-const userStore = new Store({
-  state: { fname: '', lname: '' },
-  actions: {
-    setName: fieldListSetter(['fname', 'lname']),
-  },
-});
-
-export default userStore;
-```
-
-components/CharacterName.jsx
-
-```jsx
-import userStore from '../stores/userStore.js';
-const { setName } = userStore.actions;
-export default function CharacterName() {
-  return (
-    <button onClick={() => setName('George', 'Jetson')}>
-      Change name to George Jetson
-    </button>
-  );
-}
-```
-
-### fieldListSetterSync
-
-Equivalent to fieldListSetter but synchronous.
-
 ### toggler
 
 Toggle the value of a field.
@@ -374,9 +319,9 @@ export default function GamePad() {
 }
 ```
 
-### fieldAdderSync
+### adderSync
 
-Equivalent to fieldListSetter but synchronous.
+Equivalent to adder but synchronous.
 
 ### appender
 

@@ -3,7 +3,6 @@ import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState.js';
 import { setter } from '../../actions/setter.js';
-import { fieldListSetter } from '../../actions/fieldListSetter.js';
 import Store from './Store.js';
 
 describe('new Store()', () => {
@@ -18,7 +17,7 @@ describe('new Store()', () => {
       state: { age: 14 },
       actions: {
         setAge: setter('age'),
-        setName: fieldListSetter('@', ['fname', 'lname']),
+        setName: setter('name'),
       },
     });
     const { setAge, setName } = store.actions;
@@ -28,12 +27,11 @@ describe('new Store()', () => {
     const awaited = await store.nextState();
     expect(awaited).toEqual({ age: 15 });
     expect(store.getState()).toEqual({ age: 15 });
-    setName('John', 'Doe');
+    setName('John Doe');
     await store.nextState();
     expect(store.getState()).toEqual({
       age: 15,
-      fname: 'John',
-      lname: 'Doe',
+      name: 'John Doe',
     });
   });
   it('should reset state', async () => {

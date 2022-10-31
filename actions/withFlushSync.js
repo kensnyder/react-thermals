@@ -7,6 +7,7 @@ export default function withFlushSync(actionCreator) {
   return function (...initArgs) {
     const asyncFn = actionCreator(...initArgs);
     return function (...runArgs) {
+      // "this" is the Store instance
       asyncFn.apply(this, runArgs);
       this.flushSync();
     };
