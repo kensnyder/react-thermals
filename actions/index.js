@@ -1,4 +1,4 @@
-export { fieldAdder, fieldAdderSync } from './fieldAdder.js';
+export { adder, adderSync } from './adder.js';
 export { appender, appenderSync } from './appender.js';
 export { fieldListSetter, fieldListSetterSync } from './fieldListSetter.js';
 export { fieldRemover, fieldRemoverSync } from './fieldRemover.js';

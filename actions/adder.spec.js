@@ -1,15 +1,15 @@
 import createStore from '../src/createStore/createStore.js';
-import { fieldAdder, fieldAdderSync } from './fieldAdder.js';
+import { adder, adderSync } from './adder.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
 }
 
-describe('fieldAdder(propName, amount)', () => {
+describe('adder(propName, amount)', () => {
   it('should increment', async () => {
     const store = getTestStore({ likes: 0, mode: 'view' });
-    const like = fieldAdder('likes', 1).bind(store);
-    const dislike = fieldAdder('likes', -1).bind(store);
+    const like = adder('likes', 1).bind(store);
+    const dislike = adder('likes', -1).bind(store);
     like();
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ likes: 1, mode: 'view' });
@@ -19,8 +19,8 @@ describe('fieldAdder(propName, amount)', () => {
   });
   it('should increment with multipath', async () => {
     const store = getTestStore({ post: { likes: 0, mode: 'view' } });
-    const like = fieldAdder('post.likes', 1).bind(store);
-    const dislike = fieldAdder('post.likes', -1).bind(store);
+    const like = adder('post.likes', 1).bind(store);
+    const dislike = adder('post.likes', -1).bind(store);
     like();
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ post: { likes: 1, mode: 'view' } });
@@ -32,8 +32,8 @@ describe('fieldAdder(propName, amount)', () => {
 describe('fieldAdderSync(propName, amount)', () => {
   it('should increment', () => {
     const store = getTestStore({ likes: 0, mode: 'view' });
-    const like = fieldAdderSync('likes', 1).bind(store);
-    const dislike = fieldAdderSync('likes', -1).bind(store);
+    const like = adderSync('likes', 1).bind(store);
+    const dislike = adderSync('likes', -1).bind(store);
     like();
     expect(store.getState()).toEqual({ likes: 1, mode: 'view' });
     dislike();

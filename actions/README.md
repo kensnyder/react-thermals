@@ -11,7 +11,7 @@ Actions that get, set, and append state values can be generated automatically.
    4. [fieldRemover](#fieldremover) - Remove an item from a list
    5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
    6. [fieldListSetter](#fieldlistsetter) - Set a group of field values
-   7. [fieldAdder](#fieldadder) - Add or subtract from a field value
+   7. [adder](#fieldadder) - Add or subtract from a field value
    8. [fieldMerger](#fieldmerger) - Merge values into an object
 
 ## Introduction
@@ -283,7 +283,7 @@ export default function PostText() {
 
 Equivalent to fieldLToggler but synchronous.
 
-### fieldAdder
+### adder
 
 Add or subtract from a given field.
 
@@ -303,15 +303,15 @@ In stores/gameStore.js
 
 ```jsx harmony
 import { Store } from 'react-thermals';
-import { fieldAdder } from 'react-thermals/actions';
+import { adder } from 'react-thermals/actions';
 
 const gameStore = new Store({
   state: { x: 0, y: 0 },
   actions: {
-    moveUp: fieldAdder('y', 1),
-    moveDown: fieldAdder('y', -1),
-    moveRight: fieldAdder('x', 1),
-    moveLeft: fieldAdder('x', -1),
+    moveUp: adder('y', 1),
+    moveDown: adder('y', -1),
+    moveRight: adder('x', 1),
+    moveLeft: adder('x', -1),
   },
 });
 
@@ -342,13 +342,13 @@ stores/gameStore.js
 
 ```jsx harmony
 import { Store } from 'react-thermals';
-import { fieldAdder } from 'react-thermals/actions';
+import { adder } from 'react-thermals/actions';
 
 const gameStore = new Store({
   state: { x: 0, y: 0 },
   actions: {
-    vertical: fieldAdder('y'),
-    horizontal: fieldAdder('x'),
+    vertical: adder('y'),
+    horizontal: adder('x'),
   },
 });
 
