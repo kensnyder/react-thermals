@@ -9,7 +9,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @example
  * const store = new Store({
  *     actions: {
- *         setPage: fieldSetter('page'),
+ *         setPage: setter('page'),
  *     },
  *     state: { page: 1 },
  * });
@@ -20,7 +20,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  *
  * const store = new Store({
  *     actions: {
- *         setPage: fieldSetter('results.page'),
+ *         setPage: setter('results.page'),
  *     },
  *     state: { results: { page: 1 } },
  * });
@@ -29,7 +29,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  *
  * const store = new Store({
  *     actions: {
- *         deactivateUsers: fieldSetter('users[*].isActive'),
+ *         deactivateUsers: setter('users[*].isActive'),
  *     },
  *     state: { users: [
  *         { id: 1, isActive: true },
@@ -43,7 +43,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * ] }
  *
  */
-export function fieldSetter(path) {
+export function setter(path) {
   const setField = updatePath(path, (oldValue, newValue) => {
     return newValue;
   });
@@ -55,14 +55,14 @@ export function fieldSetter(path) {
 }
 
 /**
- * Run fieldSetter and then flush pending state changes
+ * Run setter and then flush pending state changes
  * @param {String} path  The name of or path to the value to set
  * @return {Function}  A function suitable for a store action
  */
-export const fieldSetterSync = withFlushSync(fieldSetter);
+export const setterSync = withFlushSync(setter);
 
 /**
- * Run fieldSetter and then flush pending state changes
+ * Run setter and then flush pending state changes
  * using a DOM event object to set value to evt.target.value
  * @param {String} path  The name of or path to the value to set
  * @return {Function}  A function suitable for an input's onChange handler
@@ -77,8 +77,8 @@ export const fieldSetterSync = withFlushSync(fieldSetter);
  *     );
  * }
  */
-export function fieldSetterInput(path) {
-  const updater = fieldSetterSync(path);
+export function setterInput(path) {
+  const updater = setterSync(path);
   return function inputUpdater(evt) {
     updater.call(this, evt.target.value);
   };

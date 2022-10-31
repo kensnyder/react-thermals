@@ -5,7 +5,7 @@ Actions that get, set, and append state values can be generated automatically.
 1. [Introduction](#introduction)
 2. [Properties and Paths](#properties-and-paths)
 3. [Documentation and Examples](#documentation-and-examples)
-   1. [fieldSetter](#fieldsetter) - Set a single field value
+   1. [setter](#fieldsetter) - Set a single field value
    2. [toggler](#fieldtoggler) - Toggle a field value
    3. [appender](#fieldappender) - Append an item to a list
    4. [fieldRemover](#fieldremover) - Remove an item from a list
@@ -53,7 +53,7 @@ Read more at the [updatePath docs](../src/updatePath/README.md).
 
 ## Documentation and Examples
 
-### fieldSetter()
+### setter()
 
 Set a single field.
 
@@ -77,13 +77,13 @@ const setField = useCallback(
 ```jsx
 // In /stores/postsStore.ts
 import { Store } from 'react-thermals';
-import { fieldSetter } from 'react-thermals/actions';
+import { setter } from 'react-thermals/actions';
 const postsStore = new Store({
   state: {
     page: 1,
   },
   actions: {
-    setPage: fieldSetter('page'),
+    setPage: setter('page'),
   },
 });
 export default postsStore;
@@ -102,7 +102,7 @@ export default function Pagination() {
 }
 ```
 
-### fieldSetterSync
+### setterSync
 
 Set a single field synchronously.
 
@@ -110,13 +110,13 @@ stores/postsStore.js
 
 ```jsx
 import { createStore, useStoreSelector } from 'react-thermals';
-import { fieldSetterSync } from 'react-thermals/actions';
+import { setterSync } from 'react-thermals/actions';
 const postsStore = new Store({
   state: {
     searchTerm: '',
   },
   actions: {
-    setSearchTerm: fieldSetterSync('searchTerm'),
+    setSearchTerm: setterSync('searchTerm'),
   },
 });
 export default postsStore;
@@ -138,7 +138,7 @@ export default function PostsSearch() {
 }
 ```
 
-### fieldSetterInput
+### setterInput
 
 Set a single field synchronously from an input's onChange event.
 
@@ -148,13 +148,14 @@ stores/postsStore.js
 
 ```jsx
 import { createStore, useStoreSelector } from 'react-thermals';
-import { fieldSetterSync } from 'react-thermals/actions';
+import { setterSync } from 'react-thermals/actions';
+
 const postsStore = new Store({
   state: {
     searchTerm: '',
   },
   actions: {
-    setSearchTerm: fieldSetterInput('searchTerm'),
+    setSearchTerm: setterInput('searchTerm'),
   },
 });
 export default postsStore;

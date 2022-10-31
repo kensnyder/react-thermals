@@ -230,7 +230,7 @@ In stores/appStore/slices/auth.js
 
 ```js
 import appStore, { useAppState } from '../../appStore/appStore.js';
-import { fieldSetterInput } from 'react-thermals/actions';
+import { setterInput } from 'react-thermals/actions';
 
 export default function useAuth() {
   return useAppState(state => state.user);

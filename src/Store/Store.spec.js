@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState.js';
-import { fieldSetter } from '../../actions/fieldSetter.js';
+import { setter } from '../../actions/setter.js';
 import { fieldListSetter } from '../../actions/fieldListSetter.js';
 import Store from './Store.js';
 
@@ -17,7 +17,7 @@ describe('new Store()', () => {
     const store = new Store({
       state: { age: 14 },
       actions: {
-        setAge: fieldSetter('age'),
+        setAge: setter('age'),
         setName: fieldListSetter('@', ['fname', 'lname']),
       },
     });
@@ -40,7 +40,7 @@ describe('new Store()', () => {
     const store = new Store({
       state: { age: 10 },
       actions: {
-        setAge: fieldSetter('age'),
+        setAge: setter('age'),
       },
     });
     const { setAge } = store.actions;
@@ -127,8 +127,8 @@ describe('new Store() with autoReset', () => {
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     const actions = {
-      setPage: fieldSetter('page'),
-      setSort: fieldSetter('sort'),
+      setPage: setter('page'),
+      setSort: setter('sort'),
       thrower() {
         store.setState(old => {
           throw new Error('my error');
@@ -248,7 +248,7 @@ describe('new Store() flushSync', () => {
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     const actions = {
-      setPage: fieldSetter('page'),
+      setPage: setter('page'),
       pwn: () => store.setState({ pwned: 42 }),
       promise: () => {
         store.setState(() => {
@@ -366,8 +366,8 @@ describe('new Store() cloning', () => {
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     const actions = {
-      setPage: fieldSetter('page'),
-      setSort: fieldSetter('sort'),
+      setPage: setter('page'),
+      setSort: setter('sort'),
     };
     store = new Store({
       state,
