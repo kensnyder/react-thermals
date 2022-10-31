@@ -1,4 +1,4 @@
-import getPathedState from './getPathedState.js';
+import selectPath from '../selectPath/selectPath.js';
 const identity = state => state;
 
 /**
@@ -14,7 +14,7 @@ const identity = state => state;
 export default function getMapperFunction(mapState) {
   if (typeof mapState === 'string') {
     if (mapState.includes('.')) {
-      return getPathedState(mapState);
+      return selectPath(mapState);
     }
     return state => state[mapState];
   } else if (typeof mapState === 'number') {

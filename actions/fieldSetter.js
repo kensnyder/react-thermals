@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that directly sets one value
@@ -44,7 +44,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  *
  */
 export function fieldSetter(path) {
-  const setField = deepUpdater(path, (oldValue, newValue) => {
+  const setField = updatePath(path, (oldValue, newValue) => {
     return newValue;
   });
   return function updater(newValue) {

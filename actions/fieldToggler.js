@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that directly toggles one value
@@ -7,7 +7,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldToggler(path) {
-  const toggle = deepUpdater(path, function toggler(old) {
+  const toggle = updatePath(path, function toggler(old) {
     return !old;
   });
   return function updater() {

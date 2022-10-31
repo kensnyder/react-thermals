@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that runs a map function against an array value
@@ -7,10 +7,10 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldMapper(path) {
-  // we have to use { fn: mapFn } because deepUpdater getTransformerRunner would
+  // we have to use { fn: mapFn } because updatePath getUpdateRunner would
   // fall into typeof transform === 'function' which interprets a passed
   // function as a setState mutator function
-  const map = deepUpdater(path, function mapper(old, { fn: mapFn }) {
+  const map = updatePath(path, function mapper(old, { fn: mapFn }) {
     return old?.map(mapFn);
   });
   return function updater(mapFn) {

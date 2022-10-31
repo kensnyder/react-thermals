@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that directly sets one or more properties
@@ -8,7 +8,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldListSetter(path, fieldNames) {
-  const set = deepUpdater(path, function setter(copy, ...values) {
+  const set = updatePath(path, function setter(copy, ...values) {
     let i = 0;
     for (const field of fieldNames) {
       copy[field] = values[i++];

@@ -1,15 +1,15 @@
 /**
  * Build a function that accepts a value or a setState handler that receives
- *   the old state value and returns the new state value. Used by deepUpdater
+ *   the old state value and returns the new state value. Used by updatePath
  * @param {Function|Function[]|undefined} transform  Some examples:
- *   Add one to the old state: getTransformerRunner(old => old + 1)
- *   Add to the old state: getTransformerRunner((old, addend) => old + addend)
+ *   Add one to the old state: getUpdateRunner(old => old + 1)
+ *   Add to the old state: getUpdateRunner((old, addend) => old + addend)
  *   Append an item: getTranformerRunner((old, newItem) => ([...old, newItem]))
- *   Allow transforming later: getTransformerRunner(undefined)
+ *   Allow transforming later: getUpdateRunner(undefined)
  * @return {Function}
  * @throws {Error} if transform is not a valid type
  */
-export default function getTransformerRunner(transform) {
+export default function getUpdateRunner(transform) {
   if (
     Array.isArray(transform) &&
     transform.every(t => typeof t === 'function')
@@ -39,7 +39,7 @@ export default function getTransformerRunner(transform) {
     };
   } else {
     throw new Error(
-      'react-thermals: deepUpdater(path,transform) - transform must be a function, an array of functions or undefined'
+      'react-thermals: updatePath(path,transform) - transform must be a function, an array of functions or undefined'
     );
   }
 }

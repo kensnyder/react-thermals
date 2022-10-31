@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that replaces a particular array item
@@ -7,7 +7,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function arrayItemUpdater(path) {
-  const itemUpdate = deepUpdater(
+  const itemUpdate = updatePath(
     path,
     function itemUpdater(list, itemToUpdate, transformer) {
       return list?.map(item => {

@@ -45,6 +45,62 @@ npm install react-thermals
 7. Stores can optionally persist data even if all consumers unmount
 8. Stores allow for worry-free code splitting
 
+## Selectors
+
+Selectors ensure that components will re-render only when a relevant part of
+state changes.
+
+Selectors are a core concept in React Thermals. They work the same as selectors
+work in Redux and you can use libraries such as
+[reselect](https://www.npmjs.com/package/reselect) or
+[re-reselect](https://www.npmjs.com/package/re-reselect) with React Thermals to
+manage selectors.
+
+React Thermals can convert field names and field paths into selector functions.
+
+### Selector examples
+
+```js
+// Select the value of a single field
+const todos = useStoreSelector(myStore, state => state.todos);
+const todos = useStoreSelector(myStore, 'todos');
+
+// Select a deeper value
+const userId = useStoreSelector(myStore, state => state.user.id);
+const userId = useStoreSelector(myStore, 'user.id');
+
+// Select a list of deeper values
+const bookIds = useStoreSelector(myStore, state => state.books.map(b => b.id));
+const bookIds = useStoreSelector(myStore, 'books[*].id');
+
+// Select multiple fields using an array
+const [sender, recipients] = useStoreSelector(myStore, [
+  state => state.sender,
+  state => state.recipients,
+]);
+const [sender, recipients] = useStoreSelector(myStore, [
+  'sender',
+  'recipients',
+]);
+
+// Select multiple deeper values using an array
+const [senderEmail, recipientsEmails] = useStoreSelector(myStore, [
+  state => state.sender.email,
+  state => state.recipients.map(r => r.email),
+]);
+const [senderEmail, recipientsEmails] = useStoreSelector(myStore, [
+  'sender.email',
+  'recipients[*].email',
+]);
+
+// Use a mix of selector types
+const [subject, sender, recipientsEmails] = useStoreSelector(myStore, [
+  'subject',
+  state => state.sender,
+  'recipients[*].email',
+]);
+```
+
 ## Example usage
 
 ### Global state example
@@ -499,6 +555,8 @@ create action functions. Supported state changes are:
 [Full docs here](./actions/README.md).
 
 ## Code splitting
+
+stuff.
 
 ## Persistence
 

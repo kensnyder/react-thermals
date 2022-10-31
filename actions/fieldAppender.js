@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a mergeState function that appends and item to an array property
@@ -7,7 +7,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldAppender(path) {
-  const append = deepUpdater(path, (old, newItems) => {
+  const append = updatePath(path, (old, newItems) => {
     return [...old, ...newItems];
   });
   return function updater(...newItems) {

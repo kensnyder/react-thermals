@@ -1,5 +1,5 @@
 import shallowCopy from '../shallowCopy/shallowCopy.js';
-import getTransformerRunner from './getTransformerRunner.js';
+import getUpdateRunner from './getUpdateRunner.js';
 
 /**
  * Deep updater takes a path and a transformer and returns a function
@@ -11,12 +11,12 @@ import getTransformerRunner from './getTransformerRunner.js';
  *
  * @example
  *
- * const nextPage = deepUpdater('page', page => page + 1);
+ * const nextPage = updatePath('page', page => page + 1);
  * nextPage({ page: 10 });
  * // result:
  * { page: 11 }
  *
- * const addTodo = deepUpdater('app.todos', (todos, newItem) => ([...todos, newItem]));
+ * const addTodo = updatePath('app.todos', (todos, newItem) => ([...todos, newItem]));
  * const state = {
  *    app: {
  *        todos: ['Go shopping', 'Wash Car']
@@ -30,7 +30,7 @@ import getTransformerRunner from './getTransformerRunner.js';
  *    },
  * }
  *
- * const toggleActive = deepUpdater('users.*.isActive', isActive => !isActive);
+ * const toggleActive = updatePath('users.*.isActive', isActive => !isActive);
  * toggleActive({
  *    users: [
  *      { id: 1, isActive: false },
@@ -45,50 +45,50 @@ import getTransformerRunner from './getTransformerRunner.js';
  *    ]
  * }
  *
- * const add = deepUpdater('total', (total, addend) => total + addend);
+ * const add = updatePath('total', (total, addend) => total + addend);
  * add({ total: 12 }, 7);
  * // result:
  * { total: 19 }
  *
- * const add = deepUpdater('@', (num, addend) => num + addend);
+ * const add = updatePath('@', (num, addend) => num + addend);
  * add(12, 7);
  * // result:
  * 19
  */
-export function deepUpdater(path, transform = undefined) {
+export function updatePath(path, transform = undefined) {
   if (typeof path !== 'string') {
     throw new Error(
-      'react-thermals: deepUpdater(path,transform) - path must be a string'
+      'react-thermals: updatePath(path,transform) - path must be a string'
     );
   }
   // split path string on dots and brackets
   // e.g. 'users[0].isActive' => ['users', '0', 'isActive']
   // e.g. '@[1].isActive' => ['1', 'isActive']
-  const segments = path.split(/[\[\].]/).filter(Boolean);
+  const allSegments = path.split(/[\[\].]/).filter(Boolean);
   // empty string or only separators might make segments empty
-  if (segments.length === 0) {
-    throw new Error('deepUpdater path string cannot be empty');
+  if (allSegments.length === 0) {
+    throw new Error('updatePath path string cannot be empty');
   }
   // root path is denoted with at symbol
   if (path === '@') {
     return transform;
   }
-  if (segments[0] === '@') {
-    segments.shift();
+  if (allSegments[0] === '@') {
+    allSegments.shift();
   }
-  const runTransform = getTransformerRunner(transform);
+  const runTransform = getUpdateRunner(transform);
   // the actual update function that takes an object
   // and recursively creates shallow copies
   // and runs the given update function on the target segment
   return function updater(object, ...callTimeArgs) {
-    return descend(object, segments, callTimeArgs);
+    return descend(object, allSegments, callTimeArgs);
   };
   // the recursive copy/update function
   function descend(object, segments, args) {
     const copy = shallowCopy(object);
     if (segments[0] === '*' && Array.isArray(copy)) {
       // we need to map over array items
-      segments.shift();
+      segments = segments.slice(1);
       return copy.map(item => {
         if (segments.length === 0) {
           // star is at the end of path

@@ -44,12 +44,12 @@ Note that if the given path does not exist on the state, it will be created.
 For example, if the state is `{}` and you set `colors.primary` to `#f00` you
 will end up with a state value of `{ colors: { primary: '#f00' } }`.
 
-The function that creates state update functions is called `deepUpdater`. If
+The function that creates state update functions is called `updatePath`. If
 you'd like to use it directly, you can import it from `react-thermals/actions`:
 
-`import { deepUpdater } from 'react-thermals/actions';`
+`import { updatePath } from 'react-thermals/actions';`
 
-Read more at the [deepUpdater docs](../src/deepUpdater/README.md).
+Read more at the [updatePath docs](../src/updatePath/README.md).
 
 ## Documentation and Examples
 

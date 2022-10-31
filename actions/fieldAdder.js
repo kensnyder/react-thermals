@@ -1,5 +1,5 @@
 import withFlushSync from './withFlushSync.js';
-import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
+import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
  * Helper function to create a setState function that adds the given amount
@@ -8,7 +8,7 @@ import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
  * @return {Function}  A function suitable for a store action
  */
 export function fieldAdder(path, baseAmount = 0) {
-  const add = deepUpdater(path, function adder(old, totalAmount) {
+  const add = updatePath(path, function adder(old, totalAmount) {
     return old + totalAmount;
   });
   return function updater(amount = 0) {
