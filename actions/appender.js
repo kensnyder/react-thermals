@@ -6,7 +6,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @param {String} path  The name of or path to the array property to append to
  * @return {Function}  A function suitable for a store action
  */
-export function fieldAppender(path) {
+export function appender(path) {
   const append = updatePath(path, (old, newItems) => {
     return [...old, ...newItems];
   });
@@ -20,4 +20,4 @@ export function fieldAppender(path) {
  * @param {String|Number} propName  The name of the array property to append to
  * @return {Function}  A function suitable for a store action
  */
-export const fieldAppenderSync = withFlushSync(fieldAppender);
+export const appenderSync = withFlushSync(appender);

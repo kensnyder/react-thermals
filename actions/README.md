@@ -7,7 +7,7 @@ Actions that get, set, and append state values can be generated automatically.
 3. [Documentation and Examples](#documentation-and-examples)
    1. [fieldSetter](#fieldsetter) - Set a single field value
    2. [fieldToggler](#fieldtoggler) - Toggle a field value
-   3. [fieldAppender](#fieldappender) - Append an item to a list
+   3. [appender](#fieldappender) - Append an item to a list
    4. [fieldRemover](#fieldremover) - Remove an item from a list
    5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
    6. [fieldListSetter](#fieldlistsetter) - Set a group of field values
@@ -377,7 +377,7 @@ export default function GamePad() {
 
 Equivalent to fieldListSetter but synchronous.
 
-### fieldAppender
+### appender
 
 Add an item to an array.
 
@@ -399,12 +399,12 @@ stores/todoStore.js
 
 ```js
 import { Store, useStoreSelector } from 'react-thermals';
-import { fieldAppender } from 'react-thermals/actions';
+import { appender } from 'react-thermals/actions';
 
 const todoStore = new Store({
   state: { todos: [] },
   actions: {
-    addTodo: fieldAppender('todos'),
+    addTodo: appender('todos'),
   },
 });
 
@@ -451,7 +451,7 @@ export default function TodoList() {
 
 ### fieldAppenderSync
 
-Equivalent to fieldAppender but synchronous.
+Equivalent to appender but synchronous.
 
 ### fieldRemover
 
@@ -479,12 +479,12 @@ stores/todoStore.js
 
 ```js
 import { Store, useStoreSelector } from 'react-thermals';
-import { fieldAppender } from 'react-thermals/actions';
+import { appender } from 'react-thermals/actions';
 
 const todoStore = new Store({
   state: { todos: [] },
   actions: {
-    addTodo: fieldAppender('todos'),
+    addTodo: appender('todos'),
     deleteTodo: fieldRemover('todos'),
   },
 });

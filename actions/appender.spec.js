@@ -1,13 +1,13 @@
 import createStore from '../src/createStore/createStore.js';
-import { fieldAppender, fieldAppenderSync } from './fieldAppender.js';
+import { appender, appenderSync } from './appender.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
 }
-describe('fieldAppender(propName)', () => {
+describe('appender(propName)', () => {
   it('should append one or more args', async () => {
     const store = getTestStore({ vowels: [] });
-    const addVowel = fieldAppender('vowels').bind(store);
+    const addVowel = appender('vowels').bind(store);
     addVowel('a');
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ vowels: ['a'] });
@@ -17,7 +17,7 @@ describe('fieldAppender(propName)', () => {
   });
   it('should append one or more args with path', async () => {
     const store = getTestStore({ spec: { vowels: [] } });
-    const addVowel = fieldAppender('spec.vowels').bind(store);
+    const addVowel = appender('spec.vowels').bind(store);
     addVowel('a');
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ spec: { vowels: ['a'] } });
@@ -29,7 +29,7 @@ describe('fieldAppender(propName)', () => {
 describe('fieldAppenderSync(propName)', () => {
   it('should append one or more args', () => {
     const store = getTestStore({ vowels: [] });
-    const addVowel = fieldAppenderSync('vowels').bind(store);
+    const addVowel = appenderSync('vowels').bind(store);
     addVowel('a');
     expect(store.getState()).toEqual({ vowels: ['a'] });
     addVowel('e', 'i');

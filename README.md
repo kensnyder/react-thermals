@@ -137,7 +137,7 @@ export default function useTodos() {
 appStore.mergeSync({ todos: [] });
 
 export const todoActions = {
-  add: fieldAppender('todos'),
+  add: appender('todos'),
   toggleComplete: arrayItemUpdater('todos', todo => ({
     ...todo,
     isComplete: !todo.isComplete,
