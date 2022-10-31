@@ -138,7 +138,7 @@ appStore.mergeSync({ todos: [] });
 
 export const todoActions = {
   add: appender('todos'),
-  toggleComplete: arrayItemUpdater('todos', todo => ({
+  toggleComplete: replacer('todos', todo => ({
     ...todo,
     isComplete: !todo.isComplete,
   })),

@@ -1,18 +1,18 @@
 import createStore from '../src/createStore/createStore.js';
-import { arrayItemUpdater, arrayItemUpdaterSync } from './arrayItemUpdater.js';
+import { replacer, arrayItemUpdaterSync } from './replacer.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
 }
 
-describe('arrayItemUpdater()', () => {
+describe('replacer()', () => {
   it('should update a single item with an updater', async () => {
     const todos = [
       { text: 'item 0', isComplete: true },
       { text: 'item 1', isComplete: false },
     ];
     const store = getTestStore({ todos });
-    const updateTodo = arrayItemUpdater('todos').bind(store);
+    const updateTodo = replacer('todos').bind(store);
     updateTodo(todos[1], todo => ({
       ...todo,
       isComplete: true,

@@ -6,23 +6,21 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @param {String} path  The name of or path to the value to merge
  * @return {Function}  A function suitable for a store action
  */
-export function arrayItemUpdater(path) {
-  const itemUpdate = updatePath(
+export function replacer(path) {
+  const replaceItem = updatePath(
     path,
-    function itemUpdater(list, itemToUpdate, transformer) {
+    function replaceHandler(list, itemToReplace, newItem) {
       return list?.map(item => {
-        if (item === itemToUpdate) {
-          return typeof transformer === 'function'
-            ? transformer(item)
-            : transformer;
+        if (item === itemToReplace) {
+          return newItem;
         } else {
           return item;
         }
       });
     }
   );
-  return function updater(itemToUpdate, transformer) {
-    this.setState(old => itemUpdate(old, itemToUpdate, transformer));
+  return function updater(itemToReplace, newItem) {
+    this.setState(old => replaceItem(old, itemToReplace, newItem));
   };
 }
 
@@ -32,4 +30,4 @@ export function arrayItemUpdater(path) {
  * @param {String|Number} propName  The name of the property to toggle
  * @return {Function}  A function suitable for a store action
  */
-export const arrayItemUpdaterSync = withFlushSync(arrayItemUpdater);
+export const arrayItemUpdaterSync = withFlushSync(replacer);
