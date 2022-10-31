@@ -2,7 +2,7 @@ import withFlushSync from './withFlushSync.js';
 import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
- * Helper function to create a setState function that replaces a particular array item
+ * Build a setState function that replaces a particular array item
  * @param {String} path  The name of or path to the value to merge
  * @return {Function}  A function suitable for a store action
  */
@@ -30,4 +30,4 @@ export function replacer(path) {
  * @param {String|Number} propName  The name of the property to toggle
  * @return {Function}  A function suitable for a store action
  */
-export const arrayItemUpdaterSync = withFlushSync(replacer);
+export const replacerSync = withFlushSync(replacer);

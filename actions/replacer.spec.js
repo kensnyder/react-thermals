@@ -1,5 +1,5 @@
 import createStore from '../src/createStore/createStore.js';
-import { replacer, arrayItemUpdaterSync } from './replacer.js';
+import { replacer, replacerSync } from './replacer.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
@@ -24,14 +24,14 @@ describe('replacer()', () => {
     ]);
   });
 });
-describe('arrayItemUpdaterSync()', () => {
+describe('replacerSync()', () => {
   it('should update a single item synchronously with an updater', () => {
     const todos = [
       { text: 'item 1', isComplete: true },
       { text: 'item 2', isComplete: false },
     ];
     const store = getTestStore({ todos });
-    const updateTodo = arrayItemUpdaterSync('todos').bind(store);
+    const updateTodo = replacerSync('todos').bind(store);
     updateTodo(todos[1], todo => ({
       ...todo,
       isComplete: true,
