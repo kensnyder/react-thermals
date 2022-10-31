@@ -11,23 +11,6 @@ describe('Emitter', () => {
     const context = emitter.on('foo', () => {});
     expect(context).toBe(emitter);
   });
-  it('should pass events with the correct context', () => {
-    const foo = {};
-    const emitter = new Emitter(foo);
-    emitter.on('test', evt => {
-      expect(evt.target).toBe(foo);
-    });
-    emitter.emit('test');
-  });
-  it('should pass the emitted data in the event object', () => {
-    const foo = {};
-    const emitter = new Emitter(foo);
-    emitter.on('test', evt => {
-      expect(evt).toBeInstanceOf(PreventableEvent);
-      expect(evt.data).toBe(foo);
-    });
-    emitter.emit('test', foo);
-  });
   it('should return basic object from emit()', () => {
     const foo = {};
     const emitter = new Emitter(foo);
@@ -41,7 +24,7 @@ describe('Emitter', () => {
     emitter.on('test', () => {});
     const evt = emitter.emit('test', foo);
     expect(evt).toBeInstanceOf(PreventableEvent);
-    expect(evt.target).toBe(foo);
+    expect(evt.target).toBe(emitter);
     expect(evt.type).toBe('test');
   });
   it('should return the event from emit()', () => {

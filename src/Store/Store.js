@@ -1,4 +1,4 @@
-import Emitter from '../Emitter/Emitter2.js';
+import Emitter from '../Emitter/Emitter.js';
 import shallowCopy from '../shallowCopy/shallowCopy.js';
 import shallowOverride from '../shallowOverride/shallowOverride.js';
 
