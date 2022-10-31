@@ -2,13 +2,16 @@ import withFlushSync from './withFlushSync.js';
 import { updatePath } from '../src/updatePath/updatePath.js';
 
 /**
- * Helper function to create a mergeState function that removes the given item from an array property
- * @param {String|Number} propName  The name of the array property to remove from
+ * Build a setState function that removes the given item(s) from an array
+ * @param {String} path  The name of or path to the property to update
  * @return {Function}  A function suitable for a store action
  */
 export function fieldRemover(path) {
-  const remove = updatePath(path, function remover(old, items) {
-    return old?.filter(value => !items.includes(value));
+  const remove = updatePath(path, function remover(old, itemsToRemove) {
+    if (!old || !Array.isArray(old)) {
+      return [];
+    }
+    return old.filter(value => !itemsToRemove.includes(value));
   });
   return function updater(...itemsToRemove) {
     return this.setState(old => remove(old, itemsToRemove));

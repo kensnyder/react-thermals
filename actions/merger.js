@@ -2,12 +2,16 @@ import withFlushSync from './withFlushSync.js';
 import shallowOverride from '../src/shallowOverride/shallowOverride.js';
 import { updatePath } from '../src/updatePath/updatePath.js';
 
-// TODO: rename to fieldMerger
-export function sliceUpdater(path) {
+/**
+ * Build a setState function that merges the given object with the target object
+ * @param {String} path  The name of or path to the property to update
+ * @return {Function}  A function suitable for a store action
+ */
+export function merger(path) {
   const merger = updatePath(path, shallowOverride);
   return function updater(...moreArgs) {
     this.setState(old => merger(old, ...moreArgs));
   };
 }
 
-export const sliceUpdaterSync = withFlushSync(sliceUpdater);
+export const mergerSync = withFlushSync(merger);

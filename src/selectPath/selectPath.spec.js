@@ -23,7 +23,7 @@ describe('selectPath()', () => {
     });
     expect(slice).toEqual(['867-5309', '555-5555']);
   });
-  it('should return double star paths', () => {
+  it('should return double star paths as flattened array', () => {
     const selector = selectPath('books[*].authors[*].id');
     const slice = selector({
       books: [

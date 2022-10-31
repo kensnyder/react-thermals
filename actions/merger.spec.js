@@ -1,14 +1,14 @@
 import Store from '../src/Store/Store.js';
-import { sliceUpdater, sliceUpdaterSync } from './sliceUpdater.js';
+import { merger, mergerSync } from './merger.js';
 
 function getTestStore(initialState) {
   return new Store({ state: initialState });
 }
 
-describe('sliceUpdater(path)', () => {
+describe('merger(path)', () => {
   it('should merge state', async () => {
     const store = getTestStore({ door: 'A', open: false });
-    const addPaint = sliceUpdater('@').bind(store);
+    const addPaint = merger('@').bind(store);
     addPaint({ color: 'red', finish: 'matte' });
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({
@@ -20,7 +20,7 @@ describe('sliceUpdater(path)', () => {
   });
   it('should merge state at path', async () => {
     const store = getTestStore({ doors: [{ door: 'A', open: false }] });
-    const addPaint = sliceUpdater('doors[0]').bind(store);
+    const addPaint = merger('doors[0]').bind(store);
     addPaint({ color: 'blue', finish: 'gloss', open: true });
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({
@@ -35,12 +35,12 @@ describe('sliceUpdater(path)', () => {
     });
   });
 });
-describe('sliceUpdaterSync(path)', () => {
+describe('mergerSync(path)', () => {
   it('should merge state at path sync', async () => {
     const store = getTestStore({
       doors: [{ door: 'A', open: false }, { door: 'A.2' }],
     });
-    const addPaint = sliceUpdaterSync('doors[0]').bind(store);
+    const addPaint = mergerSync('doors[0]').bind(store);
     addPaint({ color: 'green', finish: 'semigloss', door: 'A.1' });
     expect(store.getState()).toEqual({
       doors: [

@@ -8,7 +8,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @return {Function}  A function suitable for a store action
  */
 export function adder(path, baseAmount = 0) {
-  const add = updatePath(path, function adder(old, totalAmount) {
+  const add = updatePath(path, function addHandler(old, totalAmount) {
     return old + totalAmount;
   });
   return function updater(amount = 0) {

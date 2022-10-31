@@ -7,7 +7,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @return {Function}  A function suitable for a store action
  */
 export function appender(path) {
-  const append = updatePath(path, (old, newItems) => {
+  const append = updatePath(path, function appendHandler(old, newItems) {
     return [...old, ...newItems];
   });
   return function updater(...newItems) {

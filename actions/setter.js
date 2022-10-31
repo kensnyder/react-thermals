@@ -44,7 +44,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  *
  */
 export function setter(path) {
-  const setField = updatePath(path, (oldValue, newValue) => {
+  const setField = updatePath(path, function setHandler(oldValue, newValue) {
     return newValue;
   });
   return function updater(newValue) {
