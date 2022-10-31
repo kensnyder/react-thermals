@@ -1,14 +1,14 @@
 import createStore from '../src/createStore/createStore.js';
-import { fieldToggler, fieldTogglerSync } from './fieldToggler.js';
+import { toggler, togglerSync } from './toggler.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
 }
 
-describe('fieldToggler(propName)', () => {
+describe('toggler(propName)', () => {
   it('should set scalar value', async () => {
     const store = getTestStore({ door: 'A', open: false });
-    const toggleDoor = fieldToggler('open').bind(store);
+    const toggleDoor = toggler('open').bind(store);
     toggleDoor();
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ door: 'A', open: true });
@@ -20,7 +20,7 @@ describe('fieldToggler(propName)', () => {
 describe('fieldTogglerSync(propName)', () => {
   it('should set scalar value', () => {
     const store = getTestStore({ door: 'A', open: false });
-    const toggleDoor = fieldTogglerSync('open').bind(store);
+    const toggleDoor = togglerSync('open').bind(store);
     toggleDoor();
     expect(store.getState()).toEqual({ door: 'A', open: true });
     toggleDoor();

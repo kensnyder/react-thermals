@@ -1,14 +1,14 @@
 import Store from '../src/Store/Store.js';
-import { fieldMapper, fieldMapperSync } from './fieldMapper.js';
+import { mapper, mapperSync } from './mapper.js';
 
 function getTestStore(initialState) {
   return new Store({ state: initialState });
 }
 
-describe('fieldMapper(propName)', () => {
+describe('mapper(propName)', () => {
   it('should map values', async () => {
     const store = getTestStore({ ints: [5, 10, 15] });
-    const mapInts = fieldMapper('ints').bind(store);
+    const mapInts = mapper('ints').bind(store);
     mapInts(n => n * 2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ints: [10, 20, 30] });
@@ -18,7 +18,7 @@ describe('fieldMapper(propName)', () => {
       { ints: [5, 10, 15] },
       { strs: ['five', 'ten', 'fifteen'] },
     ]);
-    const mapInts = fieldMapper('@[0]ints').bind(store);
+    const mapInts = mapper('@[0]ints').bind(store);
     mapInts(n => n * 2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual([
@@ -30,7 +30,7 @@ describe('fieldMapper(propName)', () => {
 describe('fieldMapperSync(propName)', () => {
   it('should map values', () => {
     const store = getTestStore({ ints: [5, 10, 15] });
-    const mapInts = fieldMapperSync('ints').bind(store);
+    const mapInts = mapperSync('ints').bind(store);
     mapInts(n => n * 2);
     expect(store.getState()).toEqual({ ints: [10, 20, 30] });
   });
@@ -42,7 +42,7 @@ describe('fieldMapperSync(propName)', () => {
         { name: 'Peter Pan', isActive: true },
       ],
     });
-    const mapUsers = fieldMapperSync('users').bind(store);
+    const mapUsers = mapperSync('users').bind(store);
     mapUsers(user => ({ ...user, isActive: false }));
     expect(store.getState()).toEqual({
       users: [

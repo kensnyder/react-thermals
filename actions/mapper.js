@@ -6,7 +6,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @param {String} path  The name of or path to the property to update
  * @return {Function}  A function suitable for a store action
  */
-export function fieldMapper(path) {
+export function mapper(path) {
   // we have to use { fn: mapFn } because updatePath getUpdateRunner would
   // fall into typeof transform === 'function' which interprets a passed
   // function as a setState mutator function
@@ -19,8 +19,8 @@ export function fieldMapper(path) {
 }
 
 /**
- * Run fieldMapper and then flush pending state changes
+ * Run mapper and then flush pending state changes
  * @param String} path  The name of or path to the property to update
  * @return {Function}  A function suitable for a store action
  */
-export const fieldMapperSync = withFlushSync(fieldMapper);
+export const mapperSync = withFlushSync(mapper);

@@ -6,7 +6,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @param {String} path  The name of or path to the value to toggle
  * @return {Function}  A function suitable for a store action
  */
-export function fieldToggler(path) {
+export function toggler(path) {
   const toggle = updatePath(path, function toggler(old) {
     return !old;
   });
@@ -16,8 +16,8 @@ export function fieldToggler(path) {
 }
 
 /**
- * Run fieldToggler and then flush pending state changes
+ * Run toggler and then flush pending state changes
  * @param {String} path  The name of or path to the value to toggle
  * @return {Function}  A function suitable for a store action
  */
-export const fieldTogglerSync = withFlushSync(fieldToggler);
+export const togglerSync = withFlushSync(toggler);

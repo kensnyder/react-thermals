@@ -7,6 +7,6 @@ export {
   fieldSetterSync,
   fieldSetterInput,
 } from './fieldSetter.js';
-export { fieldToggler, fieldTogglerSync } from './fieldToggler.js';
+export { toggler, togglerSync } from './toggler.js';
 export { arrayItemUpdater, arrayItemUpdaterSync } from './arrayItemUpdater.js';
 export { updatePath } from '../src/updatePath/updatePath.js';

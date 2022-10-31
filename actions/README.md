@@ -6,7 +6,7 @@ Actions that get, set, and append state values can be generated automatically.
 2. [Properties and Paths](#properties-and-paths)
 3. [Documentation and Examples](#documentation-and-examples)
    1. [fieldSetter](#fieldsetter) - Set a single field value
-   2. [fieldToggler](#fieldtoggler) - Toggle a field value
+   2. [toggler](#fieldtoggler) - Toggle a field value
    3. [appender](#fieldappender) - Append an item to a list
    4. [fieldRemover](#fieldremover) - Remove an item from a list
    5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
@@ -225,7 +225,7 @@ export default function CharacterName() {
 
 Equivalent to fieldListSetter but synchronous.
 
-### fieldToggler
+### toggler
 
 Toggle the value of a field.
 
@@ -243,12 +243,12 @@ const setField = useCallback(
 
 ```jsx harmony
 import { Store, useStoreSelector } from 'react-thermals';
-import { fieldToggler } from 'react-thermals/actions';
+import { toggler } from 'react-thermals/actions';
 
 const postsStore = new Store({
   state: { showDetails: false },
   actions: {
-    toggleDetails: fieldToggler('showDetails'),
+    toggleDetails: toggler('showDetails'),
   },
 });
 
