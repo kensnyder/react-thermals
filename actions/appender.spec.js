@@ -1,8 +1,8 @@
-import createStore from '../src/createStore/createStore.js';
+import Store from '../src/Store/Store.js';
 import { appender, appenderSync } from './appender.js';
 
 function getTestStore(initialState) {
-  return createStore({ state: initialState });
+  return new Store({ state: initialState });
 }
 describe('appender(propName)', () => {
   it('should append one or more args', async () => {

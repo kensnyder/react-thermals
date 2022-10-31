@@ -1,8 +1,8 @@
-import createStore from '../src/createStore/createStore.js';
+import Store from '../src/Store/Store.js';
 import { adder, adderSync } from './adder.js';
 
 function getTestStore(initialState) {
-  return createStore({ state: initialState });
+  return new Store({ state: initialState });
 }
 
 describe('adder(propName, amount)', () => {

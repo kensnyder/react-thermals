@@ -1,8 +1,8 @@
-import createStore from '../src/createStore/createStore.js';
+import Store from '../src/Store/Store.js';
 import { setter, setterInput, setterSync } from './setter.js';
 
 function getTestStore(initialState) {
-  return createStore({ state: initialState });
+  return new Store({ state: initialState });
 }
 describe('setter(propName)', () => {
   it('should set scalar value', async () => {

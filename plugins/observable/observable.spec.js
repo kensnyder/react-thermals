@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import createStore from '../../src/createStore/createStore.js';
+import Store from '../../src/Store/Store.js';
 import observable from './observable.js';
 import useStoreState from '../../src/useStoreState/useStoreState.js';
 
 describe('observable()', () => {
   let store, CountComponent;
   beforeEach(() => {
-    store = createStore({
+    store = new Store({
       state: 0,
       actions: {
         increment() {

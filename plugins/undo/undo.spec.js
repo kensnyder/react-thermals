@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import createStore from '../../src/createStore/createStore.js';
+import Store from '../../src/Store/Store.js';
 import useStoreState from '../../src/useStoreState/useStoreState.js';
 import undo from './undo.js';
 
@@ -20,7 +20,7 @@ describe('undo()', () => {
         store.mergeState(old => ({ minutes: old.minutes + num }));
       },
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });

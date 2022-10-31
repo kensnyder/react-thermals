@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import Store from '../../src/Store/Store.js';
 import persistState from './persistState.js';
-import createStore from '../../src/createStore/createStore.js';
 import useStoreState from '../../src/useStoreState/useStoreState.js';
 
 describe('persistState()', () => {
@@ -14,7 +14,7 @@ describe('persistState()', () => {
       setPage: page => store.mergeState({ page }),
       setSort: sort => store.mergeState({ sort }),
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
       id: 'myStore',
@@ -69,7 +69,7 @@ describe('persistState() with fields', () => {
       setPage: page => store.mergeState({ page }),
       setSort: sort => store.mergeState({ sort }),
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });
@@ -123,7 +123,7 @@ describe('persistState() plugin error', () => {
       setPage: page => store.mergeState({ page }),
       setSort: sort => store.mergeState({ sort }),
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });
@@ -145,21 +145,21 @@ describe('persistState() plugin error', () => {
     };
   });
   it('should throw on strings', () => {
-    const store = createStore({});
+    const store = new Store({});
     const shouldThrow = () => {
       store.plugin(persistState({ storage: 'foo' }));
     };
     expect(shouldThrow).toThrowError();
   });
   it('should throw on null', () => {
-    const store = createStore({});
+    const store = new Store({});
     const shouldThrow = () => {
       store.plugin(persistState(null));
     };
     expect(shouldThrow).toThrowError();
   });
   it('should throw on empty objects', () => {
-    const store = createStore({ storage: {} });
+    const store = new Store({ storage: {} });
     const shouldThrow = () => {
       store.plugin(persistState({}));
     };
@@ -171,7 +171,7 @@ describe('persistState() plugin error', () => {
       getItem: jest.fn(id => storage.value),
       setItem: jest.fn((id, val) => (storage.value = val)),
     };
-    const store = createStore({});
+    const store = new Store({});
     const shouldThrow = () => {
       store.plugin(persistState({ storage, fields: 'foo' }));
     };
@@ -185,7 +185,7 @@ describe('persistState() JSON errors', () => {
     spy = jest.spyOn(console, 'error');
     spy.mockImplementation(() => {});
     const state = { page: 1, sort: '-date' };
-    store = createStore({
+    store = new Store({
       state,
     });
     storage = {
@@ -250,7 +250,7 @@ describe('persistState() with custom parse and stringify', () => {
   let store, storage, Component, parse, stringify;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    store = createStore({
+    store = new Store({
       state,
     });
     storage = {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import createStore from '../createStore/createStore.js';
+import Store from '../Store/Store.js';
 import useStoreState from '../useStoreState/useStoreState.js';
 import useStoreSelector from './useStoreSelector.js';
 
@@ -26,7 +26,7 @@ describe('useStoreSelector(mapState)', () => {
         store.setState(to);
       },
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });
@@ -160,7 +160,7 @@ describe('store.on(type, handler)', () => {
         });
       },
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });

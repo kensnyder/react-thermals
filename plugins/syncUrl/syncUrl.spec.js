@@ -2,7 +2,7 @@ import React from 'react';
 import ErrorBoundary from '../../jest-setup/ErrorBoundary.js';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import createStore from '../../src/createStore/createStore.js';
+import Store from '../../src/Store/Store.js';
 import useStoreState from '../../src/useStoreState/useStoreState.js';
 import syncUrl from './syncUrl.js';
 
@@ -16,7 +16,7 @@ describe('syncUrl()', () => {
       setPage: page => store.mergeState({ page }),
       setSort: sort => store.mergeState({ sort }),
     };
-    store = createStore({
+    store = new Store({
       state,
       actions,
     });
@@ -178,7 +178,7 @@ describe('syncUrl()', () => {
 });
 describe('syncUrl() error', () => {
   it('should throw when both fields and schema are given', async () => {
-    const store = createStore({});
+    const store = new Store({});
     const toThrow = () => {
       store.plugin(
         syncUrl({

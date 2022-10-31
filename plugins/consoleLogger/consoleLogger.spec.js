@@ -1,4 +1,4 @@
-import createStore from '../../src/createStore/createStore.js';
+import Store from '../../src/Store/Store.js';
 import consoleLogger from './consoleLogger.js';
 
 describe('consoleLogger plugin', () => {
@@ -6,7 +6,7 @@ describe('consoleLogger plugin', () => {
   beforeEach(() => {
     spy = jest.spyOn(console, 'log');
     spy.mockImplementation(() => {});
-    store = createStore({ id: 'myStore' });
+    store = new Store({ id: 'myStore' });
   });
   afterEach(() => {
     spy.mockRestore();
@@ -49,7 +49,7 @@ describe('consoleLogger plugin', () => {
 describe('consoleLogger plugin errors', () => {
   let store;
   beforeEach(() => {
-    store = createStore({ id: 'myStore' });
+    store = new Store({ id: 'myStore' });
   });
   it('should error if eventTypes is not an array', () => {
     const thrower = () => {

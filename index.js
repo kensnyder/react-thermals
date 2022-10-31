@@ -1,5 +1,5 @@
-import createStore from './src/createStore/createStore.js';
+import Store from './src/Store/Store.js';
 import useStoreSelector from './src/useStoreSelector/useStoreSelector.js';
 import useStoreState from './src/useStoreState/useStoreState.js';
 
-export { createStore, useStoreSelector, useStoreState };
+export { Store, useStoreSelector, useStoreState };
