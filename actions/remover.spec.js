@@ -1,14 +1,14 @@
 import createStore from '../src/createStore/createStore.js';
-import { fieldRemover, fieldRemoverSync } from './fieldRemover.js';
+import { remover, removerSync } from './remover.js';
 
 function getTestStore(initialState) {
   return createStore({ state: initialState });
 }
 
-describe('fieldRemover(propName)', () => {
+describe('remover(propName)', () => {
   it('should remove one or more args', async () => {
     const store = getTestStore({ ids: [1, 2, 3, 4] });
-    const removeId = fieldRemover('ids').bind(store);
+    const removeId = remover('ids').bind(store);
     removeId(2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ids: [1, 3, 4] });
@@ -18,7 +18,7 @@ describe('fieldRemover(propName)', () => {
   });
   it('should remove one or more args in path', async () => {
     const store = getTestStore({ ids: [[1, 2, 3, 4]] });
-    const removeId = fieldRemover('ids[0]').bind(store);
+    const removeId = remover('ids[0]').bind(store);
     removeId(2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ids: [[1, 3, 4]] });
@@ -27,10 +27,10 @@ describe('fieldRemover(propName)', () => {
     expect(store.getState()).toEqual({ ids: [[1]] });
   });
 });
-describe('fieldRemoverSync(propName)', () => {
+describe('removerSync(propName)', () => {
   it('should remove one or more args', () => {
     const store = getTestStore({ ids: [1, 2, 3, 4] });
-    const removeId = fieldRemoverSync('ids').bind(store);
+    const removeId = removerSync('ids').bind(store);
     removeId(2);
     expect(store.getState()).toEqual({ ids: [1, 3, 4] });
     removeId(3, 4);

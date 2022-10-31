@@ -6,7 +6,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @param {String} path  The name of or path to the property to update
  * @return {Function}  A function suitable for a store action
  */
-export function fieldRemover(path) {
+export function remover(path) {
   const remove = updatePath(path, function remover(old, itemsToRemove) {
     if (!old || !Array.isArray(old)) {
       return [];
@@ -23,4 +23,4 @@ export function fieldRemover(path) {
  * @param {String|Number} propName  The name of the array property to remove from
  * @return {Function}  A function suitable for a store action
  */
-export const fieldRemoverSync = withFlushSync(fieldRemover);
+export const removerSync = withFlushSync(remover);

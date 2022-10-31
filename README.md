@@ -142,7 +142,7 @@ export const todoActions = {
     ...todo,
     isComplete: !todo.isComplete,
   })),
-  remove: fieldRemover('todos'),
+  remove: remover('todos'),
 };
 
 appStore.addActions(todoActions);
@@ -540,17 +540,16 @@ or even state that is local to a single component.
 
 ## Action creators
 
-For common types of state changes, React Thermals has 8 functions that will
+For common types of state changes, React Thermals has 7 functions that will
 create action functions. Supported state changes are:
 
-1. [Set a single field value](./actions/README.md#fieldsetter)
-2. [Toggle a field value](./actions/README.md#fieldtoggler)
-3. [Append an item to a list](./actions/README.md#fieldappender)
-4. [Remove an item from a list](./actions/README.md#fieldremover)
-5. [Update an item in a list](./actions/README.md#fielditemupdater)
-6. [Set a group of field values](./actions/README.md#fieldlistsetter)
-7. [Add or subtract from a field value](./actions/README.md#fieldadder)
-8. [Merge values into an object](./actions/README.md#fieldmerger)
+1. [Set a single value](./actions/README.md#setter)
+2. [Toggle a boolean value](./actions/README.md#toggler)
+3. [Append an item to a list](./actions/README.md#appender)
+4. [Remove an item from a list](./actions/README.md#remover)
+5. [Replace an item in a list](./actions/README.md#replacer)
+6. [Add to or subtract from a number](./actions/README.md#adder)
+7. [Merge one object into another](./actions/README.md#merger)
 
 [Full docs here](./actions/README.md).
 
@@ -727,7 +726,7 @@ myStore.use((context, next) => {
 
 // alter the state
 myStore.use((context, next) => {
-  context.next = mockStore.next();
+  context.next = mockStore.nextState();
   next();
 });
 

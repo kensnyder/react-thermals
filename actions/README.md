@@ -1,22 +1,24 @@
 # Action Creators
 
-Actions that get, set, and append state values can be generated automatically.
+Actions that update state values can be generated automatically.
 
 1. [Introduction](#introduction)
 2. [Properties and Paths](#properties-and-paths)
 3. [Documentation and Examples](#documentation-and-examples)
-   1. [setter](#fieldsetter) - Set a single field value
-   2. [toggler](#fieldtoggler) - Toggle a field value
-   3. [appender](#fieldappender) - Append an item to a list
-   4. [fieldRemover](#fieldremover) - Remove an item from a list
-   5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
-   6. [adder](#adder) - Add or subtract from a field value
-   7. [fieldMerger](#fieldmerger) - Merge values into an object
+   1. [setter](#setter) - Set a single value
+   2. [toggler](#toggler) - Toggle a boolean value
+   3. [appender](#appender) - Append an item to a list
+   4. [remover](#remover) - Remove an item from a list
+   5. [replacer](#replacer) - Replace an item in a list
+   6. [adder](#adder) - Add to or subtract from a number
+   7. [merger](#merger) - Merge one object into another
 
 ## Introduction
 
-All setters have a "Sync" equivalent which synchronously updates state. That may
-be desirable in situation such as controlled form input values.
+By default, all action creators operate asynchronously, which allows changes to
+be batched. But all action creators have a "Sync" equivalent which synchronously
+updates state. That may be desirable in situation such as controlled form input
+values.
 
 ## Properties and Paths
 
@@ -36,7 +38,7 @@ Some examples of valid paths:
 - `@` - The entire state value
 - `@*` - Each item in the array (e.g. when the entire state is an Array)
 - `@*.id` - The id of each item in the array (e.g. when the entire state is an
-  Array of items)
+  Array of objects with property id)
 
 Note that if the given path does not exist on the state, it will be created.
 
@@ -54,7 +56,7 @@ Read more at the [updatePath docs](../src/updatePath/README.md).
 
 ### setter()
 
-Set a single field.
+Set a single value.
 
 #### Equivalent code
 
@@ -103,7 +105,7 @@ export default function Pagination() {
 
 ### setterSync
 
-Set a single field synchronously.
+Set a single value synchronously.
 
 stores/postsStore.js
 
@@ -139,7 +141,7 @@ export default function PostsSearch() {
 
 ### setterInput
 
-Set a single field synchronously from an input's onChange event.
+Set a single value synchronously from an input's onChange event.
 
 #### Examples
 
@@ -173,7 +175,7 @@ export default function PostsSearch() {
 
 ### toggler
 
-Toggle the value of a field.
+Toggle a boolean value.
 
 #### Equivalent code
 
@@ -225,9 +227,173 @@ export default function PostText() {
 }
 ```
 
-### fieldTogglerSync
+### togglerSync
 
-Equivalent to fieldLToggler but synchronous.
+Equivalent to toggler but synchronous.
+
+### appender
+
+Add an item to an array.
+
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, newItem) => {
+    setState(old => (old[name] = [...old[name], newItem]));
+  },
+  [setState]
+);
+```
+
+#### Examples
+
+stores/todoStore.js
+
+```js
+import { Store, useStoreSelector } from 'react-thermals';
+import { appender } from 'react-thermals/actions';
+
+const todoStore = new Store({
+  state: { todos: [] },
+  actions: {
+    addTodo: appender('todos'),
+  },
+});
+
+export default todoStore;
+
+export function useTodos() {
+  return useStoreSelector(todoStore, 'todos');
+}
+```
+
+components/TodoList.jsx
+
+```jsx
+import { useRef, useCallback } from 'react';
+import todoStore from '../stores/todoStore.js';
+const { addTodo } = todoStore.actions;
+
+export default function TodoList() {
+  const inputRef = useRef();
+  const todos = useTodos();
+  const addItem = useCallback(() => {
+    addTodo({
+      text: inputRef.current.value,
+      done: false,
+    });
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  }, [inputRef]);
+  return (
+    <>
+      <input ref={inputRef} placeholder="Enter task..." />
+      <button onClick={addTodo}>Add</button>
+      <ul>
+        {todos.map(todo => (
+          <li>
+            {todo.done ? '[x]' : '[ ]'} {todo.text}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+### appenderSync
+
+Equivalent to appender but synchronous.
+
+### remover
+
+Remove an item from an array.
+
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, itemToRemove) => {
+    setState(old => {
+      return old[name].filter(item => {
+        return item !== itemToRemove;
+      });
+    });
+  },
+  [setState]
+);
+```
+
+#### Examples
+
+stores/todoStore.js
+
+```js
+import { Store, useStoreSelector } from 'react-thermals';
+import { appender } from 'react-thermals/actions';
+
+const todoStore = new Store({
+  state: { todos: [] },
+  actions: {
+    addTodo: appender('todos'),
+    deleteTodo: remover('todos'),
+  },
+});
+
+export default todoStore;
+
+export function useTodos() {
+  return useStoreSelector(todoStore, 'todos');
+}
+```
+
+components/TodoList.jsx
+
+```jsx
+import { useRef, useCallback } from 'react';
+import todoStore from '../stores/todoStore.js';
+const { addTodo, deleteTodo } = todoStore.actions;
+
+export default function TodoList() {
+  const inputRef = useRef();
+  const todos = useTodos();
+  const addItem = useCallback(() => {
+    addTodo({
+      text: inputRef.current.value,
+      done: false,
+    });
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  }, [inputRef]);
+  return (
+    <>
+      <input ref={inputRef} placeholder="Enter task..." />
+      <button onClick={addTodo}>Add</button>
+      <ul>
+        {todos.map(todo => (
+          <li>
+            {todo.done ? '[x]' : '[ ]'} {todo.text}
+            <span onClick={() => deleteTodo(todo)}>[Delete]</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+### removerSync
+
+Equivalent to remover but synchronous.
+
+### replacer
+
+### replacerSync
+
+Equivalent to replacer but synchronous.
 
 ### adder
 
@@ -323,160 +489,8 @@ export default function GamePad() {
 
 Equivalent to adder but synchronous.
 
-### appender
+### merger
 
-Add an item to an array.
+### mergerSync
 
-#### Equivalent code
-
-```jsx
-const [state, setState] = useState({});
-const setField = useCallback(
-  (name, newItem) => {
-    setState(old => (old[name] = [...old[name], newItem]));
-  },
-  [setState]
-);
-```
-
-#### Examples
-
-stores/todoStore.js
-
-```js
-import { Store, useStoreSelector } from 'react-thermals';
-import { appender } from 'react-thermals/actions';
-
-const todoStore = new Store({
-  state: { todos: [] },
-  actions: {
-    addTodo: appender('todos'),
-  },
-});
-
-export default todoStore;
-
-export function useTodos() {
-  return useStoreSelector(todoStore, 'todos');
-}
-```
-
-components/TodoList.jsx
-
-```jsx
-import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore.js';
-const { addTodo } = todoStore.actions;
-
-export default function TodoList() {
-  const inputRef = useRef();
-  const todos = useTodos();
-  const addItem = useCallback(() => {
-    addTodo({
-      text: inputRef.current.value,
-      done: false,
-    });
-    inputRef.current.value = '';
-    inputRef.current.focus();
-  }, [inputRef]);
-  return (
-    <>
-      <input ref={inputRef} placeholder="Enter task..." />
-      <button onClick={addTodo}>Add</button>
-      <ul>
-        {todos.map(todo => (
-          <li>
-            {todo.done ? '[x]' : '[ ]'} {todo.text}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-```
-
-### fieldAppenderSync
-
-Equivalent to appender but synchronous.
-
-### fieldRemover
-
-Remove an item from an array.
-
-#### Equivalent code
-
-```jsx
-const [state, setState] = useState({});
-const setField = useCallback(
-  (name, itemToRemove) => {
-    setState(old => {
-      return old[name].filter(item => {
-        return item !== itemToRemove;
-      });
-    });
-  },
-  [setState]
-);
-```
-
-#### Examples
-
-stores/todoStore.js
-
-```js
-import { Store, useStoreSelector } from 'react-thermals';
-import { appender } from 'react-thermals/actions';
-
-const todoStore = new Store({
-  state: { todos: [] },
-  actions: {
-    addTodo: appender('todos'),
-    deleteTodo: fieldRemover('todos'),
-  },
-});
-
-export default todoStore;
-
-export function useTodos() {
-  return useStoreSelector(todoStore, 'todos');
-}
-```
-
-components/TodoList.jsx
-
-```jsx
-import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore.js';
-const { addTodo, deleteTodo } = todoStore.actions;
-
-export default function TodoList() {
-  const inputRef = useRef();
-  const todos = useTodos();
-  const addItem = useCallback(() => {
-    addTodo({
-      text: inputRef.current.value,
-      done: false,
-    });
-    inputRef.current.value = '';
-    inputRef.current.focus();
-  }, [inputRef]);
-  return (
-    <>
-      <input ref={inputRef} placeholder="Enter task..." />
-      <button onClick={addTodo}>Add</button>
-      <ul>
-        {todos.map(todo => (
-          <li>
-            {todo.done ? '[x]' : '[ ]'} {todo.text}
-            <span onClick={() => deleteTodo(todo)}>[Delete]</span>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-```
-
-### fieldRemoverSync
-
-Equivalent to fieldRemover but synchronous.
+Equivalent to merger but synchronous.

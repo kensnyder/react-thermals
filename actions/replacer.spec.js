@@ -1,44 +1,55 @@
-import createStore from '../src/createStore/createStore.js';
+import Store from '../src/Store/Store.js';
 import { replacer, replacerSync } from './replacer.js';
-
-function getTestStore(initialState) {
-  return createStore({ state: initialState });
-}
 
 describe('replacer()', () => {
   it('should update a single item with an updater', async () => {
-    const todos = [
-      { text: 'item 0', isComplete: true },
-      { text: 'item 1', isComplete: false },
+    const players = [
+      { name: 'Michael Jordan', jersey: '23' },
+      { name: 'Steve Nash', jersey: '13' },
     ];
-    const store = getTestStore({ todos });
-    const updateTodo = replacer('todos').bind(store);
-    updateTodo(todos[1], todo => ({
-      ...todo,
-      isComplete: true,
-    }));
+    const store = new Store({
+      state: {
+        players,
+      },
+      actions: {
+        substitutePlayer: replacer('players'),
+      },
+    });
+    store.actions.substitutePlayer(players[0], {
+      name: 'Kobe Bryant',
+      jersey: '24',
+    });
     await new Promise(r => setTimeout(r, 15));
-    expect(store.getState().todos).toEqual([
-      { text: 'item 0', isComplete: true },
-      { text: 'item 1', isComplete: true },
+    expect(store.getState().players).toEqual([
+      { name: 'Kobe Bryant', jersey: '24' },
+      { name: 'Steve Nash', jersey: '13' },
     ]);
   });
 });
+
 describe('replacerSync()', () => {
-  it('should update a single item synchronously with an updater', () => {
-    const todos = [
-      { text: 'item 1', isComplete: true },
-      { text: 'item 2', isComplete: false },
+  it('should update a single item with an updater', () => {
+    const players = [
+      { name: 'Michael Jordan', jersey: '23' },
+      { name: 'Steve Nash', jersey: '13' },
     ];
-    const store = getTestStore({ todos });
-    const updateTodo = replacerSync('todos').bind(store);
-    updateTodo(todos[1], todo => ({
-      ...todo,
-      isComplete: true,
-    }));
-    expect(store.getState().todos).toEqual([
-      { text: 'item 1', isComplete: true },
-      { text: 'item 2', isComplete: true },
+    const store = new Store({
+      state: {
+        team: {
+          players,
+        },
+      },
+      actions: {
+        substitutePlayer: replacerSync('team.players'),
+      },
+    });
+    store.actions.substitutePlayer(players[0], {
+      name: 'Kobe Bryant',
+      jersey: '24',
+    });
+    expect(store.getState().team.players).toEqual([
+      { name: 'Kobe Bryant', jersey: '24' },
+      { name: 'Steve Nash', jersey: '13' },
     ]);
   });
 });
