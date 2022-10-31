@@ -42,15 +42,11 @@ export default function useStoreSelector(
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
+    setPartialState.mapState = map;
+    setPartialState.equalityFn = isEqual;
     store._subscribe(setPartialState);
     return () => store._unsubscribe(setPartialState);
   }, [store, setPartialState]);
-
-  // update the mapState and equalityFn that are registered
-  useEffect(() => {
-    setPartialState.mapState = map;
-    setPartialState.equalityFn = isEqual;
-  }, [setPartialState, map, isEqual]);
 
   // return that slice or whole bit of state
   return partialState;

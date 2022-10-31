@@ -2,13 +2,11 @@ import withFlushSync from './withFlushSync.js';
 import shallowOverride from '../src/shallowOverride/shallowOverride.js';
 import { deepUpdater } from '../src/deepUpdater/deepUpdater.js';
 
-export function sliceUpdater(path, updaterFunction = undefined) {
-  if (typeof updaterFunction !== 'function') {
-    updaterFunction = shallowOverride;
-  }
-  const sliceUpdate = deepUpdater(path, updaterFunction);
+// TODO: rename to fieldMerger
+export function sliceUpdater(path) {
+  const merger = deepUpdater(path, shallowOverride);
   return function updater(...moreArgs) {
-    this.setState(old => sliceUpdate(old, ...moreArgs));
+    this.setState(old => merger(old, ...moreArgs));
   };
 }
 

@@ -1,15 +1,28 @@
+import getPathedState from './getPathedState.js';
 const identity = state => state;
 
+/**
+ * Return a function that derives information from state
+ * @param {String|Number|Array|Function|null|undefined} mapState  One of the following:
+ *   String with a property name or path (e.g. 'user' or 'user.permission')
+ *   Number for root state that is just an array
+ *   Array of mapState values
+ *   Function that is already a mapperFunction
+ *   null|undefined to return the full state
+ * @return {Function}
+ */
 export default function getMapperFunction(mapState) {
-  if (typeof mapState === 'string' || typeof mapState === 'number') {
+  if (typeof mapState === 'string') {
+    if (mapState.includes('.')) {
+      return getPathedState(mapState);
+    }
+    return state => state[mapState];
+  } else if (typeof mapState === 'number') {
     return state => state[mapState];
   } else if (Array.isArray(mapState)) {
+    const mappers = mapState.map(getMapperFunction);
     return state => {
-      const sliced = {};
-      for (const field of mapState) {
-        sliced[field] = state[field];
-      }
-      return sliced;
+      return mappers.map(mapper => mapper(state));
     };
   } else if (typeof mapState === 'function') {
     return mapState;
@@ -17,7 +30,7 @@ export default function getMapperFunction(mapState) {
     return identity;
   } else {
     throw new Error(
-      'react-thermals: "mapState" function must be a function, string, number, array, or null.'
+      'react-thermals: "mapState" function must be a function, string, number, array, null, or undefined.'
     );
   }
 }

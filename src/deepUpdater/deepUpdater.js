@@ -1,4 +1,5 @@
 import shallowCopy from '../shallowCopy/shallowCopy.js';
+import getTransformerRunner from './getTransformerRunner.js';
 
 /**
  * Deep updater takes a path and a transformer and returns a function
@@ -120,39 +121,5 @@ export function deepUpdater(path, transform = undefined) {
       }
     }
     return copy;
-  }
-}
-
-function getTransformerRunner(transform) {
-  if (
-    Array.isArray(transform) &&
-    transform.every(t => typeof t === 'function')
-  ) {
-    // run each transform function in sequence
-    return function pipeTransforms(old, ...args) {
-      for (const fn of transform) {
-        old = fn(old, ...args);
-      }
-      return old;
-    };
-  } else if (typeof transform === 'function') {
-    // run transform directly
-    return function runTransform(old, newValue, ...args) {
-      if (typeof newValue === 'function') {
-        newValue = newValue(old, ...args);
-      }
-      return transform(old, newValue, ...args);
-    };
-  } else if (transform === undefined) {
-    // transform is an object or primitive: ignore the old value and always
-    // use the new value. Or if new value is a function, use it to transform
-    // the old value
-    return function setValue(old, newValue) {
-      return typeof newValue === 'function' ? newValue(old) : newValue;
-    };
-  } else {
-    throw new Error(
-      'react-thermals: deepUpdater(path,transform) - transform must be a function, an array of functions or undefined'
-    );
   }
 }

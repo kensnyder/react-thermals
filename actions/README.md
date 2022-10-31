@@ -1,19 +1,80 @@
-## Action Creators
+# Action Creators
 
 Actions that get, set, and append state values can be generated automatically.
 
-1. [fieldSetter](#fieldsetter)
-2. [fieldListSetter](#fieldlistsetter)
-3. [fieldToggler](#fieldtoggler)
-4. [fieldAdder](#fieldadder)
-5. [fieldAppender](#fieldappender)
-6. [fieldRemover](#fieldremover)
+1. [Introduction](#introduction)
+2. [Properties and Paths](#properties-and-paths)
+3. [Documentation and Examples](#documentation-and-examples)
+   1. [fieldSetter](#fieldsetter) - Set a single field value
+   2. [fieldToggler](#fieldtoggler) - Toggle a field value
+   3. [fieldAppender](#fieldappender) - Append an item to a list
+   4. [fieldRemover](#fieldremover) - Remove an item from a list
+   5. [fieldItemUpdater](#fielditemupdater) - Update an item in a list
+   6. [fieldListSetter](#fieldlistsetter) - Set a group of field values
+   7. [fieldAdder](#fieldadder) - Add or subtract from a field value
+   8. [fieldMerger](#fieldmerger) - Merge values into an object
 
-### fieldSetter
+## Introduction
+
+All setters have a "Sync" equivalent which synchronously updates state. That may
+be desirable in situation such as controlled form input values.
+
+## Properties and Paths
+
+Each of the action creators can operate on a single property, a path to a
+property, or a path that matches multiple properties.
+
+Some examples of valid paths:
+
+- `user` - The value of user property
+- `user.name` - The name property on the user object
+- `users[2].id` - The id of the 3rd user object
+- `users.2.id` - (same as above)
+- `users[*].isActive` - The isActive property of every user object
+- `users.*.isActive` - (same as above)
+- `books[*].authors[*].name` - The name of property of every author object
+  within every book object
+- `@` - The entire state value
+- `@*` - Each item in the array (e.g. when the entire state is an Array)
+- `@*.id` - The id of each item in the array (e.g. when the entire state is an
+  Array of items)
+
+Note that if the given path does not exist on the state, it will be created.
+
+For example, if the state is `{}` and you set `colors.primary` to `#f00` you
+will end up with a state value of `{ colors: { primary: '#f00' } }`.
+
+The function that creates state update functions is called `deepUpdater`. If
+you'd like to use it directly, you can import it from `react-thermals/actions`:
+
+`import { deepUpdater } from 'react-thermals/actions';`
+
+Read more at the [deepUpdater docs](../src/deepUpdater/README.md).
+
+## Documentation and Examples
+
+### fieldSetter()
 
 Set a single field.
 
-```tsx
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, value) => {
+    setState(old => ({
+      ...old,
+      [name]: value,
+    }));
+  },
+  [setState]
+);
+```
+
+#### Examples
+
+```jsx
 // In /stores/postsStore.ts
 import { Store } from 'react-thermals';
 import { fieldSetter } from 'react-thermals/actions';
@@ -28,8 +89,8 @@ const postsStore = new Store({
 export default postsStore;
 
 // In components/PostsPagination.tsx
-import postsStore from '../stores/postsStore';
-const { setPage } = store.actions;
+import postsStore from '../stores/postsStore.js';
+const { setPage } = postsStore.actions;
 export default function Pagination() {
   return (
     <>
@@ -45,27 +106,35 @@ export default function Pagination() {
 
 Set a single field synchronously.
 
-```jsx harmony
+stores/postsStore.js
+
+```jsx
 import { createStore, useStoreSelector } from 'react-thermals';
 import { fieldSetterSync } from 'react-thermals/actions';
 const postsStore = new Store({
   state: {
-    search: '',
+    searchTerm: '',
   },
   actions: {
-    setSearch: fieldSetterSync('search'),
+    setSearchTerm: fieldSetterSync('searchTerm'),
   },
 });
 export default postsStore;
+```
 
-// Then in PostsSearch.jsx
-import postsStore from '../stores/postsStore';
-const { setSearch } = postsStore.actions;
+components/PostsSearch.jsx
+
+```jsx
+import postsStore from '../stores/postsStore.js';
+const { setSearchTerm } = postsStore.actions;
 export default function PostsSearch() {
-    const search = useStoreSelector(postsStore, 'search');
-    return (
-        <input value={search} onChange={evt => setSearch(evt.target.value)} />
-    );
+  const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
+  return (
+    <input
+      value={searchTerm}
+      onChange={evt => setSearchTerm(evt.target.value)}
+    />
+  );
 }
 ```
 
@@ -73,73 +142,170 @@ export default function PostsSearch() {
 
 Set a single field synchronously from an input's onChange event.
 
-```jsx harmony
-import { createStore, useStoreSelector } from 'react-thermals';
-import { fieldSetterInput } from 'react-thermals/actions';
+#### Examples
 
-const store = new Store({
+stores/postsStore.js
+
+```jsx
+import { createStore, useStoreSelector } from 'react-thermals';
+import { fieldSetterSync } from 'react-thermals/actions';
+const postsStore = new Store({
   state: {
-    search: '',
+    searchTerm: '',
   },
   actions: {
-    setSearch: fieldSetterInput('search'),
+    setSearchTerm: fieldSetterInput('searchTerm'),
   },
 });
-// Then in Component.jsx
-const { setSearch } = store.setSearch;
-const search = useStoreSelector(store, 'search');
-<input value={search} onChange={fieldSetterInput} />;
+export default postsStore;
 ```
 
-### fieldListSetter & fieldListSetterSync
+components/PostsSearch.jsx
+
+```jsx
+import postsStore from '../stores/postsStore.js';
+const { setSearchTerm } = postsStore.actions;
+export default function PostsSearch() {
+  const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
+  return <input value={searchTerm} onChange={setSearchTerm} />;
+}
+```
+
+### fieldListSetter
 
 Set a list of fields.
 
-```jsx harmony
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (names, values) => {
+    setState(old => {
+      const next = { ...old };
+      for (let i = 0; i < names.length; i++) {
+        next[names[i]] = values[i];
+      }
+      return next;
+    });
+  },
+  [setState]
+);
+```
+
+```jsx
 import { Store } from 'react-thermals';
 import { fieldListSetter } from 'react-thermals/actions';
 
-const store = new Store({
+const userStore = new Store({
   state: { fname: '', lname: '' },
   actions: {
     setName: fieldListSetter(['fname', 'lname']),
   },
 });
-// Then in Component:
-const { setName } = store.actions;
-<button onClick={() => setName('George', 'Jetson')}>
-  Change name to George Jetson
-</button>;
+
+export default userStore;
 ```
 
-### fieldToggler & fieldTogglerSync
+components/CharacterName.jsx
 
-Set a list of fields.
+```jsx
+import userStore from '../stores/userStore.js';
+const { setName } = userStore.actions;
+export default function CharacterName() {
+  return (
+    <button onClick={() => setName('George', 'Jetson')}>
+      Change name to George Jetson
+    </button>
+  );
+}
+```
+
+### fieldListSetterSync
+
+Equivalent to fieldListSetter but synchronous.
+
+### fieldToggler
+
+Toggle the value of a field.
+
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  name => {
+    setState(old => (old[name] = !old[name]));
+  },
+  [setState]
+);
+```
 
 ```jsx harmony
-import { Store } from 'react-thermals';
+import { Store, useStoreSelector } from 'react-thermals';
 import { fieldToggler } from 'react-thermals/actions';
 
-const store = new Store({
-  state: { showStats: false },
+const postsStore = new Store({
+  state: { showDetails: false },
   actions: {
-    toggleStats: fieldToggler('showStats'),
+    toggleDetails: fieldToggler('showDetails'),
   },
 });
-// Then in Component:
-const { toggleStats } = store.actions;
-<button onClick={toggleStats}>Show/Hide stats</button>;
+
+export default postsStore;
+
+export function usePostsStore(selector) {
+  return useStoreSelector(postsStore, selector);
+}
 ```
 
-### fieldAdder & fieldAdderSync
+components/PostText.jsx
+
+```jsx
+import postsStore, { usePostsStore } from '../stores/postsStore.js';
+const { toggleDetails } = postsStore.actions;
+
+export default function PostText() {
+  const showDetails = usePostsStore(state => state.showDetails);
+  return (
+    <>
+      <p>Summary text</p>
+      {showDetails && <p>Details text</p>}
+      <button onClick={toggleDetails}>
+        {showDetails ? 'Hide' : 'Show'} details
+      </button>
+    </>
+  );
+}
+```
+
+### fieldTogglerSync
+
+Equivalent to fieldLToggler but synchronous.
+
+### fieldAdder
 
 Add or subtract from a given field.
+
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, addend) => {
+    setState(old => (old[name] = old[name] + addend));
+  },
+  [setState]
+);
+```
+
+In stores/gameStore.js
 
 ```jsx harmony
 import { Store } from 'react-thermals';
 import { fieldAdder } from 'react-thermals/actions';
 
-const store = new Store({
+const gameStore = new Store({
   state: { x: 0, y: 0 },
   actions: {
     moveUp: fieldAdder('y', 1),
@@ -148,73 +314,223 @@ const store = new Store({
     moveLeft: fieldAdder('x', -1),
   },
 });
-// Then in Component:
-const { moveUp, moveDown, moveRight, moveLeft } = store.actions;
-<button onClick={moveUp}>⬆︎</button>;
-<button onClick={moveDown}>⬇︎︎</button>;
-<button onClick={moveRight}>➡︎</button>;
-<button onClick={moveLeft}>⬅︎</button>;
+
+export default gameStore;
 ```
 
-Or allow handler to add or subtract from a given field.
+components/GamePad.jsx
+
+```jsx
+import gameStore from '../stores/gameStore.js';
+const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
+
+export default function GamePad() {
+  return (
+    <>
+      <button onClick={moveUp}>⬆︎</button>
+      <button onClick={moveDown}>⬇︎︎</button>
+      <button onClick={moveRight}>➡︎</button>
+      <button onClick={moveLeft}>⬅︎</button>
+    </>
+  );
+}
+```
+
+Or allow pass the addend later.
+
+stores/gameStore.js
 
 ```jsx harmony
 import { Store } from 'react-thermals';
 import { fieldAdder } from 'react-thermals/actions';
 
-const store = new Store({
+const gameStore = new Store({
   state: { x: 0, y: 0 },
   actions: {
     vertical: fieldAdder('y'),
     horizontal: fieldAdder('x'),
   },
 });
-// Then in Component:
-const { moveUp, moveDown, moveRight, moveLeft } = store.actions;
-<button onClick={() => vertical(-1)}>⬆︎</button>;
-<button onClick={() => vertical(1)}>⬇︎︎</button>;
-<button onClick={() => horizontal(1)}>➡︎</button>;
-<button onClick={() => horizontal(-1)}>⬅︎</button>;
+
+export default gameStore;
 ```
 
-### fieldAppender & fieldAppenderSync
+components/GamePad.jsx
+
+```jsx
+import gameStore from '../stores/gameStore.js';
+const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
+
+export default function GamePad() {
+  return (
+    <>
+      <button onClick={() => vertical(-1)}>⬆︎</button>
+      <button onClick={() => vertical(1)}>⬇︎︎</button>
+      <button onClick={() => horizontal(1)}>➡︎</button>
+      <button onClick={() => horizontal(-1)}>⬅︎</button>
+    </>
+  );
+}
+```
+
+### fieldAdderSync
+
+Equivalent to fieldListSetter but synchronous.
+
+### fieldAppender
 
 Add an item to an array.
 
-```jsx harmony
-import { Store } from 'react-thermals';
+#### Equivalent code
+
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, newItem) => {
+    setState(old => (old[name] = [...old[name], newItem]));
+  },
+  [setState]
+);
+```
+
+#### Examples
+
+stores/todoStore.js
+
+```js
+import { Store, useStoreSelector } from 'react-thermals';
 import { fieldAppender } from 'react-thermals/actions';
 
-const store = new Store({
+const todoStore = new Store({
   state: { todos: [] },
   actions: {
     addTodo: fieldAppender('todos'),
   },
 });
-// Then in Component:
-const { addTodo } = store.actions;
-<button onClick={() => addTodo({ text: 'Wash the Car', done: false })}>
-  Wash the Car
-</button>;
+
+export default todoStore;
+
+export function useTodos() {
+  return useStoreSelector(todoStore, 'todos');
+}
 ```
 
-### fieldRemover & fieldRemoverSync
+components/TodoList.jsx
+
+```jsx
+import { useRef, useCallback } from 'react';
+import todoStore from '../stores/todoStore.js';
+const { addTodo } = todoStore.actions;
+
+export default function TodoList() {
+  const inputRef = useRef();
+  const todos = useTodos();
+  const addItem = useCallback(() => {
+    addTodo({
+      text: inputRef.current.value,
+      done: false,
+    });
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  }, [inputRef]);
+  return (
+    <>
+      <input ref={inputRef} placeholder="Enter task..." />
+      <button onClick={addTodo}>Add</button>
+      <ul>
+        {todos.map(todo => (
+          <li>
+            {todo.done ? '[x]' : '[ ]'} {todo.text}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+### fieldAppenderSync
+
+Equivalent to fieldAppender but synchronous.
+
+### fieldRemover
 
 Remove an item from an array.
 
-```jsx harmony
-import { Store } from 'react-thermals';
-import { fieldRemover } from 'react-thermals/actions';
+#### Equivalent code
 
-const store = new Store({
-  state: { todos: ['Eat more pie'] },
+```jsx
+const [state, setState] = useState({});
+const setField = useCallback(
+  (name, itemToRemove) => {
+    setState(old => {
+      return old[name].filter(item => {
+        return item !== itemToRemove;
+      });
+    });
+  },
+  [setState]
+);
+```
+
+#### Examples
+
+stores/todoStore.js
+
+```js
+import { Store, useStoreSelector } from 'react-thermals';
+import { fieldAppender } from 'react-thermals/actions';
+
+const todoStore = new Store({
+  state: { todos: [] },
   actions: {
+    addTodo: fieldAppender('todos'),
     deleteTodo: fieldRemover('todos'),
   },
 });
-// Then in Component:
-const { deleteTodo } = store.actions;
-<button onClick={() => deleteTodo('Eat more pie')}>
-  Delete "Eat more pie"
-</button>;
+
+export default todoStore;
+
+export function useTodos() {
+  return useStoreSelector(todoStore, 'todos');
+}
 ```
+
+components/TodoList.jsx
+
+```jsx
+import { useRef, useCallback } from 'react';
+import todoStore from '../stores/todoStore.js';
+const { addTodo, deleteTodo } = todoStore.actions;
+
+export default function TodoList() {
+  const inputRef = useRef();
+  const todos = useTodos();
+  const addItem = useCallback(() => {
+    addTodo({
+      text: inputRef.current.value,
+      done: false,
+    });
+    inputRef.current.value = '';
+    inputRef.current.focus();
+  }, [inputRef]);
+  return (
+    <>
+      <input ref={inputRef} placeholder="Enter task..." />
+      <button onClick={addTodo}>Add</button>
+      <ul>
+        {todos.map(todo => (
+          <li>
+            {todo.done ? '[x]' : '[ ]'} {todo.text}
+            <span onClick={() => deleteTodo(todo)}>[Delete]</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+```
+
+### fieldRemoverSync
+
+Equivalent to fieldRemover but synchronous.

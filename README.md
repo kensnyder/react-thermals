@@ -2,9 +2,9 @@
 
 # React Thermals
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.9)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.9)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.9)](https://opensource.org/licenses/ISC)
+[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.10)](https://ci.appveyor.com/project/kensnyder/react-thermals)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.10)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.10)](https://opensource.org/licenses/ISC)
 
 Simple and extensible way to manage state in React
 
@@ -15,33 +15,27 @@ npm install react-thermals
 ## Table of contents
 
 1. [Features](#features)
-2. [Example Usage](#example-usage)
+2. [Selectors](#selectors)
+3. [Example Usage](#example-usage)
    1. [Global state example](#global-state-example)
    2. [Simple example](#simple-example)
    3. [Complex example](#complex-example)
-3. [Writing Actions](#writing-actions)
-4. [Action Creators](#action-creators)
-   1. [fieldSetter](#fieldsetter)
-   2. [fieldListSetter](#fieldlistsetter)
-   3. [fieldToggler](#fieldtoggler)
-   4. [fieldAdder](#fieldadder)
-   5. [fieldAppender](#fieldappender)
-   6. [fieldRemover](#fieldremover)
-5. [All Store Options](#all-store-options)
-6. [Suggested File Structure](#suggested-file-structure)
-7. [Events](#events)
-8. [Plugins](#plugins)
-   1. [consoleLogger](#consolelogger)
-   2. [observable](#observable)
-   3. [persistState](#persistState)
-   4. [syncUrl](#syncUrl)
-   5. [undo](#undo)
-   6. [How to write plugins](#how-to-write-plugins)
-9. [Credits](#credits)
+4. [Writing Actions](#writing-actions)
+5. [Action Creators](#action-creators)
+6. [Code splitting](#code-splitting)
+7. [Persistence](#persistence)
+8. [All Store Options](#all-store-options)
+9. [Suggested File Structure](#suggested-file-structure)
+10. [Testing stores](#testing-stores)
+11. [Events](#events)
+12. [Plugins](#plugins)
+13. [Middleware](#middleware)
+14. [Credits](#credits)
 
 ## Features
 
-1. Instead of dispatchers or observables, define simple action functions with no boilerplate
+1. Instead of dispatchers or observables, define simple action functions with no
+   boilerplate
 2. Components only re-render when relevant store state changes
 3. Store actions are easily testable
 4. Stores can respond to component lifecycle events including unmount
@@ -467,8 +461,7 @@ export default function StoryItem({ story }) {
 
 ## Writing actions
 
-For many actions, you can use helpers as defined in the
-[next section](#action-creators).
+For most actions, you can use helpers as documented [here](./actions/README.md).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
@@ -489,6 +482,36 @@ split. In React Thermals, code splitting happens naturally because components mu
 React Thermals are useful for global state, state that goes across components
 or even state that is local to a single component.
 
+## Action creators
+
+For common types of state changes, React Thermals has 8 functions that will
+create action functions. Supported state changes are:
+
+1. [Set a single field value](./actions/README.md#fieldsetter)
+2. [Toggle a field value](./actions/README.md#fieldtoggler)
+3. [Append an item to a list](./actions/README.md#fieldappender)
+4. [Remove an item from a list](./actions/README.md#fieldremover)
+5. [Update an item in a list](./actions/README.md#fielditemupdater)
+6. [Set a group of field values](./actions/README.md#fieldlistsetter)
+7. [Add or subtract from a field value](./actions/README.md#fieldadder)
+8. [Merge values into an object](./actions/README.md#fieldmerger)
+
+[Full docs here](./actions/README.md).
+
+## Code splitting
+
+## Persistence
+
+By default, a store's state value will persist even when all components unmount.
+To reset instead, add `autoReset: true` to the state definition.
+
+```js
+const myPersistingStore = new Store({
+  // ...
+  autoReset: true,
+});
+```
+
 ## All Store Options
 
 The `createStore()` function takes an object with the following properties:
@@ -496,7 +519,7 @@ The `createStore()` function takes an object with the following properties:
 - {Object} state - The store's initial state. It can be of any type.
 - {Object} actions - Named functions that can be dispatched by name and arguments.
 - {Boolean} autoReset - If true, reset the store when all consumer components
-  unmount
+  unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
 
 All callbacks receive the store as a parameter.
@@ -514,6 +537,38 @@ For reusable components or pages with private state, e.g. a header:
 - src/components/Header/Header.spec.js
 - src/components/Header/store/headerStore.js
 - src/components/Header/store/headerStore.spec.js
+
+## Testing stores
+
+Stores can be easily unit tested outside of a React Component.
+
+### Examples
+
+```js
+import myStore from './myStore.js';
+
+describe('myStore', () => {
+  it('should add to cart with addToCart(item)', () => {
+    myStore.setSync({ cart: [], total: 0 });
+    myStore.actions.addToCart({
+      id: 101,
+      name: 'White Shoe',
+      cost: 123,
+    });
+    myStore.flushSync();
+    expect(myStore.getState()).toEqual({
+      cart: [
+        {
+          id: 101,
+          name: 'White Shoe',
+          cost: 123,
+        },
+      ],
+      total: 123,
+    });
+  });
+});
+```
 
 ## Events
 
@@ -580,145 +635,54 @@ will affect what happens next
 
 ## Plugins
 
-The suite of events above allows powerful behavior using plugins. There are 5 included plugins:
+The suite of events above allows powerful behavior using plugins. There are 5
+included plugins:
 
-### consoleLogger
+1. [consoleLogger](#consolelogger) - Logs state changes to the console
+2. [observable](#observable) - Adds a subscribe function to turn store into a
+   observable subject
+3. [persistState](#persistState) - Persists state to localStorage or
+   sessionStorage
+4. [syncUrl](#syncUrl) - Persists state to URL using history API
+5. [undo](#undo) - Adds undo and redo capability to the store
 
-Log store lifecycle events to the console. Helpful for debugging timing or writing plugins.
+Interested in writing your own plugins? Check out
+[how to write plugins](#how-to-write-plugins).
 
-```js
-import consoleLogger from 'react-thermals/plugins/consoleLogger';
-// log all store events to console
-store.plugin(consoleLogger());
-// log all AfterUpdate events to console
-store.plugin(consoleLogger({ eventTypes: ['AfterUpdate'] }));
-```
+## Middleware
 
-### observable
+React Thermals has a simple middleware system. Often it is simpler to just
+subscribe to the `BeforeUpdate` event, but middleware is more intuitive to some
+people.
 
-Turn the store into an observable to observe state changes.
-
-```js
-import makeObservable from 'react-thermals/plugins/observable';
-const store = createStore(/*...*/);
-// turn store into an observable
-store.plugin(makeObservable());
-store.subscribe(observer);
-// observer.next(newState) called AfterUpdate
-// observer.error() called on SetterException
-// observer.complete() called AfterLastUnmount
-
-// or you can simply provide next, error, and complete functions
-store.subscribe(next, error, complete);
-```
-
-### persistState
-
-Read and save all or some store data to localStorage or sessionStorage.
-
-When first component mounts, load state or partial state from localStorage.
-When state is updated, save state or partial state to localStorage.
+### Examples
 
 ```js
-import persistState from 'react-thermals/plugins/persistState';
-const store = createStore({
-  state: { query: '', sort: 'name' },
-  // ...
+// observe the state but do not alter
+myStore.use((context, next) => {
+  context.prev; // the old state value
+  context.next; // the new state value
+  context.isAsync; // true if middleware is expected to call next right away
+  logToServer(context.next);
+  next();
 });
-// persist "sort" value to localStorage
-store.plugin(
-  persistState({
-    storage: localStorage,
-    fields: ['sort'], // save only "sort" to localStorage
-    key: 'user-search', // the localStorage key to store under
-  })
-);
-```
 
-### syncUrl
-
-Read and save all or some store data to the URL.
-
-When first component mounts, load state or partial state from the URL.
-When state is updated, save state or partial state to the URL.
-
-```js
-import qs from 'qs';
-import syncUrl from 'react-thermals/plugins/syncUrl';
-
-const store = createStore({
-  state: { query: '', page: 1, sort: 'name' },
-  // ...
+// alter the state
+myStore.use((context, next) => {
+  context.next = mockStore.next();
+  next();
 });
-store.plugin(
-  syncUrl({
-    // use history.replaceState to avoid back-button state
-    replace: true,
-    // save query and page to URL
-    schema: {
-      query: 'String',
-      page: 'Number', // when pulling from URL, parse as Number
-    },
-    // OPTIONAL:
-    // override the default use of URLSearchParams for serializing
-    // and deserializing
-    parse: qs.parse,
-    stringify: qs.stringify,
-  })
-);
-```
 
-Valid schema types:
-
-- `String and String[]`
-- `Number` and `Number[]`
-- `Date` and `Date[]`
-- `Boolean` and `Boolean[]`
-
-### undo
-
-Maintain an undo history and
-add .undo(), .redo(), .jump(), .jumpTo() methods to the store.
-
-```js
-import undo from 'react-thermals/plugins/undo';
-const store = createStore({
-  /* ... */
+// call next asynchronously
+myStore.use((context, next) => {
+  debounceState(context.next, next);
 });
-store.plugin(undo({ maxSize: 20 }));
-//...
-store.undo();
-store.redo();
-store.jumpTo(5);
-```
-
-## How to write plugins
-
-Here is an example plugin that loads and saves user settings.
-
-```js
-export default function syncUserSettings({ baseUrl }) {
-  return function plugin(store) {
-    store.on('AfterFirstMount', evt => {
-      fetch(`${baseUrl}/api/user/settings`)
-        .then(r => r.json())
-        .then(settings => {
-          store.mergeState({ settings });
-        });
-    });
-    store.on('AfterUpdate', evt => {
-      fetch({
-        method: 'POST',
-        url: `${baseUrl}/api/user/settings`,
-        data: evt.data.next.settings,
-      });
-    });
-  };
-}
 ```
 
 ## Credits
 
-Inspired by [@jhonnymichel's react-hookstore](https://github.com/jhonnymichel/react-hookstore/blob/6d23d2fcb0e7cf8a3929a01e0c543fe5e05ecf05/src/index.js)
+Inspired by
+[@jhonnymichel's react-hookstore](https://github.com/jhonnymichel/react-hookstore/blob/6d23d2fcb0e7cf8a3929a01e0c543fe5e05ecf05/src/index.js)
 
-Why version 4? React Thermals is an evolution of [react-create-use-store version 3](https://npmjs.com/package/react-create-use-store).
+Why start at version 4? React Thermals is an evolution of
+[react-create-use-store version 3](https://npmjs.com/package/react-create-use-store).

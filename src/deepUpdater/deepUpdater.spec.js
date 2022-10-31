@@ -91,6 +91,43 @@ describe('deepUpdater', () => {
       ],
     });
   });
+  it('should handle two asterisks deep', () => {
+    const state = {
+      books: [
+        {
+          title: 'JavaScript ABCs',
+          authors: [
+            { name: 'John A', rating: 2 },
+            { name: 'Kyle B', rating: 4 },
+          ],
+        },
+        {
+          title: 'Web Tech Rocks',
+          authors: [{ name: 'Owen C', rating: 5 }],
+        },
+      ],
+    };
+    const doubleRatings = deepUpdater(
+      'books.*.authors.*.rating',
+      old => old * 2
+    );
+    const updated = doubleRatings(state);
+    expect(updated).toEqual({
+      books: [
+        {
+          title: 'JavaScript ABCs',
+          authors: [
+            { name: 'John A', rating: 4 },
+            { name: 'Kyle B', rating: 8 },
+          ],
+        },
+        {
+          title: 'Web Tech Rocks',
+          authors: [{ name: 'Owen C', rating: 10 }],
+        },
+      ],
+    });
+  });
   it('should handle out-of-range array numbers', () => {
     const state = { todos: [{ text: 'one' }] };
     const setText = deepUpdater('todos.[1].text');
