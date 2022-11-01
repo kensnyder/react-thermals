@@ -14,4 +14,9 @@ export function merger(path) {
   };
 }
 
+/**
+ * Run merger and then flush pending state changes
+ * @param {String} path  The name of or path to the property to update
+ * @return {Function}  A function suitable for a store action
+ */
 export const mergerSync = withFlushSync(merger);

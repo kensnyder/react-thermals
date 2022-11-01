@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import useStoreSelector from '../useStoreSelector/useStoreSelector.js';
 
 /**
  * @param {Store} store - An instance of Store
@@ -6,28 +6,5 @@ import { useState, useEffect, useMemo } from 'react';
  *   Component when the state value changes
  */
 export default function useStoreState(store) {
-  // derive the initial state, in case plugins are injecting initial state
-  const initialState = useMemo(() => {
-    const initialState = store.getState();
-    if (store.getMountCount() === 0) {
-      const event = store.emit('BeforeInitialState', initialState);
-      if (event.data !== initialState) {
-        store.setSync(event.data);
-      }
-      return event.data;
-    }
-    return initialState;
-  }, [store]);
-
-  // use useState to get a method for triggering rerenders in consumer components
-  const [state, setState] = useState(initialState);
-
-  // on first mount, save that setState method as a trigger
-  useEffect(() => {
-    store._subscribe(setState);
-    return () => store._unsubscribe(setState);
-  }, [store, setState]);
-
-  // return the current state
-  return state;
+  return useStoreSelector(store, state => state);
 }

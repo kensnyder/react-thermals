@@ -14,45 +14,73 @@ declare module "src/PreventableEvent/PreventableEvent" {
 }
 declare module "src/Emitter/Emitter" {
     export default class Emitter {
-        constructor(context?: any);
-        _handlers: {
-            '*': any[];
-        };
-        _context: any;
-        on(type: any, handler: any): any;
-        off(type: any, handler: any): any;
-        once(type: any, handler: any): any;
+        on(type: any, handler: any): Emitter;
+        off(type: any, handler: any): Emitter;
+        once(type: any, handler: any): Emitter;
         emit(type: any, data?: any): PreventableEvent | {
             type: any;
             data: any;
         };
+        #private;
     }
     import PreventableEvent from "src/PreventableEvent/PreventableEvent";
 }
-declare module "src/createStore/createStore" {
+declare module "src/shallowCopy/shallowCopy" {
     /**
-     * Creates a new store
-     * @param {Object} [config] - An object containing the store setup
-     * @property {Object} [config.state] - The store's initial state. It can be of any type.
-     * @property {Object} [config.actions] - Named functions that can be dispatched by name and payload
-     * @property {Object} [config.options] - Metadata maintained by the store that does not trigger re-renders
-     * @property {Boolean} [config.autoReset] - If true, reset the store when all consumer components unmount
-     * @property {String} [config.id] - The id string for debugging
-     * @return {Object} store - Info and methods for working with the store
-     * @property {Function<Promise>} store.nextState - function that returns a Promise that resolves on next state value
-     * @property {Function} store.getState - Return the current state value
-     * @property {Object} store.actions - Methods that can be called to affect state
-     * @property {Function} store.setState - function to set a new state value
-     * @property {Function} store.mergeState - function to set a new state value
-     * @property {Function} store.reset - Reset the store's state to its original value
-     * @property {Function} store.getUsedCount - The number of components that have ever used this store
-     * @property {Function} store.plugin - Pass a plugin to extend the store's functionality
-     * @property {String} store.id - The id or number of the store
-     * @property {Number} store.idx - The index order of the store in order of definition
-     * @property {Function} store._subscribe - A method to add a setState callback that should be notified on changes
-     * @property {Function} store._unsubscribe - A method to remove a setState callback
+     * Copy a value shallowly
+     * @param {*} value  Any value, but often an object
+     * @return {*}  A copy of the value
      */
-    export default function createStore({ state: initialState, actions, options: _options, autoReset, id, }?: any): any;
+    export default function shallowCopy(value: any): any;
+}
+declare module "src/shallowOverride/shallowOverride" {
+    /**
+     * Create a copy of the given value, shallowly overriding properties
+     * @param {*} value  The value to copy
+     * @param {*} overrides  Override values to extend the copy
+     * @return {*}
+     */
+    export default function shallowOverride(value: any, overrides: any): any;
+}
+declare module "src/Store/Store" {
+    export default class Store extends Emitter {
+        constructor({ state: initialState, actions, options, autoReset, id, }?: {
+            state?: {};
+            actions?: {};
+            options?: {};
+            autoReset?: boolean;
+            id?: any;
+        });
+        actions: {};
+        id: string;
+        getState: () => {};
+        addActions: (actions: any) => Store;
+        setState: (newState: any) => Store;
+        mergeSync: (newState: any) => void;
+        setSync: (newState: any) => Store;
+        mergeState: (newState: any) => Store;
+        flushSync: () => {};
+        clone: (overrides?: {}) => Store;
+        reset: (withOverrides?: any) => Store;
+        nextState: () => Promise<any>;
+        getUsedCount: () => number;
+        hasInitialized: () => boolean;
+        getMountCount: () => number;
+        getOptions: () => {};
+        getOption: (name: any) => any;
+        setOptions: (newOptions: any) => Store;
+        setOption: (name: any, newValue: any) => Store;
+        plugin: (initializer: any) => {
+            initialized: boolean;
+            result: any;
+        };
+        getPlugins: () => any[];
+        use: (...middlewares: any[]) => Store;
+        _subscribe: (setState: any) => void;
+        _unsubscribe: (setState: any) => void;
+        #private;
+    }
+    import Emitter from "src/Emitter/Emitter";
 }
 declare module "src/defaultEqualityFn/defaultEqualityFn" {
     /**
@@ -64,36 +92,47 @@ declare module "src/defaultEqualityFn/defaultEqualityFn" {
      */
     export default function defaultEqualityFn(prev: any, next: any): boolean;
 }
+declare module "src/selectPath/selectPath" {
+    /**
+     * Build a function that will return state at a certain path
+     * @param {String} path  Path string such as "cart" or "cart.total"
+     * @return {Function}
+     */
+    export default function selectPath(path: string): Function;
+}
 declare module "src/getMapperFunction/getMapperFunction" {
-    export default function getMapperFunction(mapState: any): any;
+    /**
+     * Return a function that derives information from state
+     * @param {String|Number|Array|Function|null|undefined} mapState  One of the following:
+     *   String with a property name or path (e.g. 'user' or 'user.permission')
+     *   Number for root state that is just an array
+     *   Array of mapState values
+     *   Function that is already a mapperFunction
+     *   null|undefined to return the full state
+     * @return {Function}
+     */
+    export default function getMapperFunction(mapState: string | number | any[] | Function | null | undefined): Function;
 }
 declare module "src/useStoreSelector/useStoreSelector" {
     /**
      * @param {Object} store - A store created with createStore()
      * @param {Function|String|String[]} [mapState] - Function that returns a slice of data
      * @param {Function} [equalityFn] - Custom equality function that checks if state has change
-     * @return {Object} - tools for working with the store
-     * @property {*} state - The value in the store
-     * @property {Object} actions - functions defined by createStore
-     * @property {Function} reset - function to reset the store's state to its initial value
-     * @property {Function} nextState - function that returns a Promise that resolves on next state value
+     * @return {*} - The selected
      */
     export default function useStoreSelector(store: any, mapState?: Function | string | string[], equalityFn?: Function): any;
 }
 declare module "src/useStoreState/useStoreState" {
     /**
-     * @param {Object} store - A store created with createStore()
-     * @return {Object} - tools for working with the store
-     * @property {*} state - The value in the store
-     * @property {Object} actions - functions defined by createStore
-     * @property {Function} reset - function to reset the store's state to its initial value
-     * @property {Function} nextState - function that returns a Promise that resolves on next state value
+     * @param {Store} store - An instance of Store
+     * @return {Object} - The entire state value that will rerender the host
+     *   Component when the state value changes
      */
-    export default function useStoreState(store: any): any;
+    export default function useStoreState(store: Store): any;
 }
 declare module "index" {
-    import createStore from "src/createStore/createStore";
+    import Store from "src/Store/Store";
     import useStoreSelector from "src/useStoreSelector/useStoreSelector";
     import useStoreState from "src/useStoreState/useStoreState";
-    export { createStore, useStoreSelector, useStoreState };
+    export { Store, useStoreSelector, useStoreState };
 }

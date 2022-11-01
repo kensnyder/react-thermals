@@ -1,12 +1,10 @@
-<img alt="React Thermals Logo" src="./assets/glider-logotype.png" height="64" />
-
-# React Thermals
+<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png" height="64" />
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.10)](https://ci.appveyor.com/project/kensnyder/react-thermals)
 [![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.10)](https://codecov.io/gh/kensnyder/react-thermals)
 [![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.10)](https://opensource.org/licenses/ISC)
 
-Simple and extensible way to manage state in React
+A simple and extensible way to manage state in React
 
 ```bash
 npm install react-thermals
@@ -36,27 +34,26 @@ npm install react-thermals
 
 1. Instead of dispatchers or observables, define simple action functions with no
    boilerplate
-2. Components only re-render when relevant store state changes
-3. Store actions are easily testable
-4. Stores can respond to component lifecycle events including unmount
+2. Components only re-render when relevant state changes
+3. A store can be used by one component or many components
+4. Include stores by only the components that need them
+5. Stores persist data even if all consumers unmount (optional)
+6. Stores allow worry-free code splitting
+7. Store actions are easily testable
+8. Stores can respond to component lifecycle events including unmount
    (e.g. to abort fetching data)
-5. A store can be used by one component or many components
-6. Include stores by only the components that need them
-7. Stores can optionally persist data even if all consumers unmount
-8. Stores allow for worry-free code splitting
 
 ## Selectors
 
 Selectors ensure that components will re-render only when a relevant part of
 state changes.
 
-Selectors are a core concept in React Thermals. They work the same as selectors
-work in Redux and you can use libraries such as
-[reselect](https://www.npmjs.com/package/reselect) or
+Selectors work the same as selectors work in Redux and you can use libraries
+such as [reselect](https://www.npmjs.com/package/reselect) or
 [re-reselect](https://www.npmjs.com/package/re-reselect) with React Thermals to
-manage selectors.
-
-React Thermals can convert field names and field paths into selector functions.
+manage selectors. However, as you will see below, React Thermals supports path
+expressions and arrays of paths that often remove the need for complex
+selectors.
 
 ### Selector examples
 
@@ -101,28 +98,31 @@ const [subject, sender, recipientsEmails] = useStoreSelector(myStore, [
 ]);
 ```
 
+If your component would like to receive the entire state, you can utilize
+`useStoreSate(myStore)` which uses useStoreSelector but selects the whole state.
+
 ## Example usage
 
 ### Global state example
 
-In stores/appStore/appStore.js
+In stores/globalStore/globalStore.js
 
 ```js
-import { createStore, useStoreSelector } from 'react-thermals';
-const appStore = createStore();
-export default appStore;
-export function useAppState(selector) {
-  return useStoreSelector(appStore, selector);
-}
+import { Store, useStoreSelector } from 'react-thermals';
+const globalStore = new Store();
+
+export default globalStore;
 ```
 
-In stores/appStore/slices/todos.js
+In stores/globalStore/slices/todos.js
 
 ```js
-import appStore, { useAppState } from '../appStore.js';
-import persistState from 'react-thermals/plugins/persistState';
+import globalStore from '../globalStore.js';
+import { useStoreSelector } from 'react-thermals';
+import { persistState } from 'react-thermals/plugins';
 
-appStore.plugin(
+// add plugins to the root store at any time
+globalStore.plugin(
   persistState({
     storage: localStorage,
     key: 'myTodos',
@@ -130,29 +130,29 @@ appStore.plugin(
   })
 );
 
-export default function useTodos() {
-  return useAppState(state => state.todos);
-}
+// extend the state at any time
+globalStore.mergeSync({ todos: [] });
 
-appStore.mergeSync({ todos: [] });
-
-export const todoActions = {
-  add: appender('todos'),
-  toggleComplete: replacer('todos', todo => ({
-    ...todo,
+// add actions at any time
+export const todoActions = globalStore.addActions({
+  addTodo: appender('todos'),
+  toggleTodoComplete: merger('todos', todo => ({
     isComplete: !todo.isComplete,
   })),
-  remove: remover('todos'),
-};
+  removeTodo: remover('todos'),
+});
 
-appStore.addActions(todoActions);
+// you can provide a hook for conveniently selecting this state
+export function useTodos() {
+  return useStoreSelector('todos');
+}
 ```
 
 In components/Header.jsx
 
 ```js
 import React from 'react';
-import { useAppState } from '../appStore.js';
+import { useAppState } from '../globalStore.js';
 export default function Header() {
   const incompleteCount = useAppState(
     state => state.todos.filter(todo => !todo.isComplete).length
@@ -170,7 +170,7 @@ In components/TodoList.jsx
 
 ```js
 import React from 'react';
-import useTodos, { todoActions } from '../stores/appStore/slices/todos.js';
+import useTodos, { todoActions } from '../stores/globalStore/slices/todos.js';
 import NewTodoForm from './NewTodoForm.jsx';
 const { toggleComplete, remove } = todoActions;
 
@@ -201,7 +201,7 @@ In components/NewTodoForm.jsx
 
 ```js
 import React, { useCallback } from 'react';
-import { todoActions } from '../stores/appStore/slices/todos.js';
+import { todoActions } from '../stores/globalStore/slices/todos.js';
 const { add } = todoActions;
 
 export default function NewTodoForm() {
@@ -226,17 +226,17 @@ export default function NewTodoForm() {
 
 ---
 
-In stores/appStore/slices/auth.js
+In stores/globalStore/slices/auth.js
 
 ```js
-import appStore, { useAppState } from '../../appStore/appStore.js';
+import globalStore, { useAppState } from '../../globalStore/globalStore.js';
 import { setterInput } from 'react-thermals/actions';
 
 export default function useAuth() {
   return useAppState(state => state.user);
 }
 
-appStore.mergeSync({
+globalStore.mergeSync({
   user: {
     isLoggedIn: false,
     isCheckingLogin: false,
@@ -246,7 +246,7 @@ appStore.mergeSync({
 export const authActions = {
   async login(form) {
     const formData = Object.fromEntries(new FormData(form));
-    appStore.mergeState({
+    globalStore.mergeState({
       user: {
         isLoggedIn: false,
         isCheckingLogin: true,
@@ -254,7 +254,7 @@ export const authActions = {
     });
     const { data } = axios.post('/api/users/login', formData);
     localStorage.setItem('jwt', data.jwt);
-    appStore.mergeState({
+    globalStore.mergeState({
       user: {
         ...data.user,
         isLoggedIn: true,
@@ -264,7 +264,7 @@ export const authActions = {
   },
 };
 
-appStore.addActions(authActions);
+globalStore.addActions(authActions);
 ```
 
 In components/Login/Login.jsx
@@ -571,19 +571,18 @@ const myPersistingStore = new Store({
 
 ## All Store Options
 
-The `createStore()` function takes an object with the following properties:
+The `Store()` constructor takes an object with the following properties:
 
 - {Object} state - The store's initial state. It can be of any type.
 - {Object} actions - Named functions that can be dispatched by name and arguments.
+- {Object} options - Options that setters, plugins or event listeners might look for
 - {Boolean} autoReset - If true, reset the store when all consumer components
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
 
-All callbacks receive the store as a parameter.
-
 ## Suggested File Structure
 
-For shared stores, e.g. a theme store:
+For global or shared stores, e.g. a theme store:
 
 - src/stores/theme/themeStore.js
 - src/stores/theme/themeStore.spec.js
@@ -695,16 +694,16 @@ will affect what happens next
 The suite of events above allows powerful behavior using plugins. There are 5
 included plugins:
 
-1. [consoleLogger](#consolelogger) - Logs state changes to the console
-2. [observable](#observable) - Adds a subscribe function to turn store into a
+1. [consoleLogger](./plugins/README.md#consolelogger) - Logs state changes to the console
+2. [observable](./plugins/README.md#observable) - Adds a subscribe function to turn store into a
    observable subject
-3. [persistState](#persistState) - Persists state to localStorage or
+3. [persistState](./plugins/README.md#persiststate) - Persists state to localStorage or
    sessionStorage
-4. [syncUrl](#syncUrl) - Persists state to URL using history API
-5. [undo](#undo) - Adds undo and redo capability to the store
+4. [syncUrl](./plugins/README.md#syncurl) - Persists state to URL using history API
+5. [undo](./plugins/README.md#undo) - Adds undo and redo capability to the store
 
 Interested in writing your own plugins? Check out
-[how to write plugins](#how-to-write-plugins).
+[how to write plugins](./plugins/README.md#how-to-write-plugins).
 
 ## Middleware
 

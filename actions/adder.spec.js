@@ -28,6 +28,13 @@ describe('adder(propName, amount)', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ post: { likes: 0, mode: 'view' } });
   });
+  it('should allow passing addend', async () => {
+    const store = getTestStore({ cart: { total: 42 } });
+    const addToTotal = adder('cart.total').bind(store);
+    addToTotal(2);
+    await new Promise(r => setTimeout(r, 15));
+    expect(store.getState()).toEqual({ cart: { total: 44 } });
+  });
 });
 describe('fieldAdderSync(propName, amount)', () => {
   it('should increment', () => {

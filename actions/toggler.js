@@ -7,7 +7,7 @@ import { updatePath } from '../src/updatePath/updatePath.js';
  * @return {Function}  A function suitable for a store action
  */
 export function toggler(path) {
-  const toggle = updatePath(path, function toggler(old) {
+  const toggle = updatePath(path, function toggleHandler(old) {
     return !old;
   });
   return function updater() {

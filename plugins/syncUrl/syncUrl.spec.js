@@ -1,5 +1,4 @@
 import React from 'react';
-import ErrorBoundary from '../../jest-setup/ErrorBoundary.js';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Store from '../../src/Store/Store.js';
@@ -164,15 +163,13 @@ describe('syncUrl()', () => {
   it('should throw when casting unknown type', async () => {
     const spy = jest.spyOn(console, 'error');
     spy.mockImplementation(() => {});
+    store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
     store.setSync({ age: 14 });
     window.location.search = '?age=15';
-    store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
-    const { getByTitle } = render(
-      <ErrorBoundary>
-        <Component />
-      </ErrorBoundary>
+    render(<Component />);
+    expect(String(spy.mock.calls[0][0])).toContain(
+      'unknown schema type "NOT_A_THING"'
     );
-    expect(getByTitle('error-boundary')).toHaveTextContent('NOT_A_THING');
     spy.mockRestore();
   });
 });

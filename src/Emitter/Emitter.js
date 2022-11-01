@@ -5,6 +5,12 @@ export default class Emitter {
     '*': [],
   };
 
+  /**
+   * Add an event listener
+   * @param {String} type  The event name
+   * @param {Function} handler  The function to be called when the event fires
+   * @return {Emitter}
+   */
   on(type, handler) {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
@@ -13,6 +19,12 @@ export default class Emitter {
     return this;
   }
 
+  /**
+   * Remove an event listener
+   * @param {String} type  The event name
+   * @param {Function} handler  The function registered with "on()" or "once()"
+   * @return {Emitter}
+   */
   off(type, handler) {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
@@ -21,6 +33,12 @@ export default class Emitter {
     return this;
   }
 
+  /**
+   * Add an event listener that should fire once and only once
+   * @param {String} type  The event name
+   * @param {Function} handler  The function to be called when the event fires
+   * @return {Emitter}
+   */
   once(type, handler) {
     const onceHandler = event => {
       this.off(type, onceHandler);
@@ -30,6 +48,13 @@ export default class Emitter {
     return this;
   }
 
+  /**
+   * Trigger handlers attached to the given event with the given data
+   * @param {String} type  The event name
+   * @param {any} data  The data to pass to evt.data
+   * @return {PreventableEvent}  Returns the event object that was passed to handlers
+   * @property isDefaultPrevented  Read to tell if event was canceled
+   */
   emit(type, data = null) {
     if (
       (!this.#_handlers[type] || this.#_handlers[type].length === 0) &&

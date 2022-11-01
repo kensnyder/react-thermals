@@ -1,2 +1,2 @@
-import undoable from './undo.js';
-export default undoable;
+import undo from './undo.js';
+export default undo;

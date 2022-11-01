@@ -4,9 +4,9 @@
  * @return {Function}  A new action creator with the same arguments
  */
 export default function withFlushSync(actionCreator) {
-  return function (...initArgs) {
+  return function flusher(...initArgs) {
     const asyncFn = actionCreator(...initArgs);
-    return function (...runArgs) {
+    return function runAction(...runArgs) {
       // "this" is the Store instance
       asyncFn.apply(this, runArgs);
       this.flushSync();

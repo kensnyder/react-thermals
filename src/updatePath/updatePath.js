@@ -8,52 +8,6 @@ import getUpdateRunner from './getUpdateRunner.js';
  * @param {String} path
  * @param {Function|Function[]|undefined} transform
  * @return {Function}
- *
- * @example
- *
- * const nextPage = updatePath('page', page => page + 1);
- * nextPage({ page: 10 });
- * // result:
- * { page: 11 }
- *
- * const addTodo = updatePath('app.todos', (todos, newItem) => ([...todos, newItem]));
- * const state = {
- *    app: {
- *        todos: ['Go shopping', 'Wash Car']
- *    },
- * };
- * addTodo(state, 'Make dinner');
- * // result:
- * {
- *    app: {
- *        todos: ['Go shopping', 'Wash Car', 'Make dinner']
- *    },
- * }
- *
- * const toggleActive = updatePath('users.*.isActive', isActive => !isActive);
- * toggleActive({
- *    users: [
- *      { id: 1, isActive: false },
- *      { id: 2, isActive: true },
- *    ]
- * });
- * // result:
- * {
- *    users: [
- *      { id: 1, isActive: true },
- *      { id: 2, isActive: false },
- *    ]
- * }
- *
- * const add = updatePath('total', (total, addend) => total + addend);
- * add({ total: 12 }, 7);
- * // result:
- * { total: 19 }
- *
- * const add = updatePath('@', (num, addend) => num + addend);
- * add(12, 7);
- * // result:
- * 19
  */
 export function updatePath(path, transform = undefined) {
   if (typeof path !== 'string') {
