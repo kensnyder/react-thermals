@@ -1,26 +1,69 @@
 declare module "src/PreventableEvent/PreventableEvent" {
+    /**
+     * Object representing an event that fires from Store.emit()
+     */
     export default class PreventableEvent {
-        constructor(target: any, type: any, data: any);
-        target: any;
-        type: any;
+        /**
+         * @param {Store} target  The store that created the event
+         * @param {String} type  The event name
+         * @param {any} data  Any data associated with the event
+         */
+        constructor(target: Store, type: string, data: any);
+        target: Store;
+        type: string;
         data: any;
         defaultPrevented: boolean;
         propagationStopped: boolean;
+        /**
+         * Prevent the default behavior of this event
+         */
         preventDefault(): void;
+        /**
+         * Prevent other handlers from running
+         */
         stopPropagation(): void;
+        /**
+         * Prevent other handlers from running
+         */
         stopImmediatePropagation(): void;
+        /**
+         * Check if some handlers were skipped
+         * @return {Boolean}
+         */
         isPropagationStopped(): boolean;
     }
 }
 declare module "src/Emitter/Emitter" {
     export default class Emitter {
-        on(type: any, handler: any): Emitter;
-        off(type: any, handler: any): Emitter;
-        once(type: any, handler: any): Emitter;
-        emit(type: any, data?: any): PreventableEvent | {
-            type: any;
-            data: any;
-        };
+        /**
+         * Add an event listener
+         * @param {String} type  The event name
+         * @param {Function} handler  The function to be called when the event fires
+         * @return {Emitter}
+         */
+        on(type: string, handler: Function): Emitter;
+        /**
+         * Remove an event listener
+         * @param {String} type  The event name
+         * @param {Function} handler  The function registered with "on()" or "once()"
+         * @return {Emitter}
+         */
+        off(type: string, handler: Function): Emitter;
+        /**
+         * Add an event listener that should fire once and only once
+         * @param {String} type  The event name
+         * @param {Function} handler  The function to be called when the event fires
+         * @return {Emitter}
+         */
+        once(type: string, handler: Function): Emitter;
+        /**
+         * Trigger handlers attached to the given event with the given data
+         * @param {String} type  The event name
+         * @param {any} data  The data to pass to evt.data
+         * @return {PreventableEvent}  Returns the event object that was passed to handlers
+         * @property isDefaultPrevented  Read to tell if event was canceled
+         */
+        emit(type: string, data?: any): PreventableEvent;
         #private;
     }
     import PreventableEvent from "src/PreventableEvent/PreventableEvent";
@@ -44,40 +87,151 @@ declare module "src/shallowOverride/shallowOverride" {
 }
 declare module "src/Store/Store" {
     export default class Store extends Emitter {
-        constructor({ state: initialState, actions, options, autoReset, id, }?: {
-            state?: {};
-            actions?: {};
-            options?: {};
-            autoReset?: boolean;
-            id?: any;
-        });
+        /**
+         * Create a new store with the given state and actions
+         * @param {any} initialState  The store's initial state; it can be of any type
+         * @param {Record<String, Function>} actions  Named functions that can be dispatched by name and arguments
+         * @param {Record<String, any>} options  Options that setters, plugins or event listeners might look for
+         * @param {Boolean} autoReset  True to reset state after all components unmount
+         * @param {String} id  An identifier that could be used by plugins or event listeners
+         */
+        constructor({ state: initialState, actions, options, autoReset, id, }?: any);
         actions: {};
         id: string;
-        getState: () => {};
-        addActions: (actions: any) => Store;
-        setState: (newState: any) => Store;
-        mergeSync: (newState: any) => void;
-        setSync: (newState: any) => Store;
-        mergeState: (newState: any) => Store;
-        flushSync: () => {};
-        clone: (overrides?: {}) => Store;
+        /**
+         * Return the current state of the store
+         * @return {any}
+         */
+        getState: () => any;
+        /**
+         * Add functions that operate on state
+         * @param {Record<String, Function>} actions
+         * @return {Record<String, Function>}
+         */
+        addActions: (actions: Record<string, Function>) => Record<string, Function>;
+        /**
+         * Schedule state to be updated in the next batch of updates
+         * @param {Function|any} newState  The new value or function that will return the new value
+         * @return {Store}
+         */
+        setState: (newState: Function | any) => Store;
+        /**
+         * Schedule state to be merged in the next batch of updates
+         * @param {Function|Object} newState  The value to merge or function that will return value to merge
+         * @return {Store}
+         */
+        mergeState: (newState: Function | any) => Store;
+        /**
+         * Immediately update the state to the given value
+         * @param {Function|any} newState  The new value or function that will return the new value
+         * @return {Store}
+         */
+        setSync: (newState: Function | any) => Store;
+        /**
+         * Immediately merge the state with the given value
+         * @param {Function|Object} newState  The value to merge or function that will return value to merge
+         * @return {Store}
+         */
+        mergeSync: (newState: Function | any) => Store;
+        /**
+         * Immediately apply all updates in the update queue and notify components
+         * that they need to re-render. Note that React will not re-render
+         * synchronously.
+         * @return {any}  The resulting state
+         */
+        flushSync: () => any;
+        /**
+         * Create a clone of this store, including plugins but excluding event listeners
+         * @param {Object} overrides  Any properties you want to override
+         * @property {any} initialState  The store's initial state; it can be of any type
+         * @property {Record<String, Function>} actions  Named functions that can be dispatched by name and arguments
+         * @property {Record<String, any>} options  Options that setters, plugins or event listeners might look for
+         * @property {Boolean} autoReset  True to reset state after all components unmount
+         * @property {String} id  An identifier that could be used by plugins or event listeners
+         * @return {Store}
+         */
+        clone: (overrides?: any) => Store;
+        /**
+         * Reset a store to its initial state
+         * @param {any} withOverrides  Additional state to override
+         * @return {Store}
+         */
         reset: (withOverrides?: any) => Store;
+        /**
+         * Return a promise that will resolve once the store gets a new state
+         * @return {Promise<any>}  Resolves with the new state  value
+         */
         nextState: () => Promise<any>;
+        /**
+         * Return the number of components that "use" this store data
+         * @return {Number}
+         */
         getUsedCount: () => number;
+        /**
+         * Return true if any component has ever used this store
+         * @return {Boolean}
+         */
         hasInitialized: () => boolean;
+        /**
+         * Return the number of *mounted* components that "use" this store data
+         * @return {number}
+         */
         getMountCount: () => number;
-        getOptions: () => {};
-        getOption: (name: any) => any;
+        /**
+         * Get all the store options
+         * @return {Object}
+         */
+        getOptions: () => any;
+        /**
+         * Get a single store option
+         * @param {String} name  The name of the option
+         * @return {*}
+         */
+        getOption: (name: string) => any;
+        /**
+         * Set store options
+         * @param {Object} newOptions
+         * @return {Store}
+         */
         setOptions: (newOptions: any) => Store;
-        setOption: (name: any, newValue: any) => Store;
-        plugin: (initializer: any) => {
-            initialized: boolean;
-            result: any;
-        };
+        /**
+         * Set a single store option
+         * @param {String} name  The name of the option
+         * @param {any} newValue  The value to set
+         * @return {Store}
+         */
+        setOption: (name: string, newValue: any) => Store;
+        /**
+         * Register a plugin. Note that a handler attached to BeforePlugin can prevent the plugin from getting attached
+         * @param {Function} initializer  The function the plugin uses to configure and attach itself
+         * @return {Object}
+         * @property {Boolean} initialized  True if the plugin was successfully registered
+         * @property {any} result  The return value of the plugin initializer function
+         */
+        plugin: (initializer: Function) => any;
+        /**
+         * Get the array of plugin initializer functions
+         * @return {Array}
+         */
         getPlugins: () => any[];
-        use: (...middlewares: any[]) => Store;
-        _subscribe: (setState: any) => void;
-        _unsubscribe: (setState: any) => void;
+        /**
+         * Register a middleware function
+         * @param {Function} middlewares  The middlware function to register
+         * @return {Store}
+         */
+        use: (...middlewares: Function) => Store;
+        /**
+         * Connect a component to the store so that when relevant state changes, the component will be re-rendered
+         * @param {Function} setState  A setState function from React.useState()
+         * @private but used by useStoreSelector()
+         */
+        private _subscribe;
+        /**
+         * Disconnect a component from the store
+         * @param {Function} setState  The setState function used to _subscribe
+         * @private but used by useStoreSelector()
+         */
+        private _unsubscribe;
         #private;
     }
     import Emitter from "src/Emitter/Emitter";
