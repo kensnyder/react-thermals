@@ -13,35 +13,75 @@ npm install react-thermals
 ## Table of contents
 
 1. [Features](#features)
-2. [Selectors](#selectors)
-3. [Example Usage](#example-usage)
-   1. [Global state example](#global-state-example)
-   2. [Simple example](#simple-example)
-   3. [Complex example](#complex-example)
-4. [Writing Actions](#writing-actions)
-5. [Action Creators](#action-creators)
-6. [Code splitting](#code-splitting)
-7. [Persistence](#persistence)
-8. [All Store Options](#all-store-options)
-9. [Suggested File Structure](#suggested-file-structure)
-10. [Testing stores](#testing-stores)
-11. [Events](#events)
-12. [Plugins](#plugins)
-13. [Middleware](#middleware)
-14. [Credits](#credits)
+2. [Properties and Paths](#properties-and-paths)
+3. [Selectors](#selectors)
+4. [Immutability](#immutability)
+5. [Example Usage](#example-usage)
+   1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
+   2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
+   3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
+6. [Writing Actions](#writing-actions)
+7. [Action Creators](#action-creators)
+8. [Code Splitting](#code-splitting)
+9. [Persistence](#persistence)
+10. [All Store Options](#all-store-options)
+11. [Suggested File Structure](#suggested-file-structure)
+12. [Testing Stores](#testing-stores)
+13. [Events](#events)
+14. [Plugins](#plugins)
+15. [Middleware](#middleware)
+16. [Credits](#credits)
 
 ## Features
 
 1. Instead of dispatchers or observables, define simple action functions with no
    boilerplate
 2. Components only re-render when relevant state changes
-3. A store can be used by one component or many components
-4. Include stores by only the components that need them
-5. Stores persist data even if all consumers unmount (optional)
-6. Stores allow worry-free code splitting
-7. Store actions are easily testable
-8. Stores can respond to component lifecycle events including unmount
-   (e.g. to abort fetching data)
+3. Promises are first-class citizens (state changes can be wrapped in Promises)
+4. A store can be used by one component or many components
+5. Path expressions make it easy to deal with immutable data structures
+6. Include stores only in the components that need them
+7. Stores persist data even if all consumers unmount (optional)
+8. Stores allow worry-free code splitting
+9. Store actions are easily testable
+10. Stores can respond to component lifecycle events including unmount
+    (e.g. to abort fetching data)
+
+## Properties and Paths
+
+React Thermals supports property names and path expressions in 4 situations:
+
+1. Selecting state from the store
+2. Reading state from the store
+3. Creating store actions
+4. Updating values in the store
+
+Example situation:
+
+```js
+// 1. Selecting state from the store
+const recipients = useStoreState(store, 'email.recipients');
+
+// 2. Reading state from the store
+const recipients = store.getStateAt('email.recipients');
+
+// 3. Creating store actions
+appender('email.recipients');
+
+// 4. Updating values in the store
+store.setStateAt('email.recipients', recipients);
+```
+
+Path expression examples:
+
+- `user` - The value of user property
+- `user.name` - The name property on the user object
+- `users[2].id` - The id of the 3rd user object
+- `users.2.id` - (same as above)
+- `users[*].isActive` - The isActive property of every user object
+- `users.*.isActive` - (same as above)
+- `books[*].authors[*].name` - The name property of every author object within
+  every book object
 
 ## Selectors
 
@@ -99,11 +139,26 @@ const [subject, sender, recipientsEmails] = useStoreSelector(myStore, [
 ```
 
 If your component would like to receive the entire state, you can utilize
-`useStoreSate(myStore)` which uses useStoreSelector but selects the whole state.
+`useStoreSate(myStore)` which acts like useStoreSelector but selects the whole
+state.
+
+## Immutability
+
+Stores should treat state as immutable. When using path expressions for actions
+or calling setStateAt, React Thermals automatically ensures relevant parts of
+state are replaced instead of changed. Replacing is more efficient than cloning
+the entire state and ensures that components re-render only when replaced parts
+of the state change.
 
 ## Example usage
 
-### Global state example
+React Thermals is designed for multiple use cases:
+
+1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
+2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
+3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
+
+### Example 1: A store with global state
 
 In stores/globalStore/globalStore.js
 
@@ -112,13 +167,16 @@ import { Store, useStoreSelector } from 'react-thermals';
 const globalStore = new Store();
 
 export default globalStore;
+
+export function useGlobalStore(selector) {
+  return useStoreSelector(globalStore, selector);
+}
 ```
 
 In stores/globalStore/slices/todos.js
 
 ```js
-import globalStore from '../globalStore.js';
-import { useStoreSelector } from 'react-thermals';
+import globalStore, { useGlobalStore } from '../globalStore.js';
 import { persistState } from 'react-thermals/plugins';
 
 // add plugins to the root store at any time
@@ -144,7 +202,14 @@ export const todoActions = globalStore.addActions({
 
 // you can provide a hook for conveniently selecting this state
 export function useTodos() {
-  return useStoreSelector('todos');
+  // "todos" is equivalent to state => state.todos
+  return useGlobalStore('todos');
+}
+// ...or parts of the state
+export function useTodoIncompleteCount() {
+  return useGlobalStore(state => {
+    return state.todos.filter(todo => !todo.isComplete).length;
+  });
 }
 ```
 
@@ -152,11 +217,10 @@ In components/Header.jsx
 
 ```js
 import React from 'react';
-import { useAppState } from '../globalStore.js';
+import { useTodoIncompleteCount } from '../stores/globalStore/slices/todos.js';
+
 export default function Header() {
-  const incompleteCount = useAppState(
-    state => state.todos.filter(todo => !todo.isComplete).length
-  );
+  const incompleteCount = useTodoIncompleteCount();
   return (
     <header>
       <h1>My App</h1>
@@ -172,7 +236,7 @@ In components/TodoList.jsx
 import React from 'react';
 import useTodos, { todoActions } from '../stores/globalStore/slices/todos.js';
 import NewTodoForm from './NewTodoForm.jsx';
-const { toggleComplete, remove } = todoActions;
+const { toggleTodoComplete, removeTodo } = todoActions;
 
 export default function TodoList() {
   const todos = useTodos();
@@ -183,10 +247,10 @@ export default function TodoList() {
           <input
             type="checkbox"
             checked={todo.isComplete}
-            onClick={() => toggleComplete(todo)}
+            onClick={() => toggleTodoComplete(todo)}
           />
           <span className="text">{todo.text}</span>
-          <span onClick={() => remove(todo)}>Delete</span>
+          <span onClick={() => removeTodo(todo)}>Delete</span>
         </li>
       ))}
       <li>
@@ -202,38 +266,35 @@ In components/NewTodoForm.jsx
 ```js
 import React, { useCallback } from 'react';
 import { todoActions } from '../stores/globalStore/slices/todos.js';
-const { add } = todoActions;
 
 export default function NewTodoForm() {
-  const addTodo = useCallback(evt => {
+  const addTodoAndClear = useCallback(evt => {
+    evt.preventDefault();
     const form = evt.target;
     const data = new FormData(form);
-    const todo = Object.fromEntries(data);
-    todo.isComplete = false;
+    const newTodo = Object.fromEntries(data);
+    newTodo.isComplete = false;
     form.reset();
-    add(todo);
+    todoActions.add(newTodo);
   }, []);
   return (
-    <form onSubmit={addTodo}>
+    <form onSubmit={addTodoAndClear}>
       <input name="text" placeholder="Enter todo..." />
-      <button>Add</button>
+      <button type="submit">Add</button>
     </form>
   );
 }
 ```
 
----
-
----
-
 In stores/globalStore/slices/auth.js
 
 ```js
-import globalStore, { useAppState } from '../../globalStore/globalStore.js';
+import globalStore, { useGlobalStore } from '../../globalStore/globalStore.js';
 import { setterInput } from 'react-thermals/actions';
+import axios from 'axios';
 
-export default function useAuth() {
-  return useAppState(state => state.user);
+export function useAuth() {
+  return useGlobalStore('user');
 }
 
 globalStore.mergeSync({
@@ -243,7 +304,8 @@ globalStore.mergeSync({
   },
 });
 
-export const authActions = {
+export const authActions = globalStore.addActions({
+  // actions can be async
   async login(form) {
     const formData = Object.fromEntries(new FormData(form));
     globalStore.mergeState({
@@ -252,7 +314,7 @@ export const authActions = {
         isCheckingLogin: true,
       },
     });
-    const { data } = axios.post('/api/users/login', formData);
+    const { data } = await axios.post('/api/users/login', formData);
     localStorage.setItem('jwt', data.jwt);
     globalStore.mergeState({
       user: {
@@ -262,28 +324,32 @@ export const authActions = {
       },
     });
   },
-};
-
-globalStore.addActions(authActions);
+});
 ```
 
 In components/Login/Login.jsx
 
 ```js
-import useAuth from '../../stores/slices/auth.js';
+import { useAuth, authActions } from '../../stores/slices/auth.js';
 import Loader from '../Loader/Loader.jsx';
+const { login } = authActions;
+
 export default function Login() {
   const { isCheckingLogin } = useAuth();
-  const { login } = authActions;
   return (
     <div className="LoginComponent">
       {isCheckingLogin ? (
         <Loader />
       ) : (
-        <form onSubmit={evt => login(evt.target)}>
-          <input name="email" type="input" />
-          <input name="password" type="password" />
-          <button>Submit</button>
+        <form
+          onSubmit={evt => {
+            evt.preventDefault();
+            login(evt.target);
+          }}
+        >
+          <input name="email" type="input" placeholder="Email" />
+          <input name="password" type="password" placeholder="Password" />
+          <button type="submit">Login</button>
         </form>
       )}
     </div>
@@ -295,7 +361,8 @@ In components/Header.jsx
 
 ```js
 import React from 'react';
-import useAuth, { authActions } from '../../stores/slices/auth.js';
+import { useAuth, authActions } from '../stores/slices/auth.js';
+
 export default function Header() {
   const user = useAuth();
   return (
@@ -311,146 +378,182 @@ export default function Header() {
 }
 ```
 
-### Simple example
+### Example 2: A store used by multiple components
 
-In src/stores/adder/adderStore.js
+In src/stores/cartStore.js
 
-```jsx harmony
-import { createStore, useStoreState, useStoreSelector } from 'react-thermals';
+```js
+import { Store, useStoreSelector } from 'react-thermals';
+import {
+  appender,
+  remover,
+  setter,
+  composeActions,
+} from 'react-thermals/actions';
 
-// initial state
-const state = { count: 0, extra: 'foo' };
-
-// list of action functions
-const actions = {
-  add(addend) {
-    store.setState(old => ({ ...old, count: old.count + addend }));
-    // OR use mergeState to update a slice of state
-    store.mergeState(old => ({ count: old.count + addend }));
+export const cartStore = new Store({
+  state: { items: [], discount: 0 },
+  actions: {
+    add: composeActions([
+      appender('items'),
+      newItem => {
+        axios.post('/api/v1/carts/item', newItem);
+      },
+    ]),
+    remove: composeActions([
+      remover('items'),
+      oldItem => {
+        axios.delete(`/api/v1/carts/items/${oldItem.id}`);
+      },
+    ]),
+    setDiscount: setter('discount'),
   },
-};
+});
 
-// create and export the store
-const store = createStore({ state, actions });
+export const cartActions = store.actions;
 
-// Due to the rules of hooks, we must define our hook functions manually
-store.useState = () => useStoreState(store);
-store.useSelector = (map = null, eq = null) => useStoreSelector(store, map, eq);
+export function useCartItems() {
+  return useStoreSelector(cartStore, 'items');
+}
 
-export default store;
+export function useCartItemCount() {
+  return useStoreSelector(cartStore, state => state.items.length);
+}
+
+export function useCartTotal() {
+  return useStoreSelector(cartStore, state => {
+    let total = 0;
+    state.items.forEach(item => {
+      total += item.quantity * item.price * (1 - state.discount);
+    });
+    return total;
+  });
+}
 ```
 
-In src/components/PlusTwo/PlusTwo.js
+In components/Header.jsx
 
-```jsx harmony
+```js
 import React from 'react';
-import adderStore from 'stores/adder/adderStore.js';
+import { useCartItemCount } from '../stores/cartStore.js';
 
-export function PlusTwo() {
-  const state = adderStore.useState();
-  const { add } = adderStore.actions;
-
+export default function Header() {
+  // only re-render when cart item count changes
+  const itemCount = useCartItemCount();
   return (
-    <>
-      <button onClick={() => add(2)}>+2</button>
-      <p>Count: {state.count}</p>
-    </>
+    <header>
+      <h1>My App</h1>
+      <a href="/cart">
+        Shopping Cart: {itemCount} {itemCount === 1 ? 'item' : 'items'}
+      </a>
+    </header>
   );
 }
 ```
 
-Or use a `mapState` function to rerender only when a subset of state changes.
+In components/CartDetails.jsx
 
-```jsx harmony
+```js
 import React from 'react';
-import adderStore from 'stores/adder/adderStore.js';
+import {
+  useCartItems,
+  useCartTotal,
+  cartActions,
+} from '../stores/cartStore.js';
 
-export function PlusTwo() {
-  const count = adderStore.useSelector(state => state.count);
-  const { add } = adderStore.actions;
-
+export default function CartDetails() {
+  // only re-render when list or total changes
+  const items = useCartItems();
+  const total = useCartTotal();
   return (
-    <>
-      <button onClick={() => add(2)}>+2</button>
-      <p>Count: {count}</p>
-    </>
+    <ul>
+      {items.map(item => (
+        <li key={item.id}>
+          {item.name}: ${item.price.toFixed(2)}{' '}
+          <button onClick={() => cartActions.remove(item)}>Delete</button>
+        </li>
+      ))}
+      <li>Total: ${total.toFixed(2)}</li>
+    </ul>
   );
 }
 ```
 
-_Also note that you can shorten
-`adderStore.useSelector(state => state.count);` to
-`adderStore.useSelector('count');`._
+In components/Product.jsx
 
-In src/stores/adder/adderStore.spec.js
-
-```jsx harmony
+```js
 import React from 'react';
-import adderStore from './adderStore.js';
+import { cartActions } from '../stores/cartStore.js';
 
-describe('AdderStore', () => {
-  it('should add numbers', () => {
-    adderStore.state = { count: 5 };
-    adderStore.actions.add(4);
-    adderStore.flushSync();
-    expect(adderStore.state.count).toBe(9);
+export default function Product({ product }) {
+  return (
+    <div>
+      <h3>{product.name}</h3>
+      <p>{product.description}</p>
+      <p>${product.price.toFixed(2)}</p>
+      <button onClick={() => cartActions.add(product)}>Add to cart</button>
+    </div>
+  );
+}
+```
+
+In stores/cartStore.spec.js
+
+```js
+import axios from 'axios';
+import { cartStore } from './cartStore.js';
+
+jest.mock('axios');
+
+describe('cartStore', () => {
+  let store;
+  beforeEach(() => {
+    store = cartStore.clone();
+  });
+  it('should add item', () => {
+    const item = { id: 123, name: 'Pencil', price: 2.99 };
+    store.actions.add(item);
+    store.flushSync();
+    expect(store.getState().items[0]).toBe(item);
+    expect(axios.post).toHaveBeenCalledWith('/api/v1/carts/item', item);
   });
 });
 ```
 
-## Complex example
+## Example 3: A store used by one component
 
-In src/stores/story/storyStore.js
+Even if a store is only used by one component, it can be a nice way to separate
+concerns.
 
-```jsx harmony
-import { createStore, useStoreState, useStoreSelector } from 'react-thermals';
+In components/Game/store.js
 
-// initial state
-const state = {
-  view: 'list',
-  isLoading: false,
-  stories: [],
-};
+```js
+import { Store, useStoreSelector } from 'react-thermals';
 
-// define action functions
-function showView(view) {
-  setState(old => ({ ...old, view }));
-}
-
-async function searchStories(term = '') {
-  store.setState(old => ({ ...old, isLoading: true, stories: [] }));
-  const stories = await api.get('/api/stories', { term });
-  store.setState(old => ({ ...old, isLoading: false, stories }));
-}
-
-async function deleteStory(story) {
-  const stories = store.state.stories.filter(s => s !== story);
-  store.setState(old => ({ ...old, stories }));
-  const deletedOk = await api.delete(`/api/stories/${story.id}`);
-  if (!deletedOk) {
-    alert('Server error deleting story');
-  }
-}
-
-// list of action functions
-const actions = {
-  showView,
-  searchStories,
-  deleteStory,
-};
-
-// create and export the store
-const store = createStore({
-  state,
-  actions,
-  afterFirstMount: searchStories,
+const gameStore = new Store({
+  state: {
+    board: {
+      position: { x: 0, y: 0 },
+      pieces: [],
+    },
+    score: 0,
+  },
+  actions: {
+    restart() {
+      store.setStateAt('board.position', { x: 0, y: 0 });
+    },
+    moveBy(x, y) {
+      store.setStateAt('board.position', old => ({
+        x: old.x + x,
+        y: old.y + y,
+      }));
+    },
+    addToScore: adder('score'),
+  },
+  autoReset: true,
 });
 
-// Due to the rules of hooks, we must define our hook functions manually
-store.useState = () => useStoreState(store);
-store.useSelector = (map = null, eq = null) => useStoreSelector(store, map, eq);
-
-export default store;
+store.onChange('settings.notifications');
 ```
 
 In src/components/StoryListing/StoryListing.js
@@ -515,9 +618,10 @@ export default function StoryItem({ story }) {
 }
 ```
 
-## Writing actions
+## Writing Actions
 
-For most actions, you can use helpers as documented [here](./actions/README.md).
+For most actions, you can use action creators as introduced in the next
+section and as documented [here](./actions/README.md).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
@@ -551,16 +655,23 @@ create action functions. Supported state changes are:
 6. [Add to or subtract from a number](./actions/README.md#adder)
 7. [Merge one object into another](./actions/README.md#merger)
 
-[Full docs here](./actions/README.md).
+There are also two functions for combining action functions:
+
+1. [composeActions](./actions/README.md#composeactions) - Run multiple actions
+   where one action doesn't depend on the changes from another
+2. [pipeActions](./actions/README.md#pipeactions) - Run multiple actions
+   in sequence where one state change depends on another
+
+[Full docs](./actions/README.md) on action creators.
 
 ## Code splitting
 
-stuff.
+To be written.
 
 ## Persistence
 
 By default, a store's state value will persist even when all components unmount.
-To reset instead, add `autoReset: true` to the state definition.
+To reset the state instead, add `autoReset: true` to the store definition.
 
 ```js
 const myPersistingStore = new Store({
@@ -596,7 +707,7 @@ For reusable components or pages with private state, e.g. a header:
 
 ## Testing stores
 
-Stores can be easily unit tested outside of a React Component.
+Stores can be easily unit tested inside or outside of a React Component.
 
 ### Examples
 
@@ -644,10 +755,10 @@ store.on('BeforeUpdate', evt => {
 
 ### Event description & Cancelability
 
-The following events fire during the life cycle of the store. Some events allow you use
+The following events fire during the life cycle of the store. Some events allow you call
 `event.preventDefault()` to block the next step. For example, canceling the BeforeSet event
-will block all pending state updates. Handlers can also call `event.stopImmediatePropagation()`
-to block other handlers from firing this particular event.
+will block all pending state updates. Handlers can also call `event.stopPropagation()`to
+block other handlers from firing this particular event.
 
 | Event              | Description                                                 | Cancelable? |
 | ------------------ | ----------------------------------------------------------- | ----------- |
@@ -682,10 +793,10 @@ will affect what happens next
 | AfterLastUnmount   | null                                                       | N/A        |
 | SetterException    | The Error object                                           | No         |
 | BeforeSet          | Previous state                                             | No         |
-| BeforeUpdate       | { prev, next } => previous state and next state            | data.next  |
-| AfterUpdate        | { prev, next } => previous state and next state            | No         |
-| BeforeReset        | { before, after } => state before and after the reset      | data.after |
-| AfterReset         | { before, after } => state before and after the reset      | No         |
+| BeforeUpdate       | ({ prev, next }) => previous state and next state          | data.next  |
+| AfterUpdate        | ({ prev, next }) => previous state and next state          | No         |
+| BeforeReset        | ({ before, after }) => state before and after the reset    | data.after |
+| AfterReset         | ({ before, after }) => state before and after the reset    | No         |
 | BeforePlugin       | The plugin's initializer function (with name property)     | No         |
 | AfterPlugin        | The plugin's initializer function (with name property)     | No         |
 
@@ -708,8 +819,8 @@ Interested in writing your own plugins? Check out
 ## Middleware
 
 React Thermals has a simple middleware system. Often it is simpler to just
-subscribe to the `BeforeUpdate` event, but middleware is more intuitive to some
-people.
+subscribe to the `BeforeUpdate` event, but middleware is more intuitive in
+some circumstances
 
 ### Examples
 

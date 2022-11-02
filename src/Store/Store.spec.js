@@ -116,6 +116,62 @@ describe('new Store()', () => {
     store.plugin(s => (pluggedInto = s));
     expect(pluggedInto).toBe(undefined);
   });
+  it('should setSyncAt(path, value)', async () => {
+    const store = new Store({
+      state: { hello: { world: 42 } },
+    });
+    store.setSyncAt('hello.world', 44);
+    expect(store.getState().hello.world).toBe(44);
+  });
+  it('should setSyncAt(path, transformer)', async () => {
+    const store = new Store({
+      state: { hello: { world: 42 } },
+    });
+    store.setSyncAt('hello.world', s => s + 1);
+    expect(store.getState().hello.world).toBe(43);
+  });
+  it('should setStateAt(path, value)', async () => {
+    const store = new Store({
+      state: { hello: { world: 42 } },
+    });
+    store.setStateAt('hello.world', 44);
+    store.flushSync();
+    expect(store.getState().hello.world).toBe(44);
+  });
+  it('should setStateAt(path, transformer)', async () => {
+    const store = new Store({
+      state: { hello: { world: 42 } },
+    });
+    store.setStateAt('hello.world', s => s + 1);
+    store.flushSync();
+    expect(store.getState().hello.world).toBe(43);
+  });
+  it('should getStateAt(path)', async () => {
+    const store = new Store({
+      state: { hello: { world: 42 } },
+    });
+    expect(store.getStateAt('hello.world')).toBe(42);
+  });
+  it('should getStateAt(path) with asterisk', async () => {
+    const store = new Store({
+      state: {
+        books: [
+          {
+            title: 'JavaScript ABCs',
+            authors: [
+              { name: 'John A', rating: 2 },
+              { name: 'Kyle B', rating: 4 },
+            ],
+          },
+          {
+            title: 'Web Tech Rocks',
+            authors: [{ name: 'Owen C', rating: 5 }],
+          },
+        ],
+      },
+    });
+    expect(store.getStateAt('books.*.authors.*.rating')).toEqual([2, 4, 5]);
+  });
 });
 describe('new Store() with autoReset', () => {
   // define store before each test

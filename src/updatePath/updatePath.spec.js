@@ -178,4 +178,29 @@ describe('deepUpdater', () => {
     expect(updated.cart).not.toBe(state.cart);
     expect(updated).toEqual({ cart: [{ price: 18 }] });
   });
+  it('should only update relevant parts of state', () => {
+    const state = {
+      email: {
+        subject: 'hello',
+        sender: { id: 3, name: 'Otto' },
+        recipients: [
+          { id: 1, name: 'John' },
+          { id: 2, name: 'Josh' },
+        ],
+      },
+    };
+    const addRecipient = updatePath(
+      'email.recipients',
+      (recipients, newRecipient) => {
+        return [...recipients, newRecipient];
+      }
+    );
+    const updated = addRecipient(state, { id: 4, name: 'Lili' });
+    expect(updated.email).not.toBe(state.email);
+    expect(updated.email.subject).toBe(state.email.subject);
+    expect(updated.email.sender).toBe(state.email.sender);
+    expect(updated.email.recipients).not.toBe(state.email.recipients);
+    expect(updated.email.recipients[0]).toBe(state.email.recipients[0]);
+    expect(updated.email.recipients[1]).toBe(state.email.recipients[1]);
+  });
 });

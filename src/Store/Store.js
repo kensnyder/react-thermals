@@ -1,6 +1,8 @@
 import Emitter from '../Emitter/Emitter.js';
 import shallowCopy from '../shallowCopy/shallowCopy.js';
 import shallowOverride from '../shallowOverride/shallowOverride.js';
+import { updatePath } from '../updatePath/updatePath.js';
+import selectPath from '../selectPath/selectPath.js';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -55,6 +57,14 @@ export default class Store extends Emitter {
    */
   getState = () => {
     return this.#_state;
+  };
+
+  /**
+   * Return the current state of the store
+   * @return {any}
+   */
+  getStateAt = path => {
+    return selectPath(path)(this.#_state);
   };
 
   /**
@@ -144,6 +154,26 @@ export default class Store extends Emitter {
       );
     }
     this.#_state = shallowOverride(this.#_state, newState);
+  };
+
+  /**
+   * Schedule a value to be updated in the next batch of updates at the given path inside the state
+   * @param {String} path  The path to the value
+   * @param {Function|any} newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   */
+  setStateAt = (path, newStateOrUpdater) => {
+    const updater = updatePath(path);
+    this.setState(old => updater(old, newStateOrUpdater));
+  };
+
+  /**
+   * Immediately update a value at the given path inside the state
+   * @param {String} path  The path to the value
+   * @param {Function|any} newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   */
+  setSyncAt = (path, newStateOrUpdater) => {
+    const updater = updatePath(path);
+    this.setSync(old => updater(old, newStateOrUpdater));
   };
 
   /**
