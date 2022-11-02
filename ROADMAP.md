@@ -1,9 +1,2 @@
-- use `new Store()` instead of `createStore()`
-- README for actions
-- README for consoleLogger plugin
-- README for observable plugin
-- README for persistState plugin
-- README for syncUrl plugin
-- README for undo plugin
-- examples in examples folder
--
+- Examples folder?
+- Example Sandboxes?

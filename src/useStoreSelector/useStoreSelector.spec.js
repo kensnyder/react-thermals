@@ -302,6 +302,7 @@ describe('store.on(type, handler)', () => {
       </>
     );
     expect(store.getUsedCount()).toBe(3);
+    expect(store.getMountCount()).toBe(3);
   });
   it('should fire before set', async () => {
     const { getByText } = render(

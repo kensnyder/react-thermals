@@ -19,8 +19,8 @@ export default function useStoreSelector(
     // assume "mapState" and "equalityFn" args are stable like redux does
   }, []);
 
-  // derive the initial state, if different because of mapState or equalityFn
-  const initialState = useMemo(() => {
+  // use useState to get a method for triggering re-renders in consumer components
+  const [partialState, setPartialState] = useState(() => {
     const fullInitialState = store.getState();
     if (!store.hasInitialized()) {
       const event = store.emit('BeforeInitialState', fullInitialState);
@@ -31,10 +31,7 @@ export default function useStoreSelector(
       return mapped;
     }
     return map(fullInitialState);
-  }, [store, map]);
-
-  // use useState to get a method for triggering rerenders in consumer components
-  const [partialState, setPartialState] = useState(initialState);
+  });
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {

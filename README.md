@@ -4,7 +4,7 @@
 [![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.10)](https://codecov.io/gh/kensnyder/react-thermals)
 [![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.10)](https://opensource.org/licenses/ISC)
 
-A simple and extensible way to manage state in React
+React thermals is a simple and extensible way to manage state in React
 
 ```bash
 npm install react-thermals
@@ -13,24 +13,37 @@ npm install react-thermals
 ## Table of contents
 
 1. [Features](#features)
-2. [Properties and Paths](#properties-and-paths)
-3. [Selectors](#selectors)
-4. [Immutability](#immutability)
-5. [Example Usage](#example-usage)
+   1. [Changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
+   1. [Roadmap](https://github.com/kensnyder/react-thermals/blob/master/ROADMAP.md)
+2. [Core Concepts](#features)
+   1. [Properties and Paths](#properties-and-paths)
+   2. [Selectors](#selectors)
+   3. [Immutability](#immutability)
+   4. [Persistence](#persistence)
+3. [Example Usage](#example-usage)
    1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
    2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
    3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
-6. [Writing Actions](#writing-actions)
-7. [Action Creators](#action-creators)
-8. [Code Splitting](#code-splitting)
-9. [Persistence](#persistence)
-10. [All Store Options](#all-store-options)
-11. [Suggested File Structure](#suggested-file-structure)
-12. [Testing Stores](#testing-stores)
-13. [Events](#events)
-14. [Plugins](#plugins)
-15. [Middleware](#middleware)
-16. [Credits](#credits)
+4. [Action Functions](#action-functions)
+   1. [Writing Actions](#writing-actions)
+   2. [Action Creators](#action-creators)
+   3. [Action Batching](#action-batching)
+   4. [Asynchronous Actions](#asynchronous-actions)
+5. [Full Documentation](#all-store-options)
+   1. [All Store Options](#all-store-options)
+   2. [All Store Methods](#all-store-methods)
+6. [Best Practices](#best-practices)
+   1. [Code Splitting](#code-splitting)
+   2. [Suggested File Structure](#suggested-file-structure)
+   3. [Testing Stores](#testing-stores)
+7. [Extending Store Behavior](#extending-store-behavior)
+   1. [Events](#events)
+   2. [Plugins](#plugins)
+   3. [Middleware](#middleware)
+8. [Community](#community)
+   1. [Contributing](#contributing)
+   2. [ISC License](#isc-license)
+   3. [Credits](#credits)
 
 ## Features
 
@@ -47,7 +60,14 @@ npm install react-thermals
 10. Stores can respond to component lifecycle events including unmount
     (e.g. to abort fetching data)
 
-## Properties and Paths
+Also see the
+[changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
+and
+[roadmap](https://github.com/kensnyder/react-thermals/blob/master/ROADMAP.md).
+
+## Core Concepts
+
+### Properties and Paths
 
 React Thermals supports property names and path expressions in 4 situations:
 
@@ -59,7 +79,7 @@ React Thermals supports property names and path expressions in 4 situations:
 Example situation:
 
 ```js
-// 1. Selecting state from the store
+// 1. Selecting state from the store (inside a component)
 const recipients = useStoreState(store, 'email.recipients');
 
 // 2. Reading state from the store
@@ -83,7 +103,7 @@ Path expression examples:
 - `books[*].authors[*].name` - The name property of every author object within
   every book object
 
-## Selectors
+### Selectors
 
 Selectors ensure that components will re-render only when a relevant part of
 state changes.
@@ -95,7 +115,7 @@ manage selectors. However, as you will see below, React Thermals supports path
 expressions and arrays of paths that often remove the need for complex
 selectors.
 
-### Selector examples
+#### Selector examples
 
 ```js
 // Select the value of a single field
@@ -142,13 +162,61 @@ If your component would like to receive the entire state, you can utilize
 `useStoreSate(myStore)` which acts like useStoreSelector but selects the whole
 state.
 
-## Immutability
+### Immutability
 
 Stores should treat state as immutable. When using path expressions for actions
 or calling setStateAt, React Thermals automatically ensures relevant parts of
 state are replaced instead of changed. Replacing is more efficient than cloning
 the entire state and ensures that components re-render only when replaced parts
 of the state change.
+
+Under the hood, React Thermals has an `updatePath()` function that does this
+state replacement. The unit test below illustrates a change to a multi-layer
+state value, where the resulting state has some changes but keeps unaffected
+parts unchanged.
+
+```js
+describe('updatePath', () => {
+  it('should only update relevant parts of state', () => {
+    const state = {
+      email: {
+        subject: 'hello',
+        sender: { id: 3, name: 'Otto' },
+        recipients: [
+          { id: 1, name: 'John' },
+          { id: 2, name: 'Josh' },
+        ],
+      },
+    };
+    const addRecipient = updatePath(
+      'email.recipients',
+      (recipients, newRecipient) => {
+        return [...recipients, newRecipient];
+      }
+    );
+    const updated = addRecipient(state, { id: 4, name: 'Lili' });
+    expect(updated).not.toBe(state);
+    expect(updated.email).not.toBe(state.email);
+    expect(updated.email.subject).toBe(state.email.subject);
+    expect(updated.email.sender).toBe(state.email.sender);
+    expect(updated.email.recipients).not.toBe(state.email.recipients);
+    expect(updated.email.recipients[0]).toBe(state.email.recipients[0]);
+    expect(updated.email.recipients[1]).toBe(state.email.recipients[1]);
+  });
+});
+```
+
+### Persistence
+
+By default, a store's state value will persist even when all components unmount.
+To reset the state instead, add `autoReset: true` to the store definition.
+
+```js
+const myPersistingStore = new Store({
+  // ...
+  autoReset: true,
+});
+```
 
 ## Example usage
 
@@ -520,7 +588,7 @@ describe('cartStore', () => {
 });
 ```
 
-## Example 3: A store used by one component
+### Example 3: A store used by one component
 
 Even if a store is only used by one component, it can be a nice way to separate
 concerns.
@@ -618,7 +686,9 @@ export default function StoryItem({ story }) {
 }
 ```
 
-## Writing Actions
+## Action Functions
+
+### Writing Actions
 
 For most actions, you can use action creators as introduced in the next
 section and as documented [here](./actions/README.md).
@@ -642,7 +712,7 @@ split. In React Thermals, code splitting happens naturally because components mu
 React Thermals are useful for global state, state that goes across components
 or even state that is local to a single component.
 
-## Action creators
+### Action creators
 
 For common types of state changes, React Thermals has 7 functions that will
 create action functions. Supported state changes are:
@@ -657,30 +727,31 @@ create action functions. Supported state changes are:
 
 There are also two functions for combining action functions:
 
-1. [composeActions](./actions/README.md#composeactions) - Run multiple actions
-   where one action doesn't depend on the changes from another
-2. [pipeActions](./actions/README.md#pipeactions) - Run multiple actions
-   in sequence where one state change depends on another
+1. [composeActions(actions)](./actions/README.md#composeactions) - Run multiple
+   actions where one action doesn't depend on the changes from another
+2. [pipeActions(actions)](./actions/README.md#pipeactions) - Run multiple
+   actions in sequence where one state change depends on another
 
 [Full docs](./actions/README.md) on action creators.
 
-## Code splitting
+### Action Batching
 
-To be written.
+Actions are batched by default. Meaning state changes are put into a queue until
+the next event loop. Since React rendering is also batched, actions work pretty
+intuitively.
 
-## Persistence
+If you want to immediately flush the queue, you can call `store.flushSync()`.
+If any parts of the state returned `Promise`s, there will be a subsequent update
+after each `Promise`s resolves. See the next section for more information on
+`Promise`s.
 
-By default, a store's state value will persist even when all components unmount.
-To reset the state instead, add `autoReset: true` to the store definition.
+### Asynchronous Actions
 
-```js
-const myPersistingStore = new Store({
-  // ...
-  autoReset: true,
-});
-```
+When the queue of changes
 
-## All Store Options
+## Full Documentation
+
+### All Store Options
 
 The `Store()` constructor takes an object with the following properties:
 
@@ -691,7 +762,17 @@ The `Store()` constructor takes an object with the following properties:
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
 
-## Suggested File Structure
+### All Store Methods
+
+TODO
+
+## Best Practices
+
+### Code splitting
+
+TODO
+
+### Suggested File Structure
 
 For global or shared stores, e.g. a theme store:
 
@@ -705,11 +786,11 @@ For reusable components or pages with private state, e.g. a header:
 - src/components/Header/store/headerStore.js
 - src/components/Header/store/headerStore.spec.js
 
-## Testing stores
+### Testing stores
 
 Stores can be easily unit tested inside or outside of a React Component.
 
-### Examples
+#### Unit Test Examples
 
 ```js
 import myStore from './myStore.js';
@@ -737,7 +818,9 @@ describe('myStore', () => {
 });
 ```
 
-## Events
+## Extending Store Behavior
+
+### Events
 
 Stores fire a series of lifecycle events. For example:
 
@@ -753,7 +836,7 @@ store.on('BeforeUpdate', evt => {
 });
 ```
 
-### Event description & Cancelability
+#### Event description & Cancelability
 
 The following events fire during the life cycle of the store. Some events allow you call
 `event.preventDefault()` to block the next step. For example, canceling the BeforeSet event
@@ -777,7 +860,7 @@ block other handlers from firing this particular event.
 | BeforePlugin       | Fires before a plugin is registered                         | Yes         |
 | AfterPlugin        | Fires after a plugin is registered                          | No          |
 
-### Event data
+#### Event data
 
 Each event comes with a `data` property. Below is the available data for each event that carries some.
 Note the "Editable?" column which indicates events where altering event.data or its sub properties
@@ -800,7 +883,7 @@ will affect what happens next
 | BeforePlugin       | The plugin's initializer function (with name property)     | No         |
 | AfterPlugin        | The plugin's initializer function (with name property)     | No         |
 
-## Plugins
+### Plugins
 
 The suite of events above allows powerful behavior using plugins. There are 5
 included plugins:
@@ -816,13 +899,13 @@ included plugins:
 Interested in writing your own plugins? Check out
 [how to write plugins](./plugins/README.md#how-to-write-plugins).
 
-## Middleware
+### Middleware
 
 React Thermals has a simple middleware system. Often it is simpler to just
 subscribe to the `BeforeUpdate` event, but middleware is more intuitive in
 some circumstances
 
-### Examples
+#### Examples
 
 ```js
 // observe the state but do not alter
@@ -846,7 +929,18 @@ myStore.use((context, next) => {
 });
 ```
 
-## Credits
+## Community
+
+### Contributing
+
+Contributions welcome! Please see
+[our Contributor Covenant Code of Conduct](https://github.com/kensnyder/react-thermals/blob/master/CONTRIBUTING.md).
+
+### ISC License
+
+[View here](https://opensource.org/licenses/ISC)
+
+### Credits
 
 Inspired by
 [@jhonnymichel's react-hookstore](https://github.com/jhonnymichel/react-hookstore/blob/6d23d2fcb0e7cf8a3929a01e0c543fe5e05ecf05/src/index.js)

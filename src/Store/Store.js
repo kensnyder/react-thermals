@@ -409,7 +409,7 @@ export default class Store extends Emitter {
   /**
    * Connect a component to the store so that when relevant state changes, the component will be re-rendered
    * @param {Function} setState  A setState function from React.useState()
-   * @private but used by useStoreSelector()
+   * @note private but used by useStoreSelector()
    */
   _subscribe = setState => {
     if (this.#_usedCount++ === 0) {
@@ -427,7 +427,7 @@ export default class Store extends Emitter {
   /**
    * Disconnect a component from the store
    * @param {Function} setState  The setState function used to _subscribe
-   * @private but used by useStoreSelector()
+   * @note private but used by useStoreSelector()
    */
   _unsubscribe = setState => {
     const idx = this.#_setters.indexOf(setState);
@@ -452,7 +452,8 @@ export default class Store extends Emitter {
   #_getComponentUpdater = (prev, next) => {
     return function _maybeSetState(setter) {
       if (typeof setter.mapState === 'function') {
-        // component wants only a slice of state
+        // registered from useStoreSelector so only re-render
+        // components when the relevant slice of state changes
         const prevSelected = setter.mapState(prev);
         const nextSelected = setter.mapState(next);
         if (!setter.equalityFn(prevSelected, nextSelected)) {
@@ -460,7 +461,7 @@ export default class Store extends Emitter {
           setter(nextSelected);
         }
       } else {
-        // no mapState; always rerender component
+        // registered from useStoreState
         setter(next);
       }
     };

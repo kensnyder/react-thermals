@@ -196,6 +196,7 @@ describe('deepUpdater', () => {
       }
     );
     const updated = addRecipient(state, { id: 4, name: 'Lili' });
+    expect(updated).not.toBe(state);
     expect(updated.email).not.toBe(state.email);
     expect(updated.email.subject).toBe(state.email.subject);
     expect(updated.email.sender).toBe(state.email.sender);
