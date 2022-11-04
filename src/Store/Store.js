@@ -20,7 +20,17 @@ export default class Store extends Emitter {
   #_state;
   #_updateQueue = [];
   #_usedCount = 0;
+
+  /**
+   * The actions that interact with the store
+   * @type {Record<string, function>}
+   */
   actions = {};
+
+  /**
+   * A string to identify the store by
+   * @type {String}
+   */
   id;
 
   /**
@@ -122,6 +132,22 @@ export default class Store extends Emitter {
   };
 
   /**
+   * Schedule state to be merged in the next batch of updates
+   * @param {Object} moreState  The values to merge into the state (components will not be notified)
+   * @return {Store}
+   */
+  extendState = moreState => {
+    if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
+      throw new Error(
+        'react-thermals Store.extendState(): current state and given state must both be objects'
+      );
+    }
+    // TODO: throw exception if state or moreState are not objects
+    Object.assign(this.#_state, moreState);
+    return this;
+  };
+
+  /**
    * Immediately update the state to the given value
    * @param {Function|any} newState  The new value or function that will return the new value
    * @return {Store}
@@ -215,7 +241,7 @@ export default class Store extends Emitter {
 
   /**
    * Create a clone of this store, including plugins but excluding event listeners
-   * @param {Object} overrides  Any properties you want to override
+   * @param {Object} withOverrides  Any properties you want to override
    * @property {any} initialState  The store's initial state; it can be of any type
    * @property {Record<String, Function>} actions  Named functions that can be dispatched by name and arguments
    * @property {Record<String, any>} options  Options that setters, plugins or event listeners might look for
@@ -223,14 +249,14 @@ export default class Store extends Emitter {
    * @property {String} id  An identifier that could be used by plugins or event listeners
    * @return {Store}
    */
-  clone = (overrides = {}) => {
+  clone = (withOverrides = {}) => {
     const cloned = new Store({
       state: shallowCopy(this.#_state),
       actions: this.#_rawActions,
       autoReset: this.#_autoReset,
       options: this.#_options,
       id: this.id,
-      ...overrides,
+      ...withOverrides,
     });
     for (const initializer of this.#_plugins) {
       cloned.plugin(initializer);
@@ -287,7 +313,7 @@ export default class Store extends Emitter {
   };
 
   /**
-   * Return the number of *mounted* components that "use" this store data
+   * Return the number of *mounted* components that "use" this store
    * @return {number}
    */
   getMountCount = () => {
@@ -360,7 +386,7 @@ export default class Store extends Emitter {
 
   /**
    * Register a middleware function
-   * @param {Function} middlewares  The middlware function to register
+   * @param {Function} middlewares  The middleware function to register
    * @return {Store}
    */
   use = (...middlewares) => {

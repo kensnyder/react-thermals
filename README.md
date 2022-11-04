@@ -31,7 +31,8 @@ npm install react-thermals
    4. [Asynchronous Actions](#asynchronous-actions)
 5. [Full Documentation](#all-store-options)
    1. [All Store Options](#all-store-options)
-   2. [All Store Methods](#all-store-methods)
+   2. [Common Store Methods](#common-store-methods)
+   3. [Other Store Methods](#other-store-methods)
 6. [Best Practices](#best-practices)
    1. [Code Splitting](#code-splitting)
    2. [Suggested File Structure](#suggested-file-structure)
@@ -52,13 +53,14 @@ npm install react-thermals
 2. Components only re-render when relevant state changes
 3. Promises are first-class citizens (state changes can be wrapped in Promises)
 4. A store can be used by one component or many components
-5. Path expressions make it easy to deal with immutable data structures
+5. Path expressions make it super easy to deal with immutable data structures
 6. Include stores only in the components that need them
 7. Stores persist data even if all consumers unmount (optional)
 8. Stores allow worry-free code splitting
 9. Store actions are easily testable
 10. Stores can respond to component lifecycle events including unmount
     (e.g. to abort fetching data)
+11. No higher-order functions are needed in `<App />` or elsewhere
 
 Also see the
 [changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
@@ -71,12 +73,12 @@ and
 
 React Thermals supports property names and path expressions in 4 situations:
 
-1. Selecting state from the store
+1. Selecting state inside a component
 2. Reading state from the store
 3. Creating store actions
 4. Updating values in the store
 
-Example situation:
+Example of these 4 situations:
 
 ```js
 // 1. Selecting state from the store (inside a component)
@@ -228,7 +230,7 @@ React Thermals is designed for multiple use cases:
 
 ### Example 1: A store with global state
 
-In stores/globalStore/globalStore.js
+In stores/globalStore/globalStore.js we create the store
 
 ```js
 import { Store, useStoreSelector } from 'react-thermals';
@@ -241,7 +243,8 @@ export function useGlobalStore(selector) {
 }
 ```
 
-In stores/globalStore/slices/todos.js
+In stores/globalStore/slices/todos.js we extend the store's state with a "todos"
+property.
 
 ```js
 import globalStore, { useGlobalStore } from '../globalStore.js';
@@ -257,7 +260,7 @@ globalStore.plugin(
 );
 
 // extend the state at any time
-globalStore.mergeSync({ todos: [] });
+globalStore.extendState({ todos: [] });
 
 // add actions at any time
 export const todoActions = globalStore.addActions({
@@ -281,7 +284,7 @@ export function useTodoIncompleteCount() {
 }
 ```
 
-In components/Header.jsx
+In components/Header.jsx we may only care about the TODO incomplete count
 
 ```js
 import React from 'react';
@@ -298,7 +301,8 @@ export default function Header() {
 }
 ```
 
-In components/TodoList.jsx
+In components/TodoList.jsx we need to render the whole TODO list and provide a
+way to toggle completeness and delete a todo
 
 ```js
 import React from 'react';
@@ -329,7 +333,8 @@ export default function TodoList() {
 }
 ```
 
-In components/NewTodoForm.jsx
+In components/NewTodoForm.jsx we don't need any state, but we do need to access
+the action for adding a TODO.
 
 ```js
 import React, { useCallback } from 'react';
@@ -354,18 +359,19 @@ export default function NewTodoForm() {
 }
 ```
 
-In stores/globalStore/slices/auth.js
+In stores/globalStore/slices/auth.js we extend the store's state with a "user"
+property.
 
 ```js
+import axios from 'axios';
 import globalStore, { useGlobalStore } from '../../globalStore/globalStore.js';
 import { setterInput } from 'react-thermals/actions';
-import axios from 'axios';
 
 export function useAuth() {
   return useGlobalStore('user');
 }
 
-globalStore.mergeSync({
+globalStore.extendState({
   user: {
     isLoggedIn: false,
     isCheckingLogin: false,
@@ -395,7 +401,8 @@ export const authActions = globalStore.addActions({
 });
 ```
 
-In components/Login/Login.jsx
+In components/Login/Login.jsx we need to know information about the user and
+connect the login action to a form submission.
 
 ```js
 import { useAuth, authActions } from '../../stores/slices/auth.js';
@@ -425,17 +432,17 @@ export default function Login() {
 }
 ```
 
-In components/Header.jsx
+In components/SubHeader.jsx we might show the user's name or a link to log in.
 
 ```js
 import React from 'react';
 import { useAuth, authActions } from '../stores/slices/auth.js';
 
-export default function Header() {
+export default function SubHeader() {
   const user = useAuth();
   return (
     <header>
-      <h1>My App</h1>
+      <h2>My App</h2>
       {user.isLoggedIn ? (
         <span>Hello {user.name}</span>
       ) : (
@@ -448,7 +455,8 @@ export default function Header() {
 
 ### Example 2: A store used by multiple components
 
-In src/stores/cartStore.js
+In src/stores/cartStore.js we define a single store that is only used by the
+parts of the application that deal with a shopping cart.
 
 ```js
 import { Store, useStoreSelector } from 'react-thermals';
@@ -499,7 +507,7 @@ export function useCartTotal() {
 }
 ```
 
-In components/Header.jsx
+In components/Header.jsx we may want to show how many items are on the
 
 ```js
 import React from 'react';
@@ -519,7 +527,8 @@ export default function Header() {
 }
 ```
 
-In components/CartDetails.jsx
+In components/CartDetails.jsx we need the items, the total, and a way to remove
+an item from the cart.
 
 ```js
 import React from 'react';
@@ -547,7 +556,8 @@ export default function CartDetails() {
 }
 ```
 
-In components/Product.jsx
+In components/Product.jsx we don't need info about the cart, but we may need to
+add an item to the cart.
 
 ```js
 import React from 'react';
@@ -565,7 +575,8 @@ export default function Product({ product }) {
 }
 ```
 
-In stores/cartStore.spec.js
+In stores/cartStore.spec.js we can test that actions change state in the correct
+way and test any side effects like an http request.
 
 ```js
 import axios from 'axios';
@@ -585,6 +596,14 @@ describe('cartStore', () => {
     expect(store.getState().items[0]).toBe(item);
     expect(axios.post).toHaveBeenCalledWith('/api/v1/carts/item', item);
   });
+  it('should remove item', () => {
+    const item = { id: 123, name: 'Pencil', price: 2.99 };
+    store.setStateAt('items', [item]);
+    store.actions.remove(item);
+    store.flushSync();
+    expect(store.getState().items).toEqual([]);
+    expect(axios.delete).toHaveBeenCalledWith(`/api/v1/carts/items/${item.id}`);
+  });
 });
 ```
 
@@ -593,94 +612,88 @@ describe('cartStore', () => {
 Even if a store is only used by one component, it can be a nice way to separate
 concerns.
 
-In components/Game/store.js
+In components/Game/gameStore.js
 
 ```js
-import { Store, useStoreSelector } from 'react-thermals';
+import { Store, useStoreState } from 'react-thermals';
+import random from 'random-int';
 
-const gameStore = new Store({
+export const gameStore = new Store({
   state: {
     board: {
-      position: { x: 0, y: 0 },
-      pieces: [],
+      user: { x: 0, y: 0 },
+      flag: { x: random(1, 10), y: random(1, 10) },
     },
-    score: 0,
+    hasWon: false,
   },
   actions: {
     restart() {
-      store.setStateAt('board.position', { x: 0, y: 0 });
+      gameStore.setStateAt('board.user', { x: 0, y: 0 });
+      gameStore.setStateAt('board.flag', {
+        x: random(1, 10),
+        y: random(1, 10),
+      });
     },
     moveBy(x, y) {
-      store.setStateAt('board.position', old => ({
+      gameStore.setStateAt('board.user', old => ({
         x: old.x + x,
         y: old.y + y,
       }));
+      gameStore.flushSync();
+      gameStore.flushSync();
+      const user = gameStore.getStateAt('board.user');
+      const flag = gameStore.getStateAt('board.flag');
+      if (flag.x === user.x && flag.y === user.y) {
+        gameStore.mergeState({ hasWon: true });
+      }
     },
-    addToScore: adder('score'),
   },
   autoReset: true,
 });
 
-store.onChange('settings.notifications');
-```
-
-In src/components/StoryListing/StoryListing.js
-
-```jsx harmony
-import React, { useState } from 'react';
-import storyStore from 'stores/StoryStore/StoryStore.js';
-import StoryItem from '../StoryItem.js';
-
-export function StoryListing() {
-  const state = storyStore.useState();
-  const { setView, searchStories } = storyStore.actions;
-  const [searchTerm, setSearchTerm] = useState('');
-
-  return (
-    <div className="Component StoryListing">
-      <h1>Stories</h1>
-      <form onSubmit={runSearch}>
-        <input value={searchTerm} onChange={updateSearchTerm} />
-        <button>Search</button>
-      </form>
-      <button onClick={() => setView('list')}>list view</button>
-      <button onClick={() => setView('grid')}>grid view</button>
-      {state.stories.map(story => {
-        <StoryItem key={story.id} story={story} />;
-      })}
-    </div>
-  );
-
-  function updateSearchTerm(event) {
-    setSearchTerm(event.target.value);
-  }
-
-  function runSearch(event) {
-    event.preventDefault();
-    searchStories(searchTerm);
-  }
+export function useGameState() {
+  return useStoreState(gameStore);
 }
 ```
 
-In src/components/StoryItem/StoryItem.js
+In components/Game/Game.jsx
 
 ```jsx harmony
 import React from 'react';
-import storyStore from 'stores/story/storyStore.js';
+import range from 'range';
+import { gameStore, useGameState } from './gameStore.js';
+const { restart, moveBy } = gameStore.actions;
 
-export default function StoryItem({ story }) {
-  // will only re-render if "story" or "view" changes
-  const view = storyStore.useSelector(state => state.view);
-  const { deleteStory } = storyStore.actions;
-
-  const [w, h] = view === 'list' ? [110, 110] : [200, 180];
+export function Game() {
+  const state = useGameState();
 
   return (
-    <div className={`StoryItem Component view-${view}`}>
-      <img url={story.image} width={w} height={h} />
-      <h2 className="title">{story.title}</h2>
-      <div className="descr">{story.descr}</div>
-      <button onClick={() => deleteStory(story)}>[Delete]</button>
+    <div className="Game">
+      <h1>Find the invisible flag</h1>
+      <div className="board">
+        {range(10).map(x => (
+          <div key={`x-${x}`} className="row">
+            {range(10).map(y => (
+              <div key={`y-${y}`} className="cell">
+                {state.board.user.x === x && state.board.user.y === y && '🚶'}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {state.hasWon ? (
+        <span className="you-win">
+          You win!
+          <button onClick={restart}>New game</button>
+        </span>
+      ) : (
+        <div className="controls">
+          <button onClick={() => moveBy(0, -1)}>⬆︎</button>
+          <button onClick={() => moveBy(0, 1)}>⬇︎︎</button>
+          <button onClick={() => moveBy(1, 0)}>➡︎</button>
+          <button onClick={() => moveBy(-1, 0)}>⬅︎</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -695,7 +708,8 @@ section and as documented [here](./actions/README.md).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
-with the partial state passed to mergeState.
+with the partial state passed to mergeState--with the assumption that the
+current state and new state are both plain objects.
 
 Calling `state.setState` will trigger a rerender on all components that consume
 the whole state and components that consume selected state that changes.
@@ -706,8 +720,8 @@ consumes. To disable persistence, create the state with `autoReset` set to
 `true`.
 
 Many cross-component state patterns like Redux do not have built-in ways to code
-split. In React Thermals, code splitting happens naturally because components must
-`import` any stores they want to consume.
+split. In React Thermals, code splitting happens naturally because components
+must `import` any stores they want to consume.
 
 React Thermals are useful for global state, state that goes across components
 or even state that is local to a single component.
@@ -724,6 +738,18 @@ create action functions. Supported state changes are:
 5. [Replace an item in a list](./actions/README.md#replacer)
 6. [Add to or subtract from a number](./actions/README.md#adder)
 7. [Merge one object into another](./actions/README.md#merger)
+
+```js
+export default function cycle(path, values) {
+  let idx = 0;
+  const nextValue = updatePath(path, function goToNextCycle() {
+    return values[idx % values.length];
+  });
+  return function updater(newValue) {
+    this.setState(old => nextValue());
+  };
+}
+```
 
 There are also two functions for combining action functions:
 
@@ -747,7 +773,11 @@ after each `Promise`s resolves. See the next section for more information on
 
 ### Asynchronous Actions
 
-When the queue of changes
+When `setState()` receives a promise or a function that returns a promise,
+React Thermals will automatically await that value. If more than one promise
+is batched for changes, they will be awaited serially, such that a promise
+operates on the post-promise state; and re-renders will not be triggered until
+all batched promises have resolved.
 
 ## Full Documentation
 
@@ -762,15 +792,53 @@ The `Store()` constructor takes an object with the following properties:
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
 
-### All Store Methods
+### Common Store Methods
 
-TODO
+| Method                      | Description                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| extendState(moreState)      | Extend state to a store after it has been instantiated. Useful for global stores.         |
+| addActions(actions)         | Add action functions to a store after it has been instantiated. Useful for global stores. |
+| setState(valueOrFn)         | In an action function: set the store's state                                              |
+| setStateAt(path, valueOrFn) | In an action function: set the store's state at the given path                            |
+| setSync(valueOrFn)          | In an action function: set the store's state (synchronously)                              |
+| setSync(path, valueOrFn)    | In an action function: set the store's state at the given path (synchronously)            |
+| mergeState(valueOrFn)       | In an action function: extend the store's state                                           |
+| mergeSync(valueOrFn)        | In an action function: extend the store's state (synchronously)                           |
+| flushSync()                 | Run queued updates immediately                                                            |
+| on(type, handler)           | Register a handler to be called for the given event type                                  |
+| off(type, handler)          | De-register a handler for the given event type                                            |
+| once(type, handler)         | Register a handler to be called ONCE for the given event type                             |
+| plugin(initializer)         | Register a plugin                                                                         |
+| use(...middlewares)         | Register one or more middlewares                                                          |
+
+### Other Store Methods
+
+| Method                 | Description                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| getState()             | Get state. Generally your action functions should use store.setState(old => { ... })                 |
+| getStateAt(path)       | Get state at path. Generally your action functions should use store.setStateAt(path, old => { ... }) |
+| clone(withOverrides)   | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
+| reset(withOverrides)   | Reset store state (cancelable by BeforeReset event)                                                  |
+| nextState()            | Return a promise that resolves when queued updates finish running                                    |
+| hasInitialized()       | True if any component has ever used this store (but may not have mounted yet)                        |
+| getOptions()           | Get all options that may have been set by a plugin                                                   |
+| getOption(name)        | Get an option that may have been set by a plugin                                                     |
+| setOptions(options)    | Set options from the given object. May be used by plugins                                            |
+| setOption(name, value) | Set an option with the given name. May be used by plugins                                            |
+| getMountCount()        | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
+| getPlugins()           | Get the list of initializer functions registered as plugins                                          |
 
 ## Best Practices
 
 ### Code splitting
 
-TODO
+A store can be global or used by a number of components. Regardless, each
+component must import the store; that way, any components loaded from
+`React.lazy` will allow automatic code splitting.
+
+A global store can be extended at any time using `store.addActions(actions)` or
+`store.mergeState()` so a global store can be defined in one file but only
+extended when needed when loaded by a component.
 
 ### Suggested File Structure
 
@@ -788,7 +856,7 @@ For reusable components or pages with private state, e.g. a header:
 
 ### Testing stores
 
-Stores can be easily unit tested inside or outside of a React Component.
+Stores can be easily unit tested inside of or outside of a React Component.
 
 #### Unit Test Examples
 
@@ -903,9 +971,9 @@ Interested in writing your own plugins? Check out
 
 React Thermals has a simple middleware system. Often it is simpler to just
 subscribe to the `BeforeUpdate` event, but middleware is more intuitive in
-some circumstances
+some circumstances.
 
-#### Examples
+Middleware examples:
 
 ```js
 // observe the state but do not alter

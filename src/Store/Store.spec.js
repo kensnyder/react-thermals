@@ -172,6 +172,14 @@ describe('new Store()', () => {
     });
     expect(store.getStateAt('books.*.authors.*.rating')).toEqual([2, 4, 5]);
   });
+  it('should extendState(moreState)', async () => {
+    const initialState = { hello: { world: 42 } };
+    const store = new Store({ state: initialState });
+    const ret = store.extendState({ foo: 'bar' });
+    expect(store.getState()).toBe(initialState);
+    expect(store.getState().foo).toBe('bar');
+    expect(ret).toBe(store);
+  });
 });
 describe('new Store() with autoReset', () => {
   // define store before each test
