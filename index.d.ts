@@ -85,6 +85,39 @@ declare module "src/shallowOverride/shallowOverride" {
      */
     export default function shallowOverride(value: any, overrides: any): any;
 }
+declare module "src/updatePath/getUpdateRunner" {
+    /**
+     * Build a function that accepts a value or a setState handler that receives
+     *   the old state value and returns the new state value. Used by updatePath
+     * @param {Function|Function[]|undefined} transform  Some examples:
+     *   Add one to the old state: getUpdateRunner(old => old + 1)
+     *   Add to the old state: getUpdateRunner((old, addend) => old + addend)
+     *   Append an item: getTranformerRunner((old, newItem) => ([...old, newItem]))
+     *   Allow transforming later: getUpdateRunner(undefined)
+     * @return {Function}
+     * @throws {Error} if transform is not a valid type
+     */
+    export default function getUpdateRunner(transform: Function | Function[] | undefined): Function;
+}
+declare module "src/updatePath/updatePath" {
+    /**
+     * Deep updater takes a path and a transformer and returns a function
+     *   that will take in an object and return a copy of that object
+     *   with that transform applied to the value at "path"
+     * @param {String} path
+     * @param {Function|Function[]|undefined} transform
+     * @return {Function}
+     */
+    export function updatePath(path: string, transform?: Function | Function[] | undefined): Function;
+}
+declare module "src/selectPath/selectPath" {
+    /**
+     * Build a function that will return state at a certain path
+     * @param {String} path  Path string such as "cart" or "cart.total"
+     * @return {Function}
+     */
+    export default function selectPath(path: string): Function;
+}
 declare module "src/Store/Store" {
     export default class Store extends Emitter {
         /**
@@ -96,13 +129,26 @@ declare module "src/Store/Store" {
          * @param {String} id  An identifier that could be used by plugins or event listeners
          */
         constructor({ state: initialState, actions, options, autoReset, id, }?: any);
-        actions: {};
+        /**
+         * The actions that interact with the store
+         * @type {Record<string, function>}
+         */
+        actions: Record<string, Function>;
+        /**
+         * A string to identify the store by
+         * @type {String}
+         */
         id: string;
         /**
          * Return the current state of the store
          * @return {any}
          */
         getState: () => any;
+        /**
+         * Return the current state of the store
+         * @return {any}
+         */
+        getStateAt: (path: any) => any;
         /**
          * Add functions that operate on state
          * @param {Record<String, Function>} actions
@@ -122,6 +168,12 @@ declare module "src/Store/Store" {
          */
         mergeState: (newState: Function | any) => Store;
         /**
+         * Schedule state to be merged in the next batch of updates
+         * @param {Object} moreState  The values to merge into the state (components will not be notified)
+         * @return {Store}
+         */
+        extendState: (moreState: any) => Store;
+        /**
          * Immediately update the state to the given value
          * @param {Function|any} newState  The new value or function that will return the new value
          * @return {Store}
@@ -134,6 +186,18 @@ declare module "src/Store/Store" {
          */
         mergeSync: (newState: Function | any) => Store;
         /**
+         * Schedule a value to be updated in the next batch of updates at the given path inside the state
+         * @param {String} path  The path to the value
+         * @param {Function|any} newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+         */
+        setStateAt: (path: string, newStateOrUpdater: Function | any) => void;
+        /**
+         * Immediately update a value at the given path inside the state
+         * @param {String} path  The path to the value
+         * @param {Function|any} newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+         */
+        setSyncAt: (path: string, newStateOrUpdater: Function | any) => void;
+        /**
          * Immediately apply all updates in the update queue and notify components
          * that they need to re-render. Note that React will not re-render
          * synchronously.
@@ -142,7 +206,7 @@ declare module "src/Store/Store" {
         flushSync: () => any;
         /**
          * Create a clone of this store, including plugins but excluding event listeners
-         * @param {Object} overrides  Any properties you want to override
+         * @param {Object} withOverrides  Any properties you want to override
          * @property {any} initialState  The store's initial state; it can be of any type
          * @property {Record<String, Function>} actions  Named functions that can be dispatched by name and arguments
          * @property {Record<String, any>} options  Options that setters, plugins or event listeners might look for
@@ -150,7 +214,7 @@ declare module "src/Store/Store" {
          * @property {String} id  An identifier that could be used by plugins or event listeners
          * @return {Store}
          */
-        clone: (overrides?: any) => Store;
+        clone: (withOverrides?: any) => Store;
         /**
          * Reset a store to its initial state
          * @param {any} withOverrides  Additional state to override
@@ -173,7 +237,7 @@ declare module "src/Store/Store" {
          */
         hasInitialized: () => boolean;
         /**
-         * Return the number of *mounted* components that "use" this store data
+         * Return the number of *mounted* components that "use" this store
          * @return {number}
          */
         getMountCount: () => number;
@@ -216,22 +280,22 @@ declare module "src/Store/Store" {
         getPlugins: () => any[];
         /**
          * Register a middleware function
-         * @param {Function} middlewares  The middlware function to register
+         * @param {Function} middlewares  The middleware function to register
          * @return {Store}
          */
         use: (...middlewares: Function) => Store;
         /**
          * Connect a component to the store so that when relevant state changes, the component will be re-rendered
          * @param {Function} setState  A setState function from React.useState()
-         * @private but used by useStoreSelector()
+         * @note private but used by useStoreSelector()
          */
-        private _subscribe;
+        _subscribe: (setState: Function) => void;
         /**
          * Disconnect a component from the store
          * @param {Function} setState  The setState function used to _subscribe
-         * @private but used by useStoreSelector()
+         * @note private but used by useStoreSelector()
          */
-        private _unsubscribe;
+        _unsubscribe: (setState: Function) => void;
         #private;
     }
     import Emitter from "src/Emitter/Emitter";
@@ -245,14 +309,6 @@ declare module "src/defaultEqualityFn/defaultEqualityFn" {
      * @return {Boolean} - True if values are shallowly equal
      */
     export default function defaultEqualityFn(prev: any, next: any): boolean;
-}
-declare module "src/selectPath/selectPath" {
-    /**
-     * Build a function that will return state at a certain path
-     * @param {String} path  Path string such as "cart" or "cart.total"
-     * @return {Function}
-     */
-    export default function selectPath(path: string): Function;
 }
 declare module "src/getMapperFunction/getMapperFunction" {
     /**
@@ -285,8 +341,10 @@ declare module "src/useStoreState/useStoreState" {
     export default function useStoreState(store: Store): any;
 }
 declare module "index" {
-    import Store from "src/Store/Store";
-    import useStoreSelector from "src/useStoreSelector/useStoreSelector";
-    import useStoreState from "src/useStoreState/useStoreState";
-    export { Store, useStoreSelector, useStoreState };
+    export * as Store from "src/Store/Store";
+    export * as useStoreSelector from "src/useStoreSelector/useStoreSelector";
+    export * as useStoreState from "src/useStoreState/useStoreState";
+    export * as selectPath from "src/selectPath/selectPath";
+    export * as shallowCopy from "src/shallowCopy/shallowCopy";
+    export * as updatePath from "src/updatePath/updatePath";
 }
