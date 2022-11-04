@@ -247,7 +247,7 @@ In stores/globalStore/slices/todos.js we extend the store's state with a "todos"
 property.
 
 ```js
-import globalStore, { useGlobalStore } from '../globalStore.js';
+import globalStore, { useGlobalStore } from '../globalStore';
 import { persistState } from 'react-thermals/plugins';
 
 // add plugins to the root store at any time
@@ -288,7 +288,7 @@ In components/Header.jsx we may only care about the TODO incomplete count
 
 ```js
 import React from 'react';
-import { useTodoIncompleteCount } from '../stores/globalStore/slices/todos.js';
+import { useTodoIncompleteCount } from '../stores/globalStore/slices/todos';
 
 export default function Header() {
   const incompleteCount = useTodoIncompleteCount();
@@ -306,7 +306,7 @@ way to toggle completeness and delete a todo
 
 ```js
 import React from 'react';
-import useTodos, { todoActions } from '../stores/globalStore/slices/todos.js';
+import useTodos, { todoActions } from '../stores/globalStore/slices/todos';
 import NewTodoForm from './NewTodoForm.jsx';
 const { toggleTodoComplete, removeTodo } = todoActions;
 
@@ -338,7 +338,7 @@ the action for adding a TODO.
 
 ```js
 import React, { useCallback } from 'react';
-import { todoActions } from '../stores/globalStore/slices/todos.js';
+import { todoActions } from '../stores/globalStore/slices/todos';
 
 export default function NewTodoForm() {
   const addTodoAndClear = useCallback(evt => {
@@ -364,7 +364,7 @@ property.
 
 ```js
 import axios from 'axios';
-import globalStore, { useGlobalStore } from '../../globalStore/globalStore.js';
+import globalStore, { useGlobalStore } from '../../globalStore/globalStore';
 import { setterInput } from 'react-thermals/actions';
 
 export function useAuth() {
@@ -405,7 +405,7 @@ In components/Login/Login.jsx we need to know information about the user and
 connect the login action to a form submission.
 
 ```js
-import { useAuth, authActions } from '../../stores/slices/auth.js';
+import { useAuth, authActions } from '../../stores/slices/auth';
 import Loader from '../Loader/Loader.jsx';
 const { login } = authActions;
 
@@ -436,7 +436,7 @@ In components/SubHeader.jsx we might show the user's name or a link to log in.
 
 ```js
 import React from 'react';
-import { useAuth, authActions } from '../stores/slices/auth.js';
+import { useAuth, authActions } from '../stores/slices/auth';
 
 export default function SubHeader() {
   const user = useAuth();
@@ -511,7 +511,7 @@ In components/Header.jsx we may want to show how many items are on the
 
 ```js
 import React from 'react';
-import { useCartItemCount } from '../stores/cartStore.js';
+import { useCartItemCount } from '../stores/cartStore';
 
 export default function Header() {
   // only re-render when cart item count changes
@@ -532,11 +532,7 @@ an item from the cart.
 
 ```js
 import React from 'react';
-import {
-  useCartItems,
-  useCartTotal,
-  cartActions,
-} from '../stores/cartStore.js';
+import { useCartItems, useCartTotal, cartActions } from '../stores/cartStore';
 
 export default function CartDetails() {
   // only re-render when list or total changes
@@ -561,7 +557,7 @@ add an item to the cart.
 
 ```js
 import React from 'react';
-import { cartActions } from '../stores/cartStore.js';
+import { cartActions } from '../stores/cartStore';
 
 export default function Product({ product }) {
   return (
@@ -580,7 +576,7 @@ way and test any side effects like an http request.
 
 ```js
 import axios from 'axios';
-import { cartStore } from './cartStore.js';
+import { cartStore } from './cartStore';
 
 jest.mock('axios');
 
@@ -865,7 +861,7 @@ Stores can be easily unit tested inside of or outside of a React Component.
 #### Unit Test Examples
 
 ```js
-import myStore from './myStore.js';
+import myStore from './myStore';
 
 describe('myStore', () => {
   it('should add to cart with addToCart(item)', () => {

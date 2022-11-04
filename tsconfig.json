@@ -1,5 +1,19 @@
 {
   "files": [
-    "index.js"
-  ]
+    "index.ts"
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true,
+    "compilerOptions": {
+      "rootDir": "."
+    }
+  },
+  "compilerOptions": {
+    "target": "es5",
+    "module": "es2022",
+    "sourceMap": true,
+    "rootDir": ".",
+    "outDir": "./dist"
+  }
 }

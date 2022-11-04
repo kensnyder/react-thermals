@@ -90,7 +90,7 @@ const postsStore = new Store({
 export default postsStore;
 
 // In components/PostsPagination.tsx
-import postsStore from '../stores/postsStore.js';
+import postsStore from '../stores/postsStore';
 const { setPage } = postsStore.actions;
 export default function Pagination() {
   return (
@@ -126,7 +126,7 @@ export default postsStore;
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore from '../stores/postsStore.js';
+import postsStore from '../stores/postsStore';
 const { setSearchTerm } = postsStore.actions;
 export default function PostsSearch() {
   const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
@@ -165,7 +165,7 @@ export default postsStore;
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore from '../stores/postsStore.js';
+import postsStore from '../stores/postsStore';
 const { setSearchTerm } = postsStore.actions;
 export default function PostsSearch() {
   const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
@@ -210,7 +210,7 @@ export function usePostsStore(selector) {
 components/PostText.jsx
 
 ```jsx
-import postsStore, { usePostsStore } from '../stores/postsStore.js';
+import postsStore, { usePostsStore } from '../stores/postsStore';
 const { toggleDetails } = postsStore.actions;
 
 export default function PostText() {
@@ -273,7 +273,7 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore.js';
+import todoStore from '../stores/todoStore';
 const { addTodo } = todoStore.actions;
 
 export default function TodoList() {
@@ -354,7 +354,7 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore.js';
+import todoStore from '../stores/todoStore';
 const { addTodo, deleteTodo } = todoStore.actions;
 
 export default function TodoList() {
@@ -433,7 +433,7 @@ export default gameStore;
 components/GamePad.jsx
 
 ```jsx
-import gameStore from '../stores/gameStore.js';
+import gameStore from '../stores/gameStore';
 const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
 
 export default function GamePad() {
@@ -470,7 +470,7 @@ export default gameStore;
 components/GamePad.jsx
 
 ```jsx
-import gameStore from '../stores/gameStore.js';
+import gameStore from '../stores/gameStore';
 const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
 
 export default function GamePad() {
