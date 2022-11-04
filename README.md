@@ -612,9 +612,9 @@ describe('cartStore', () => {
 Even if a store is only used by one component, it can be a nice way to separate
 concerns.
 
-In components/Game/gameStore.js
+In components/Game/gameStore.ts
 
-```js
+```ts
 import { Store, useStoreState } from 'react-thermals';
 import random from 'random-int';
 
@@ -627,19 +627,18 @@ export const gameStore = new Store({
     hasWon: false,
   },
   actions: {
-    restart() {
-      gameStore.setStateAt('board.user', { x: 0, y: 0 });
+    restart(): void {
+      gameStore.reset();
       gameStore.setStateAt('board.flag', {
         x: random(1, 10),
         y: random(1, 10),
       });
     },
-    moveBy(x, y) {
-      gameStore.setStateAt('board.user', old => ({
+    moveBy(x: number, y: number): void {
+      gameStore.setSyncAt('board.user', (old: Record<string, number>) => ({
         x: old.x + x,
         y: old.y + y,
       }));
-      gameStore.flushSync();
       gameStore.flushSync();
       const user = gameStore.getStateAt('board.user');
       const flag = gameStore.getStateAt('board.flag');
@@ -656,42 +655,47 @@ export function useGameState() {
 }
 ```
 
-In components/Game/Game.jsx
+In components/Game/Game.tsx
 
-```jsx harmony
+```tsx
 import React from 'react';
-import range from 'range';
-import { gameStore, useGameState } from './gameStore.js';
+import range from '../range';
+import './Game.css';
+import { gameStore, useGameState } from './gameStore';
 const { restart, moveBy } = gameStore.actions;
 
-export function Game() {
+export default function Game(): React.Element {
   const state = useGameState();
 
   return (
     <div className="Game">
-      <h1>Find the invisible flag</h1>
+      <h1>Hop to the flag</h1>
       <div className="board">
-        {range(10).map(x => (
+        {range(11).map((x: number) => (
           <div key={`x-${x}`} className="row">
-            {range(10).map(y => (
+            {range(11).map((y: number) => (
               <div key={`y-${y}`} className="cell">
-                {state.board.user.x === x && state.board.user.y === y && '🚶'}
+                {state.board.user.x === x && state.board.user.y === y
+                  ? '🐸'
+                  : state.board.flag.x === x &&
+                    state.board.flag.y === y &&
+                    '⛳️'}
               </div>
             ))}
           </div>
         ))}
       </div>
       {state.hasWon ? (
-        <span className="you-win">
+        <div className="you-win">
           You win!
           <button onClick={restart}>New game</button>
-        </span>
+        </div>
       ) : (
         <div className="controls">
-          <button onClick={() => moveBy(0, -1)}>⬆︎</button>
-          <button onClick={() => moveBy(0, 1)}>⬇︎︎</button>
-          <button onClick={() => moveBy(1, 0)}>➡︎</button>
-          <button onClick={() => moveBy(-1, 0)}>⬅︎</button>
+          <button onClick={() => moveBy(0, -1)}>←</button>
+          <button onClick={() => moveBy(-1, 0)}>↑</button>
+          <button onClick={() => moveBy(1, 0)}>↓</button>
+          <button onClick={() => moveBy(0, 1)}>→</button>
         </div>
       )}
     </div>
@@ -742,7 +746,7 @@ create action functions. Supported state changes are:
 ```js
 export default function cycle(path, values) {
   let idx = 0;
-  const nextValue = updatePath(path, function goToNextCycle() {
+  const nextValue = updatePath(path, function doCycle() {
     return values[idx % values.length];
   });
   return function updater(newValue) {

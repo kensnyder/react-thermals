@@ -5,11 +5,14 @@ export function composeActions(actions) {
 }
 
 export function pipeActions(actions) {
-  return function actionPiper(...args) {
+  return async function actionPiper(...args) {
     const store = this;
-    actions.forEach(action => {
-      action(...args);
+    for (const action of actions) {
+      let result = action(...args);
+      if (typeof result?.then === 'function') {
+        result = await result;
+      }
       store.flushSync();
-    });
+    }
   };
 }
