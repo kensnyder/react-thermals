@@ -1,27 +1,27 @@
 /**
  * Build a function that will return state at a certain path
- * @param {String} path  Path string such as "cart" or "cart.total"
+ * @param {string} path  Path string such as "cart" or "cart.total"
  * @return {Function}
  */
-export default function selectPath(path) {
+export default function selectPath(path: string): Function {
   const allSegments = path.split(/[\[\].]/).filter(Boolean);
   if (allSegments.length === 1) {
     // simplified function for the trivial case when path is just a prop name
-    return function get(state) {
+    return function get(state: any): any {
       return state[allSegments[0]];
     };
   }
-  return function get(state) {
+  return function get(state: any): any {
     return descend(state, allSegments);
   };
   // the recursive selector
-  function descend(state, segments) {
+  function descend(state: any, segments: Array<string>): any {
     if (segments.length === 0) {
       return state;
     } else if (segments[0] === '*' && Array.isArray(state)) {
       // we need to map over array items and recurse
       segments = segments.slice(1); // remove that * segment
-      return state.map(item => descend(item, segments)).flat();
+      return state.map((item: any) => descend(item, segments)).flat();
     } else if (segments[0] in state) {
       return descend(state[segments[0]], segments.slice(1));
     } else {

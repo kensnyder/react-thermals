@@ -1,27 +1,37 @@
 import selectPath from '../selectPath/selectPath';
-const identity = state => state;
+const identity = <T>(state: T): T => state;
+
+type MapFunction =
+  | string
+  | number
+  | Function
+  | null
+  | undefined
+  | Array<string>
+  | Array<number>
+  | Array<Function>;
 
 /**
  * Return a function that derives information from state
  * @param {String|Number|Array|Function|null|undefined} mapState  One of the following:
- *   String with a property name or path (e.g. 'user' or 'user.permission')
- *   Number for root state that is just an array
- *   Array of mapState values
- *   Function that is already a mapperFunction
- *   null|undefined to return the full state
+ *   - String with a property name or path (e.g. 'user' or 'user.permission')
+ *   - Number for root state that is just an array
+ *   - Array of mapState values
+ *   - Function that is already a mapperFunction
+ *   - null|undefined to return the full state
  * @return {Function}
  */
-export default function getMapperFunction(mapState) {
+export default function getMapperFunction(mapState: MapFunction) {
   if (typeof mapState === 'string') {
     if (mapState.includes('.')) {
       return selectPath(mapState);
     }
-    return state => state[mapState];
+    return (state: Record<string, any>): any => state[mapState];
   } else if (typeof mapState === 'number') {
-    return state => state[mapState];
+    return (state: Array<any>): any => state[mapState];
   } else if (Array.isArray(mapState)) {
     const mappers = mapState.map(getMapperFunction);
-    return state => {
+    return (state: any): any => {
       return mappers.map(mapper => mapper(state));
     };
   } else if (typeof mapState === 'function') {

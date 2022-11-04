@@ -4,7 +4,7 @@
  * @param {*} overrides  Override values to extend the copy
  * @return {*}
  */
-export default function shallowOverride(value, overrides) {
+export default function shallowOverride(value: any, overrides: any): any {
   if (value instanceof Map) {
     const copy = new Map(value);
     if (overrides instanceof Map) {
