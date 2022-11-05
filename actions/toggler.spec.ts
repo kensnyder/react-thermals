@@ -1,7 +1,7 @@
 import Store from '../src/Store/Store';
 import { toggler, togglerSync } from './toggler';
 
-function getTestStore(initialState) {
+function getTestStore(initialState: Object) {
   return new Store({ state: initialState });
 }
 

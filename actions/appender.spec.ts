@@ -1,7 +1,7 @@
 import Store from '../src/Store/Store';
 import { appender, appenderSync } from './appender';
 
-function getTestStore(initialState) {
+function getTestStore(initialState: Object) {
   return new Store({ state: initialState });
 }
 describe('appender(propName)', () => {

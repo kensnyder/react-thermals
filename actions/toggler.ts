@@ -1,16 +1,17 @@
 import withFlushSync from './withFlushSync';
 import { updatePath } from '../src/updatePath/updatePath';
+import Store from '../src/Store/Store';
 
 /**
  * Helper function to create a setState function that directly toggles one value
  * @param {String} path  The name of or path to the value to toggle
  * @return {Function}  A function suitable for a store action
  */
-export function toggler(path) {
-  const toggle = updatePath(path, function toggleHandler(old) {
+export function toggler(path: string) {
+  const toggle = updatePath(path, function toggleHandler(old: boolean) {
     return !old;
   });
-  return function updater() {
+  return function updater(this: Store) {
     return this.setState(toggle);
   };
 }

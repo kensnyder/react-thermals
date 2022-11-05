@@ -9,7 +9,10 @@ import getUpdateRunner from './getUpdateRunner';
  * @param {Function|Function[]|undefined} transform
  * @return {Function}
  */
-export function updatePath(path, transform = undefined) {
+export function updatePath(
+  path: string,
+  transform: undefined | Function | Array<Function> = undefined
+): Function {
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: updatePath(path,transform) - path must be a string'
@@ -23,24 +26,28 @@ export function updatePath(path, transform = undefined) {
   if (allSegments.length === 0) {
     throw new Error('updatePath path string cannot be empty');
   }
+  const runTransform: Function = getUpdateRunner(transform);
   // root path is denoted with at symbol
   if (path === '@') {
-    return transform;
+    return runTransform;
   }
   if (allSegments[0] === '@') {
     allSegments.shift();
   }
-  const runTransform = getUpdateRunner(transform);
   // the actual update function that takes an object
   // and recursively creates shallow copies
   // and runs the given update function on the target segment
-  return function updater(object, ...callTimeArgs) {
+  return function updater<T>(object: T, ...callTimeArgs: Array<any>): T {
     return descend(object, allSegments, callTimeArgs);
   };
   // the recursive copy/update function
-  function descend(object, segments, args) {
+  function descend(
+    object: any,
+    segments: Array<string>,
+    args: Array<any>
+  ): any {
     const copy = shallowCopy(object);
-    if (segments[0] === '*' && Array.isArray(copy)) {
+    if (segments[0] === '*' && copy instanceof Array) {
       // we need to map over array items
       segments = segments.slice(1);
       return copy.map(item => {

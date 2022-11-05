@@ -1,18 +1,18 @@
 // // Mock `window.location` with Jest spies and extend expect
 // import 'jest-location-mock';
+import { JSDOM } from 'jsdom';
+const window = new JSDOM('').window;
 
 const oldWindowLocation = window.location;
 
 beforeEach(() => {
-  delete window.location;
-
   window.location = Object.defineProperties(
     {},
     {
       ...Object.getOwnPropertyDescriptors(oldWindowLocation),
       assign: {
         configurable: true,
-        value: jest.fn(),
+        value: vitest.fn(),
       },
       search: {
         configurable: true,

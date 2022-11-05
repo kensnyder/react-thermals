@@ -1,26 +1,26 @@
 import withFlushSync from './withFlushSync';
 import { updatePath } from '../src/updatePath/updatePath';
+import Store from '../src/Store/Store';
 
 /**
  * Build a setState function that replaces a particular array item
  * @param {String} path  The name of or path to the value to merge
  * @return {Function}  A function suitable for a store action
  */
-export function replacer(path) {
-  const replaceItem = updatePath(
-    path,
-    function replaceHandler(list, itemToReplace, newItem) {
-      return list?.map(item => {
-        if (item === itemToReplace) {
-          return newItem;
-        } else {
-          return item;
-        }
-      });
-    }
-  );
-  return function updater(itemToReplace, newItem) {
-    this.setState(old => replaceItem(old, itemToReplace, newItem));
+export function replacer(path: any) {
+  const replaceItem = updatePath(path, function replaceHandler<
+    T
+  >(list: Array<T>, itemToReplace: T, newItem: T) {
+    return list?.map(item => {
+      if (item === itemToReplace) {
+        return newItem;
+      } else {
+        return item;
+      }
+    });
+  });
+  return function updater(this: Store, itemToReplace: any, newItem: any) {
+    this.setState((old: any) => replaceItem(old, itemToReplace, newItem));
   };
 }
 

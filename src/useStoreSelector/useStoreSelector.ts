@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import defaultEqualityFn from '../defaultEqualityFn/defaultEqualityFn';
 import getMapperFunction from '../getMapperFunction/getMapperFunction';
+import { Setter } from '../Store/ComponentUpdater';
 
 /**
  * @param {Object} store - A store created with createStore()
@@ -9,9 +10,9 @@ import getMapperFunction from '../getMapperFunction/getMapperFunction';
  * @return {*} - The selected
  */
 export default function useStoreSelector(
-  store,
-  mapState = null,
-  equalityFn = null
+  store: any,
+  mapState: Function | null = null,
+  equalityFn: Function | null = null
 ) {
   // derive and cache the mapState and equalityFn
   const [map, isEqual] = useMemo(() => {
@@ -35,10 +36,13 @@ export default function useStoreSelector(
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
-    setPartialState.mapState = map;
-    setPartialState.equalityFn = isEqual;
-    store._subscribe(setPartialState);
-    return () => store._unsubscribe(setPartialState);
+    const updater: Setter = {
+      mapState: map,
+      equalityFn: isEqual,
+      handler: setPartialState,
+    };
+    store._subscribe(updater);
+    return () => store._unsubscribe(updater);
   }, [store, setPartialState]);
 
   // return that slice or whole bit of state

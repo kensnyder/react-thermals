@@ -1,5 +1,6 @@
 import withFlushSync from './withFlushSync';
 import { updatePath } from '../src/updatePath/updatePath';
+import Store from '../src/Store/Store';
 
 /**
  * Helper function to create a setState function that adds the given amount
@@ -8,12 +9,15 @@ import { updatePath } from '../src/updatePath/updatePath';
  *   e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
  * @return {Function}  A function suitable for a store action
  */
-export function adder(path, baseAmount = 0) {
-  const add = updatePath(path, function addHandler(old, totalAmount) {
-    return old + totalAmount;
-  });
-  return function updater(amount = 0) {
-    return this.setState(old => add(old, baseAmount + amount));
+export function adder(path: string, baseAmount = 0): Function {
+  const add = updatePath(
+    path,
+    function addHandler(old: any, totalAmount: number) {
+      return old + totalAmount;
+    }
+  );
+  return function updater(this: Store, amount = 0) {
+    return this.setState((old: any) => add(old, baseAmount + amount));
   };
 }
 

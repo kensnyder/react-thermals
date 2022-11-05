@@ -3,7 +3,7 @@
  * @param {*} value  Any value, but often an object
  * @return {*}  A copy of the value
  */
-export default function shallowCopy(value) {
+export default function shallowCopy(value: any) {
   if (!value || typeof value === 'string') {
     // falsy scalar
     return value;

@@ -11,11 +11,11 @@ const directlyCompariable = [
 /**
  * A default way to check if two slices of state are equal
  * Used to determine if a component should rerender or not
- * @param {*} prev - The previous value of the state
- * @param {*} next - The next value of the state
- * @return {Boolean} - True if values are shallowly equal
+ * @param prev - The previous value of the state
+ * @param next - The next value of the state
+ * @return True if values are shallowly equal
  */
-export default function defaultEqualityFn(prev, next) {
+export default function defaultEqualityFn(prev: any, next: any): boolean {
   // handle null specially since typeof null === 'object'
   if (prev === null && next === null) {
     // both null

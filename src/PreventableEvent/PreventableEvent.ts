@@ -2,18 +2,18 @@
  * Object representing an event that fires from Store.emit()
  */
 export default class PreventableEvent {
-	public target: any;
-	public type: any;
-	public data: any;
-	public defaultPrevented: any;
-	public propagationStopped: any;
+  public target: any;
+  public type: string;
+  public data: any;
+  public defaultPrevented: boolean;
+  public propagationStopped: boolean;
 
   /**
    * @param {Store} target  The store that created the event
    * @param {String} type  The event name
    * @param {any} data  Any data associated with the event
    */
-  constructor(target, type, data) {
+  constructor(target: any, type: string, data: any) {
     this.target = target;
     this.type = type;
     this.data = data;
@@ -24,21 +24,21 @@ export default class PreventableEvent {
   /**
    * Prevent the default behavior of this event
    */
-  preventDefault() {
+  preventDefault(): void {
     this.defaultPrevented = true;
   }
 
   /**
    * Prevent other handlers from running
    */
-  stopPropagation() {
+  stopPropagation(): void {
     this.propagationStopped = true;
   }
 
   /**
    * Prevent other handlers from running
    */
-  stopImmediatePropagation() {
+  stopImmediatePropagation(): void {
     this.propagationStopped = true;
   }
 
@@ -46,7 +46,7 @@ export default class PreventableEvent {
    * Check if some handlers were skipped
    * @return {Boolean}
    */
-  isPropagationStopped() {
+  isPropagationStopped(): boolean {
     return this.propagationStopped;
   }
 }
