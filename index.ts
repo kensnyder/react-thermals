@@ -1,4 +1,13 @@
-import Store from './src/Store/Store';
-import useStoreSelector from './src/useStoreSelector/useStoreSelector';
-import useStoreState from './src/useStoreState/useStoreState';
-export { Store, useStoreState, useStoreSelector };
+export * as Store from './src/Store/Store';
+export * as useStoreSelector from './src/useStoreSelector/useStoreSelector';
+export * as useStoreState from './src/useStoreState/useStoreState';
+export { adder, adderSync } from './src/actions/adder';
+export { appender, appenderSync } from './src/actions/appender';
+export { remover, removerSync } from './src/actions/remover';
+export { setter, setterSync, setterInput } from './src/actions/setter';
+export { toggler, togglerSync } from './src/actions/toggler';
+export { replacer, replacerSync } from './src/actions/replacer';
+export { updatePath } from './src/updatePath/updatePath';
+export { composeActions, pipeActions } from './src/actions/composeActions';
+export * as consoleLogger from './src/plugins/consoleLogger/consoleLogger';
+export * as observable from './src/plugins/observable/observable';

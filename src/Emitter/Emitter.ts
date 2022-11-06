@@ -1,7 +1,7 @@
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
 
 export default class Emitter {
-  #_handlers: Record<string, Array<Function>> = {
+  #_handlers: Record<string, Function>[] = {
     '*': [],
   };
 

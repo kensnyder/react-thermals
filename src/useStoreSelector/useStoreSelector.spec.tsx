@@ -1,6 +1,5 @@
 import React, { FunctionComponent, ReactElement, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
-import '@testing-library/vitest-dom';
 import Store from '../Store/Store';
 import useStoreState from '../useStoreState/useStoreState';
 import useStoreSelector from './useStoreSelector';
@@ -18,7 +17,7 @@ describe('useStoreSelector(mapState)', () => {
     type TransportState = {
       planet: string;
       rocket: number;
-      seats: Array<string>;
+      seats: string[];
     };
     const state: TransportState = {
       planet: 'Jupiter',
@@ -171,7 +170,7 @@ describe('store.on(type, handler)', () => {
     type TelescopeState = {
       target: string;
       zoom: number;
-      seats: Array<string>;
+      seats: string[];
     };
     const state: TelescopeState = {
       target: 'moon',

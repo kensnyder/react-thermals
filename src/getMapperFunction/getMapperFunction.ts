@@ -7,9 +7,9 @@ type MapFunction =
   | Function
   | null
   | undefined
-  | Array<string>
-  | Array<number>
-  | Array<Function>;
+  | string[]
+  | number[]
+  | Function[];
 
 /**
  * Return a function that derives information from state
@@ -28,7 +28,7 @@ export default function getMapperFunction(mapState: MapFunction) {
     }
     return (state: Record<string, any>): any => state[mapState];
   } else if (typeof mapState === 'number') {
-    return (state: Array<any>): any => state[mapState];
+    return (state: any>): any =[] state[mapState];
   } else if (Array.isArray(mapState)) {
     const mappers = mapState.map(getMapperFunction);
     return (state: any): any => {

@@ -5,8 +5,8 @@ import shallowCopy from '../shallowCopy/shallowCopy';
 import shallowOverride from '../shallowOverride/shallowOverride';
 import { updatePath } from '../updatePath/updatePath';
 import selectPath from '../selectPath/selectPath';
-import MiddlewareContext from '../MiddlewareContext/MiddlewareContext';
-import { Setter } from './ComponentUpdater';
+import MiddlewareContext from '../MiddlewareContext/MiddlewareContext.interface';
+import { Setter } from './Setter.type';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -237,19 +237,13 @@ export default class Store extends Emitter {
     // save final state result (a handler may have altered the final result)
     // then notify affected components
     this.#_notifyComponents(prevState, event2.data.next);
-    // _notifyComponents sets _state
-    // and we return it here for convenience
+    // _notifyComponents sets #_state and we return it here for convenience
     return this.#_state;
   };
 
   /**
    * Create a clone of this store, including plugins but excluding event listeners
    * @param withConfigOverrides  Any Store configuration you want to override
-   * @property initialState  The store's initial state; it can be of any type
-   * @property actions  Named functions that can be dispatched by name and arguments
-   * @property options  Options that setters, plugins or event listeners might look for
-   * @property autoReset  True to reset state after all components unmount
-   * @property id  An identifier that could be used by plugins or event listeners
    * @return The cloned store
    */
   clone = (withConfigOverrides: StoreConfig = {}): Store => {
@@ -480,7 +474,7 @@ export default class Store extends Emitter {
   /**
    * Get a function that will tell connected components to re-render
    * @param prev  The previous state value
-   * @param {next  The next state value
+   * @param next  The next state value
    */
   #_getComponentUpdater = (prev: any, next: any): Function => {
     return function _maybeSetState(setter: Setter) {
@@ -647,5 +641,23 @@ export default class Store extends Emitter {
     } else {
       return prev;
     }
+  };
+
+  // observable plugin
+  subscribe = pluginWarning('observable', 'subscribe');
+
+  // undo plugin
+  undo = pluginWarning('undo', 'undo');
+  redo = pluginWarning('undo', 'redo');
+  jump = pluginWarning('undo', 'jump');
+  jumpTo = pluginWarning('undo', 'jumpTo');
+  getHistory = pluginWarning('undo', 'getHistory');
+}
+
+function pluginWarning(pluginName: string, functionName: string): Function {
+  return function throwForMissingPlugin() {
+    throw new Error(
+      `Import ${pluginName} and register it with "store.plugin(${pluginName}())" to use the "store.${functionName}()" function.`
+    );
   };
 }

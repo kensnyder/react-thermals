@@ -704,7 +704,7 @@ export default function Game(): React.Element {
 ### Writing Actions
 
 For most actions, you can use action creators as introduced in the next
-section and as documented [here](./actions/README.md).
+section and as documented [here](src/actions/README.md).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
@@ -731,13 +731,13 @@ or even state that is local to a single component.
 For common types of state changes, React Thermals has 7 functions that will
 create action functions. Supported state changes are:
 
-1. [Set a single value](./actions/README.md#setter)
-2. [Toggle a boolean value](./actions/README.md#toggler)
-3. [Append an item to a list](./actions/README.md#appender)
-4. [Remove an item from a list](./actions/README.md#remover)
-5. [Replace an item in a list](./actions/README.md#replacer)
-6. [Add to or subtract from a number](./actions/README.md#adder)
-7. [Merge one object into another](./actions/README.md#merger)
+1. [Set a single value](src/actions/README.md#setter)
+2. [Toggle a boolean value](src/actions/README.md#toggler)
+3. [Append an item to a list](src/actions/README.md#appender)
+4. [Remove an item from a list](src/actions/README.md#remover)
+5. [Replace an item in a list](src/actions/README.md#replacer)
+6. [Add to or subtract from a number](src/actions/README.md#adder)
+7. [Merge one object into another](src/actions/README.md#merger)
 
 ```js
 export default function cycle(path, values) {
@@ -753,12 +753,12 @@ export default function cycle(path, values) {
 
 There are also two functions for combining action functions:
 
-1. [composeActions(actions)](./actions/README.md#composeactions) - Run multiple
+1. [composeActions(actions)](src/actions/README.md#composeactions) - Run multiple
    actions where one action doesn't depend on the changes from another
-2. [pipeActions(actions)](./actions/README.md#pipeactions) - Run multiple
+2. [pipeActions(actions)](src/actions/README.md#pipeactions) - Run multiple
    actions in sequence where one state change depends on another
 
-[Full docs](./actions/README.md) on action creators.
+[Full docs](src/actions/README.md) on action creators.
 
 ### Action Batching
 
@@ -956,16 +956,16 @@ will affect what happens next
 The suite of events above allows powerful behavior using plugins. There are 5
 included plugins:
 
-1. [consoleLogger](./plugins/README.md#consolelogger) - Logs state changes to the console
-2. [observable](./plugins/README.md#observable) - Adds a subscribe function to turn store into a
+1. [consoleLogger](src/plugins/README.md#consolelogger) - Logs state changes to the console
+2. [observable](src/plugins/README.md#observable) - Adds a subscribe function to turn store into a
    observable subject
-3. [persistState](./plugins/README.md#persiststate) - Persists state to localStorage or
+3. [persistState](src/plugins/README.md#persiststate) - Persists state to localStorage or
    sessionStorage
-4. [syncUrl](./plugins/README.md#syncurl) - Persists state to URL using history API
-5. [undo](./plugins/README.md#undo) - Adds undo and redo capability to the store
+4. [syncUrl](src/plugins/README.md#syncurl) - Persists state to URL using history API
+5. [undo](src/plugins/README.md#undo) - Adds undo and redo capability to the store
 
 Interested in writing your own plugins? Check out
-[how to write plugins](./plugins/README.md#how-to-write-plugins).
+[how to write plugins](src/plugins/README.md#how-to-write-plugins).
 
 ### Middleware
 

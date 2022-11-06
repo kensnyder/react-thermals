@@ -11,7 +11,7 @@ import getUpdateRunner from './getUpdateRunner';
  */
 export function updatePath(
   path: string,
-  transform: undefined | Function | Array<Function> = undefined
+  transform: undefined | Function | Function[] = undefined
 ): Function {
   if (typeof path !== 'string') {
     throw new Error(
@@ -37,15 +37,11 @@ export function updatePath(
   // the actual update function that takes an object
   // and recursively creates shallow copies
   // and runs the given update function on the target segment
-  return function updater<T>(object: T, ...callTimeArgs: Array<any>): T {
+  return function updater<T>(object: T, ...callTimeArgs: any[]): T {
     return descend(object, allSegments, callTimeArgs);
   };
   // the recursive copy/update function
-  function descend(
-    object: any,
-    segments: Array<string>,
-    args: Array<any>
-  ): any {
+  function descend(object: any, segments: string[], args: any[]): any {
     const copy = shallowCopy(object);
     if (segments[0] === '*' && copy instanceof Array) {
       // we need to map over array items

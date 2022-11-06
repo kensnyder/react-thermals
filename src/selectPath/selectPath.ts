@@ -15,7 +15,7 @@ export default function selectPath(path: string): Function {
     return descend(state, allSegments);
   };
   // the recursive selector
-  function descend(state: any, segments: Array<string>): any {
+  function descend(state: any, segments: string[]): any {
     if (segments.length === 0) {
       return state;
     } else if (segments[0] === '*' && Array.isArray(state)) {

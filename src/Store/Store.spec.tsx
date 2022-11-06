@@ -1,10 +1,10 @@
 import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import useStoreState from '../useStoreState/useStoreState';
-import { setter } from '../../actions/setter';
+import { setter } from '../actions/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import MiddlewareContext from '../MiddlewareContext/MiddlewareContext';
+import MiddlewareContext from '../MiddlewareContext/MiddlewareContext.interface';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
@@ -113,6 +113,14 @@ describe('new Store()', () => {
     expect(store.getOptions()).toEqual({ debug: true, another: 1 });
     expect(store.getOption('debug')).toEqual(true);
     expect(store.getOption('another')).toEqual(1);
+  });
+  it('should extend options', () => {
+    const options = { debug: false };
+    const store = new Store({ options });
+    expect(store.getOptions()).toEqual({ debug: false });
+    expect(store.extendOptions({ foo: 'bar' })).toBe(store);
+    expect(store.getOptions()).toEqual({ debug: true, foo: 'bar' });
+    store.setOption('another', 1);
   });
   it('should allow plugins', () => {
     const spy: Function = vitest.fn();
