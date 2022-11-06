@@ -23,9 +23,10 @@
     "component state"
   ],
   "scripts": {
-    "test": "jest",
-    "test-watch": "jest --watch",
-    "coverage": "jest --collectCoverage",
+    "test": "vitest run",
+    "test-watch": "vitest",
+    "build": "tsc --project tsconfig.build.json",
+    "coverage": "vitest --collectCoverage",
     "view-coverage": "open ./coverage/lcov-report/index.html",
     "generate-types": "sh scripts/generate-types.sh"
   },
@@ -52,6 +53,7 @@
     "react-test-renderer": "18.2.0",
     "release-it": "15.5.0",
     "ts-node": "10.9.1",
+    "tsc": "2.0.4",
     "typescript": "4.8.4",
     "vite": "3.2.0",
     "vitest": "0.24.5",
