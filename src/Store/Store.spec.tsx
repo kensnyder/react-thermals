@@ -1,5 +1,6 @@
 import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState';
 import { setter } from '../actions/setter';
 import Store from './Store';
@@ -118,7 +119,7 @@ describe('new Store()', () => {
     const options = { debug: false };
     const store = new Store({ options });
     expect(store.getOptions()).toEqual({ debug: false });
-    expect(store.extendOptions({ foo: 'bar' })).toBe(store);
+    expect(store.extendOptions({ debug: true, foo: 'bar' })).toBe(store);
     expect(store.getOptions()).toEqual({ debug: true, foo: 'bar' });
     store.setOption('another', 1);
   });

@@ -1,6 +1,6 @@
 import { Mock, SpyInstance } from 'vitest';
-import '@testing-library/jest-dom';
 import { render, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import React, { FunctionComponent } from 'react';
 import Store from '../../Store/Store';
 import useStoreState from '../../useStoreState/useStoreState';

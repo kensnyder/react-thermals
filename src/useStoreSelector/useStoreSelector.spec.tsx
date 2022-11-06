@@ -1,5 +1,6 @@
 import React, { FunctionComponent, ReactElement, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Store from '../Store/Store';
 import useStoreState from '../useStoreState/useStoreState';
 import useStoreSelector from './useStoreSelector';
@@ -131,7 +132,7 @@ describe('useStoreSelector(mapState)', () => {
     await act(() => {
       fireEvent.click(getByText('Visit Mars'));
     });
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 0));
     // await findByText('Mars');
     expect(renderCounts.trip).toBe(2);
     expect(renderCounts.planet).toBe(2);
@@ -328,7 +329,7 @@ describe('store.on(type, handler)', () => {
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 0));
     expect(caught).toBe('foobar');
   });
   it('should return used count', async () => {

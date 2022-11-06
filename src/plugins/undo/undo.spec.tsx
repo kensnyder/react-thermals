@@ -1,4 +1,8 @@
-import React from 'react';
+import React, {
+  ComponentProps,
+  FunctionComponent,
+  MouseEventHandler,
+} from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Store from '../../Store/Store';
@@ -7,17 +11,23 @@ import undo from './undo';
 
 describe('undo()', () => {
   // define store before each test
-  let store, KeyboardComponent, KeyComponent;
+  let store: Store;
+  let KeyboardComponent: FunctionComponent;
+  let KeyComponent: FunctionComponent<{ character: string }>;
   beforeEach(() => {
-    const state = { keys: [], minutes: 60 };
+    type MyState = {
+      keys: string[];
+      minutes: number;
+    };
+    const state: MyState = { keys: [], minutes: 60 };
     const actions = {
-      pressKey: character => {
-        store.mergeState(old => ({
+      pressKey: (character: string) => {
+        store.mergeState((old: MyState) => ({
           keys: [...old.keys, character],
         }));
       },
-      addMinutes: num => {
-        store.mergeState(old => ({ minutes: old.minutes + num }));
+      addMinutes: (num: number) => {
+        store.mergeState((old: MyState) => ({ minutes: old.minutes + num }));
       },
     };
     store = new Store({
@@ -26,7 +36,7 @@ describe('undo()', () => {
     });
     KeyboardComponent = () => {
       const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
-      const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      const numbers = '0123456789'.split('');
       const state = useStoreState(store);
       const { addMinutes } = store.actions;
       return (
@@ -40,8 +50,8 @@ describe('undo()', () => {
           ))}
           <KeyComponent character=" " />
           <button onClick={() => addMinutes(5)}>+5 minutes</button>
-          <button onClick={store.undo}>undo</button>
-          <button onClick={store.redo}>redo</button>
+          <button onClick={store.undo as MouseEventHandler}>undo</button>
+          <button onClick={store.redo as MouseEventHandler}>redo</button>
           <button onClick={() => store.jumpTo(1)}>jumpTo(1)</button>
           <button onClick={() => store.jump(-2)}>jump(-2)</button>
         </div>

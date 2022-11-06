@@ -28,10 +28,10 @@ export default function getMapperFunction(mapState: MapFunction) {
     }
     return (state: Record<string, any>): any => state[mapState];
   } else if (typeof mapState === 'number') {
-    return (state: any>): any =[] state[mapState];
+    return (state: any[]): any => state[mapState];
   } else if (Array.isArray(mapState)) {
     const mappers = mapState.map(getMapperFunction);
-    return (state: any): any => {
+    return (state: any[]): any => {
       return mappers.map(mapper => mapper(state));
     };
   } else if (typeof mapState === 'function') {

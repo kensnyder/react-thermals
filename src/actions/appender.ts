@@ -10,7 +10,7 @@ import Store from '../Store/Store';
 export function appender(path: string) {
   const append = updatePath(
     path,
-    function appendHandler(old: any>, newItems: Array<any[]) {
+    function appendHandler(old: any, newItems: any[]) {
       return [...old, ...newItems];
     }
   );
