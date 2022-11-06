@@ -1,12 +1,12 @@
 /**
  * Build a function that accepts a value or a setState handler that receives
  *   the old state value and returns the new state value. Used by updatePath
- * @param Some examples:
+ * @param transform  Some examples:
  *   Add one to the old state: getUpdateRunner(old => old + 1)
  *   Add to the old state: getUpdateRunner((old, addend) => old + addend)
  *   Append an item: getTranformerRunner((old, newItem) => ([...old, newItem]))
  *   Allow transforming later: getUpdateRunner(undefined)
- * @return {Function}
+ * @return A function that will update state
  * @throws {Error} if transform is not a valid type
  */
 export default function getUpdateRunner(
