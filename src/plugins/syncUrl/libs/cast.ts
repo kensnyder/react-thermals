@@ -11,9 +11,6 @@ export type SchemaType =
 export type CastableSchema = Record<string, SchemaType>;
 
 export function castToStrings(schema: CastableSchema, obj: Object) {
-  if (!schema) {
-    return obj;
-  }
   const casted: Record<string, keyof Object> = {};
   for (const [key, value] of Object.entries(obj)) {
     casted[key] = _castToString(schema, key, value);
@@ -21,9 +18,6 @@ export function castToStrings(schema: CastableSchema, obj: Object) {
   return casted;
 }
 export function castFromStrings(schema: CastableSchema, obj: Object) {
-  if (!schema) {
-    return obj;
-  }
   const casted: Record<string, keyof Object> = {};
   for (const [key, value] of Object.entries(obj)) {
     casted[key] = _castFromString(schema, key, value);
