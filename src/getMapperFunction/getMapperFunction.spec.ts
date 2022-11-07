@@ -33,6 +33,7 @@ describe('getMapperFunction(function|string|int|array)', () => {
   });
   it('should throw errors on boolean', () => {
     const tryIt = () => {
+      // @ts-ignore
       getMapperFunction(false);
     };
     expect(tryIt).toThrowError();
@@ -43,7 +44,10 @@ describe('getMapperFunction(function|string|int|array)', () => {
     expect(slice).toEqual(['John', '867-5309']);
   });
   it('should accept nested arrays', () => {
-    const mapper = getMapperFunction([['name', [state => state.phone]]]);
+    type MyState = Record<'phone', string>;
+    const mapper = getMapperFunction([
+      [['name'], [(state: MyState) => state.phone]],
+    ]);
     const slice = mapper({ name: 'John', phone: '867-5309' });
     expect(slice).toEqual([['John', ['867-5309']]]);
   });

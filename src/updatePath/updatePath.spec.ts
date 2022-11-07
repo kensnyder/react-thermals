@@ -2,6 +2,7 @@ import { updatePath } from './updatePath';
 
 describe('deepUpdater', () => {
   it('should throw exceptions on non-string path', () => {
+    // @ts-ignore
     const thrower = () => updatePath(5);
     expect(thrower).toThrow(/must be a string/);
   });

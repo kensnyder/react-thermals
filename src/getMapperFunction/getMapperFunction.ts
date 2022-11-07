@@ -1,27 +1,22 @@
 import selectPath from '../selectPath/selectPath';
 const identity = <T>(state: T): T => state;
 
-type MapFunction =
-  | string
-  | number
-  | Function
-  | null
-  | undefined
-  | string[]
-  | number[]
-  | Function[];
+type MapFunction = string | number | Function | null | undefined;
+
+type MapFunctions = MapFunction[] | MapFunction[][] | MapFunction[][][];
 
 /**
  * Return a function that derives information from state
- * @param {String|Number|Array|Function|null|undefined} mapState  One of the following:
+ * @param mapState  One of the following:
  *   - String with a property name or path (e.g. 'user' or 'user.permission')
  *   - Number for root state that is just an array
- *   - Array of mapState values
  *   - Function that is already a mapperFunction
  *   - null|undefined to return the full state
- * @return {Function}
+ *   - An array of any of these
  */
-export default function getMapperFunction(mapState: MapFunction) {
+export default function getMapperFunction(
+  mapState: MapFunction | MapFunctions
+): Function {
   if (typeof mapState === 'string') {
     if (mapState.includes('.')) {
       return selectPath(mapState);
