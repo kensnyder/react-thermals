@@ -492,9 +492,6 @@ export default class Store extends Emitter {
         }
       } else {
         // registered from useStoreState
-        if (typeof setter.handler !== 'function') {
-          console.log('++++++++++++++++++++ setter', setter);
-        }
         setter.handler(next);
       }
     };

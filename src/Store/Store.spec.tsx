@@ -1,5 +1,6 @@
 import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
+import { vitest } from 'vitest';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState';
 import { setter } from '../actions/setter';
@@ -136,6 +137,20 @@ describe('new Store()', () => {
     store.plugin(spy);
     expect(spy).not.toHaveBeenCalled();
   });
+  it('should throw on missing plugins', () => {
+    const store = new Store();
+    const throwers = [
+      store.subscribe,
+      store.undo,
+      store.redo,
+      store.jump,
+      store.jumpTo,
+      store.getHistory,
+    ];
+    for (const thrower of throwers) {
+      expect(thrower).toThrow();
+    }
+  });
   it('should setSyncAt(path, value)', async () => {
     const store = new Store({
       state: { hello: { world: 42 } },
@@ -199,6 +214,14 @@ describe('new Store()', () => {
     expect(store.getState()).toBe(initialState);
     expect(store.getState().foo).toBe('bar');
     expect(ret).toBe(store);
+  });
+  it('should throw if extendState(moreState) moreState not an object', async () => {
+    const initialState = { hello: { world: 42 } };
+    const store = new Store({ state: initialState });
+    const thrower = () => {
+      store.extendState(42);
+    };
+    expect(thrower).toThrow();
   });
 });
 describe('new Store() with autoReset', () => {
