@@ -1,6 +1,6 @@
 import { vitest } from 'vitest';
 
-/* istanbul ignore next */
+/* istanbul ignore next @preserve */
 export const MockLocation = {
   assign: vitest.fn(),
   search: '',

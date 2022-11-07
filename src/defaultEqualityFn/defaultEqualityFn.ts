@@ -62,6 +62,6 @@ export default function defaultEqualityFn(prev: any, next: any): boolean {
     return true;
   }
   // some future non-object data type not yet in the JavaScript specification
-  /* istanbul ignore next */
+  /* istanbul ignore next @preserve */
   return false;
 }

@@ -46,7 +46,7 @@ export default function observable() {
       return {
         unsubscribe() {
           const idx = observers.indexOf(observer);
-          /* istanbul ignore next */
+          /* istanbul ignore next @preserve */
           if (idx > -1) {
             observers.splice(idx, 1);
           }

@@ -508,7 +508,7 @@ export default class Store extends Emitter {
     const failsafeCascadeCount = 100;
     let failsafe = this.#_updateQueue.length + failsafeCascadeCount;
     while (this.#_updateQueue.length > 0) {
-      /* istanbul ignore next */
+      /* istanbul ignore next @preserve */
       if (--failsafe === 0) {
         throw new Error(
           `react-thermals: Too many setState calls in queue; you probably have an infinite loop.`
@@ -603,7 +603,7 @@ export default class Store extends Emitter {
     const failsafeCascadeCount = 100;
     let failsafe = this.#_updateQueue.length + failsafeCascadeCount;
     while (this.#_updateQueue.length > 0) {
-      /* istanbul ignore next */
+      /* istanbul ignore next @preserve */
       if (--failsafe === 0) {
         throw new Error(
           `react-thermals: Too many setState calls in queue; probably an infinite loop.`

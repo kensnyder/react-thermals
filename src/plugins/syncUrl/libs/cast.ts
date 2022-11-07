@@ -29,6 +29,7 @@ function _castToString(schema: CastableSchema, field: string, value: any) {
   if (!toType) {
     return value;
   }
+  /* istanbul ignore next @preserve */
   switch (toType.toLowerCase()) {
     case 'string':
     case 'string[]':
@@ -46,13 +47,12 @@ function _castToString(schema: CastableSchema, field: string, value: any) {
     case 'boolean[]':
       return value.map((v: any) => (v ? 'true' : 'false'));
     default:
-      /* istanbul ignore next */
       throw new Error(`react-thermals: unknown schema type "${toType}"`);
   }
 }
 function _castFromString(schema: CastableSchema, field: string, value: any) {
   const toType: SchemaType = schema[field];
-  /* istanbul ignore next */
+  /* istanbul ignore next @preserve */
   if (!toType) {
     return value;
   }

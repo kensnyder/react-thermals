@@ -1,4 +1,4 @@
-import { Mock, SpyInstance } from 'vitest';
+import { vitest, Mock, SpyInstance } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React, { FunctionComponent } from 'react';
@@ -161,7 +161,7 @@ describe('syncUrl()', () => {
     render(<Component />);
     expect(store.getState()).toEqual({ flags: [true, false] });
   });
-  it('should cast from schema date', async () => {
+  it('should cast from schema Date', async () => {
     store.setSync({ start: '2022-05-23' });
     location.search = '?start=2022-05-24';
     store.plugin(syncUrl({ schema: { start: 'Date' } }));
@@ -169,7 +169,7 @@ describe('syncUrl()', () => {
     expect(store.getState().start).toBeInstanceOf(Date);
     expect(store.getState().start.toJSON()).toBe('2022-05-24T00:00:00.000Z');
   });
-  it('should cast from schema date[]', async () => {
+  it('should cast from schema Date[]', async () => {
     store.setSync({ range: ['2022-05-20', '2022-05-21'] });
     location.search = '?range=2022-05-23,2022-05-24';
     store.plugin(syncUrl({ schema: { range: 'Date[]' } }));
