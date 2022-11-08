@@ -6,7 +6,7 @@ import useStoreState from '../useStoreState/useStoreState';
 import { setter } from '../actions/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import MiddlewareContext from '../MiddlewareContext/MiddlewareContext.interface';
+import MiddlewareContextInterface from './MiddlewareContext.interface';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
@@ -391,13 +391,7 @@ describe('new Store() flushSync', () => {
             throw new Error('Scooby Doo');
           });
         });
-      },
-      setSyncError: () => {
-        store.setSync(() => Promise.resolve(42));
-      },
-      mergeSyncError: () => {
-        store.mergeSync(() => Promise.resolve(42));
-      },
+      }
     };
     store = new Store({
       state,
@@ -476,20 +470,6 @@ describe('new Store() flushSync', () => {
     store.flushSync();
     expect(store.getState().page).toBe(1);
   });
-  it('should error if setSync function returns Promise', () => {
-    const thrower = () => {
-      store.actions.setSyncError();
-    };
-    expect(thrower).toThrowError();
-    expect(store.getState().page).toBe(1);
-  });
-  it('should error if mergeSync function returns Promise', () => {
-    const thrower = () => {
-      store.actions.mergeSyncError();
-    };
-    expect(thrower).toThrowError();
-    expect(store.getState().page).toBe(1);
-  });
 });
 describe('new Store() cloning', () => {
   // define store before each test
@@ -546,7 +526,7 @@ describe('new Store() middleware', () => {
   });
   it('should allow spying middleware', async () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContext, next: Function) => {
+    store.use((ctx: MiddlewareContextInterface, next: Function) => {
       spy(ctx);
       next();
     });
@@ -562,7 +542,7 @@ describe('new Store() middleware', () => {
   });
   it('should allow non-nexting middleware', async () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContext, next: Function) => {
+    store.use((ctx: MiddlewareContextInterface, next: Function) => {
       spy(ctx);
     });
     store.actions.setPage(2);
@@ -577,7 +557,7 @@ describe('new Store() middleware', () => {
   });
   it('should allow spying sync middleware', () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContext, next: Function) => {
+    store.use((ctx: MiddlewareContextInterface, next: Function) => {
       spy(ctx);
       next();
     });
@@ -593,7 +573,7 @@ describe('new Store() middleware', () => {
   });
   it('should allow non-nexting sync middleware', () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContext, next: Function) => {
+    store.use((ctx: MiddlewareContextInterface, next: Function) => {
       spy(ctx);
     });
     store.actions.setPage(2);

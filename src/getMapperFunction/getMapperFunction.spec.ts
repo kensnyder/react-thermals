@@ -49,7 +49,7 @@ describe('getMapperFunction(function|string|int|array)', () => {
       [['name'], [(state: MyState) => state.phone]],
     ]);
     const slice = mapper({ name: 'John', phone: '867-5309' });
-    expect(slice).toEqual([['John', ['867-5309']]]);
+    expect(slice).toEqual([[['John'], ['867-5309']]]);
   });
 });
 describe('getMapperFunction(pathedString)', () => {

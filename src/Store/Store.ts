@@ -5,8 +5,9 @@ import shallowCopy from '../shallowCopy/shallowCopy';
 import shallowOverride from '../shallowOverride/shallowOverride';
 import { updatePath } from '../updatePath/updatePath';
 import selectPath from '../selectPath/selectPath';
-import MiddlewareContext from '../MiddlewareContext/MiddlewareContext.interface';
-import { Setter } from './Setter.type';
+import MiddlewareContextInterface from './MiddlewareContext.interface';
+import { SetterType } from './Setter.type';
+import { MergableStateAsyncType, MergableStateType} from "./MergableState.type";
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -20,7 +21,7 @@ export default class Store extends Emitter {
   #_options: Record<string, any>;
   #_plugins: Function[] = [];
   #_rawActions: Record<string, Function> = {};
-  #_setters: Setter[] = [];
+  #_setters: SetterType[] = [];
   #_state: any;
   #_updateQueue: Function[] = [];
   #_usedCount = 0;
@@ -112,7 +113,7 @@ export default class Store extends Emitter {
    * @param newState  The value to merge or function that will return value to merge
    * @chainable
    */
-  mergeState = (newState: Function | Object) => {
+  mergeState = (newState: MergableStateAsyncType) => {
     let updater;
     if (typeof newState === 'function') {
       updater = (old: Object) => {
@@ -144,7 +145,6 @@ export default class Store extends Emitter {
         'react-thermals Store.extendState(): current state and given state must both be objects'
       );
     }
-    // TODO: throw exception if state or moreState are not objects
     Object.assign(this.#_state, moreState);
     return this;
   };
@@ -154,15 +154,8 @@ export default class Store extends Emitter {
    * @param newState The new value or function that will return the new value
    */
   setSync = (newState: any) => {
-    if (typeof newState === 'function') {
-      newState = newState(this.#_state);
-    }
-    if (typeof newState?.then === 'function') {
-      throw new Error(
-        'react-thermals: Error - when calling setSync, state updaters may not return a promise'
-      );
-    }
-    this.#_state = newState;
+    this.setState(newState);
+    this.flushSync();
     return this;
   };
 
@@ -170,16 +163,9 @@ export default class Store extends Emitter {
    * Immediately merge the state with the given value
    * @param newState  The value to merge or function that will return value to merge
    */
-  mergeSync = (newState: any) => {
-    if (typeof newState === 'function') {
-      newState = newState(this.#_state);
-    }
-    if (typeof newState?.then === 'function') {
-      throw new Error(
-        'react-thermals: Error - when calling mergeSync, state updaters may not return a promise'
-      );
-    }
-    this.#_state = shallowOverride(this.#_state, newState);
+  mergeSync = (newState: MergableStateType) => {
+    this.mergeState(newState);
+    this.flushSync();
     return this;
   };
 
@@ -402,7 +388,7 @@ export default class Store extends Emitter {
    * @param {Object} context  Object with prev, next, isAsync, store
    * @param {Function} callback  The function to call when all middlewares have called "next()"
    */
-  #_runMiddlewares = (context: MiddlewareContext, callback: Function): void => {
+  #_runMiddlewares = (context: MiddlewareContextInterface, callback: Function): void => {
     let i = 0;
     const next = () => {
       if (i === this.#_middlewares.length) {
@@ -420,7 +406,7 @@ export default class Store extends Emitter {
    * @private
    * @param {Object} context  Object with prev, next, isAsync, store
    */
-  #_runMiddlewaresSync = (context: MiddlewareContext): boolean => {
+  #_runMiddlewaresSync = (context: MiddlewareContextInterface): boolean => {
     let i = 0;
     const timesCalled = () => i++;
     for (const middleware of this.#_middlewares) {
@@ -439,7 +425,7 @@ export default class Store extends Emitter {
    * @param setState  A setState function from React.useState()
    * @note private but used by useStoreSelector()
    */
-  _subscribe = (setState: Setter) => {
+  _subscribe = (setState: SetterType) => {
     if (this.#_usedCount++ === 0) {
       this.emit('AfterFirstUse');
     }
@@ -457,7 +443,7 @@ export default class Store extends Emitter {
    * @param setState  The setState function used to _subscribe
    * @note private but used by useStoreSelector()
    */
-  _unsubscribe = (setState: Setter) => {
+  _unsubscribe = (setState: SetterType) => {
     const idx = this.#_setters.indexOf(setState);
     if (idx > -1) {
       this.#_setters.splice(idx, 1);
@@ -477,7 +463,7 @@ export default class Store extends Emitter {
    * @param next  The next state value
    */
   #_getComponentUpdater = (prev: any, next: any): Function => {
-    return function _maybeSetState(setter: Setter) {
+    return function _maybeSetState(setter: SetterType) {
       if (
         typeof setter.mapState === 'function' &&
         typeof setter.equalityFn === 'function'
@@ -556,7 +542,7 @@ export default class Store extends Emitter {
       return;
     }
     const nextState = await this.#_getNextState();
-    const context: MiddlewareContext = {
+    const context: MiddlewareContextInterface = {
       prev: prevState,
       next: nextState,
       isAsync: true,
@@ -583,7 +569,7 @@ export default class Store extends Emitter {
     // save final state result
     this.#_state = next;
     // update components with no selector or with matching selector
-    this.#_setters.forEach((setter: Setter) => {
+    this.#_setters.forEach((setter: SetterType) => {
       this.#_getComponentUpdater(prev, this.#_state)(setter);
     });
     // announce the final state

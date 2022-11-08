@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Setter } from '../Store/Setter.type';
+import { SetterType } from '../Store/Setter.type';
 import Store from '../Store/Store';
 
 /**
@@ -24,7 +24,7 @@ export default function useStoreState(store: Store) {
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
-    const setter: Setter = {
+    const setter: SetterType = {
       handler: setState,
     };
     store._subscribe(setter);

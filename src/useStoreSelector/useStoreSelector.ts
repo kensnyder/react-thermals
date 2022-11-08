@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import defaultEqualityFn from '../defaultEqualityFn/defaultEqualityFn';
 import getMapperFunction from '../getMapperFunction/getMapperFunction';
-import { Setter } from '../Store/Setter.type';
+import { SetterType } from '../Store/Setter.type';
 
 /**
  * @param {Object} store - A store created with createStore()
@@ -36,7 +36,7 @@ export default function useStoreSelector(
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
-    const updater: Setter = {
+    const updater: SetterType = {
       mapState: map,
       equalityFn: isEqual,
       handler: setPartialState,

@@ -248,7 +248,7 @@ property.
 
 ```js
 import globalStore, { useGlobalStore } from '../globalStore';
-import { persistState } from 'react-thermals/plugins';
+import { persistState } from 'react-thermals';
 
 // add plugins to the root store at any time
 globalStore.plugin(
@@ -365,7 +365,7 @@ property.
 ```js
 import axios from 'axios';
 import globalStore, { useGlobalStore } from '../../globalStore/globalStore';
-import { setterInput } from 'react-thermals/actions';
+import { setterInput } from 'react-thermals';
 
 export function useAuth() {
   return useGlobalStore('user');
@@ -459,13 +459,14 @@ In src/stores/cartStore.js we define a single store that is only used by the
 parts of the application that deal with a shopping cart.
 
 ```js
-import { Store, useStoreSelector } from 'react-thermals';
 import {
+  Store, 
+  useStoreSelector,
   appender,
   remover,
   setter,
-  composeActions,
-} from 'react-thermals/actions';
+  composeActions 
+} from 'react-thermals';
 
 export const cartStore = new Store({
   state: { items: [], discount: 0 },

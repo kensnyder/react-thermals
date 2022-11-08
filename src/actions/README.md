@@ -48,7 +48,7 @@ will end up with a state value of `{ colors: { primary: '#f00' } }`.
 The function that creates state update functions is called `updatePath`. If
 you'd like to use it directly, you can import it from `react-thermals/actions`:
 
-`import { updatePath } from 'react-thermals/actions';`
+`import { updatePath } from 'react-thermals';`
 
 Read more at the [updatePath docs](../src/updatePath/README.md).
 
@@ -77,8 +77,8 @@ const setField = useCallback(
 
 ```jsx
 // In /stores/postsStore.ts
-import { Store } from 'react-thermals';
-import { setter } from 'react-thermals/actions';
+import { Store, setter } from 'react-thermals';
+
 const postsStore = new Store({
   state: {
     page: 1,
@@ -110,8 +110,8 @@ Set a single value synchronously.
 stores/postsStore.js
 
 ```jsx
-import { createStore, useStoreSelector } from 'react-thermals';
-import { setterSync } from 'react-thermals/actions';
+import { createStore, useStoreSelector, setterSync } from 'react-thermals';
+
 const postsStore = new Store({
   state: {
     searchTerm: '',
@@ -148,8 +148,7 @@ Set a single value synchronously from an input's onChange event.
 stores/postsStore.js
 
 ```jsx
-import { createStore, useStoreSelector } from 'react-thermals';
-import { setterSync } from 'react-thermals/actions';
+import { createStore, useStoreSelector, setterSync } from 'react-thermals';
 
 const postsStore = new Store({
   state: {
@@ -190,8 +189,7 @@ const setField = useCallback(
 ```
 
 ```jsx harmony
-import { Store, useStoreSelector } from 'react-thermals';
-import { toggler } from 'react-thermals/actions';
+import { Store, useStoreSelector, toggler } from 'react-thermals';
 
 const postsStore = new Store({
   state: { showDetails: false },
@@ -252,8 +250,7 @@ const setField = useCallback(
 stores/todoStore.js
 
 ```js
-import { Store, useStoreSelector } from 'react-thermals';
-import { appender } from 'react-thermals/actions';
+import { Store, useStoreSelector, appender } from 'react-thermals';
 
 const todoStore = new Store({
   state: { todos: [] },
@@ -332,8 +329,7 @@ const setField = useCallback(
 stores/todoStore.js
 
 ```js
-import { Store, useStoreSelector } from 'react-thermals';
-import { appender } from 'react-thermals/actions';
+import { Store, useStoreSelector, appender } from 'react-thermals';
 
 const todoStore = new Store({
   state: { todos: [] },
@@ -414,8 +410,7 @@ const setField = useCallback(
 In stores/gameStore.js
 
 ```jsx harmony
-import { Store } from 'react-thermals';
-import { adder } from 'react-thermals/actions';
+import { Store, adder } from 'react-thermals';
 
 const gameStore = new Store({
   state: { x: 0, y: 0 },
@@ -453,8 +448,7 @@ Or allow pass the addend later.
 stores/gameStore.js
 
 ```jsx harmony
-import { Store } from 'react-thermals';
-import { adder } from 'react-thermals/actions';
+import { Store, adder } from 'react-thermals';
 
 const gameStore = new Store({
   state: { x: 0, y: 0 },

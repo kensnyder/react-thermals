@@ -46,13 +46,13 @@ export function updatePath(
     if (segments[0] === '*' && copy instanceof Array) {
       // we need to map over array items
       segments = segments.slice(1);
-      return copy.map(item => {
+      return copy.map(leaf => {
         if (segments.length === 0) {
           // star is at the end of path
-          return runTransform(item, ...args);
+          return runTransform(leaf, ...args);
         } else {
           // we can recurse further
-          return descend(item, segments, args);
+          return descend(leaf, segments, args);
         }
       });
     } else if (typeof copy === 'object' && segments[0] in copy) {

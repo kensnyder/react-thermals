@@ -1,4 +1,4 @@
-import { Mock, SpyInstance } from 'vitest';
+import { vitest, Mock, SpyInstance } from 'vitest';
 import React, { FunctionComponent } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -67,6 +67,7 @@ describe('persistState()', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
+      store.flushSync();
     });
     expect(storage.value).toEqual(JSON.stringify({ page: 2, sort: '-date' }));
     expect(getByText('page=2')).toBeInTheDocument();
@@ -127,6 +128,7 @@ describe('persistState() with fields', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
+      store.flushSync();
     });
     expect(storage.value).toEqual(JSON.stringify({ page: 2 }));
     expect(getByText('page=2')).toBeInTheDocument();
@@ -333,8 +335,8 @@ describe('persistState() with custom parse and stringify', () => {
     storage.value = 'page=2&sort=-date';
     render(<Component />);
     expect(store.getState()).toEqual({ page: '2', sort: '-date' });
-    expect(storage.setItem.mock.calls).toEqual([
-      ['params', 'page=2&sort=-date'],
-    ]);
+    expect(storage.setItem.mock.lastCall).toEqual(
+      ['params', 'page=2&sort=-date']
+    );
   });
 });

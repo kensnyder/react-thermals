@@ -1,4 +1,4 @@
-export type Setter = {
+export type SetterType = {
   handler: Function;
   mapState?: Function;
   equalityFn?: Function;

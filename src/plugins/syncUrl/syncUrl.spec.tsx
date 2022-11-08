@@ -82,6 +82,7 @@ describe('syncUrl()', () => {
     const { getByText, unmount } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
+      store.flushSync();
     });
     expect(getByText('page=3')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
@@ -109,6 +110,7 @@ describe('syncUrl()', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
+      store.flushSync();
     });
     expect(getByText('page=21')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
