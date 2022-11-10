@@ -1,3 +1,5 @@
+import { PlainObjectType } from '../../../types';
+
 export type SchemaType =
   | 'string'
   | 'string[]'
@@ -10,15 +12,15 @@ export type SchemaType =
 
 export type CastableSchema = Record<string, SchemaType>;
 
-export function castToStrings(schema: CastableSchema, obj: Object) {
-  const casted: Record<string, keyof Object> = {};
+export function castToStrings(schema: CastableSchema, obj: PlainObjectType) {
+  const casted: Record<string, keyof PlainObjectType> = {};
   for (const [key, value] of Object.entries(obj)) {
     casted[key] = _castToString(schema, key, value);
   }
   return casted;
 }
-export function castFromStrings(schema: CastableSchema, obj: Object) {
-  const casted: Record<string, keyof Object> = {};
+export function castFromStrings(schema: CastableSchema, obj: PlainObjectType) {
+  const casted: Record<string, keyof PlainObjectType> = {};
   for (const [key, value] of Object.entries(obj)) {
     casted[key] = _castFromString(schema, key, value);
   }

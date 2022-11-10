@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { SetterType } from '../Store/Setter.type';
 import Store from '../Store/Store';
+import { SetterType } from '../types';
 
 /**
  * @param {Store} store - An instance of Store

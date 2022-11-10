@@ -1,7 +1,8 @@
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
+import { EventHandlerType, EventNameType } from '../types';
 
 export default class Emitter {
-  #_handlers: Record<string, Function[]> = {
+  #_handlers: Record<string, EventHandlerType[]> = {
     '*': [],
   };
 
@@ -11,7 +12,7 @@ export default class Emitter {
    * @param {Function} handler  The function to be called when the event fires
    * @return {Emitter}
    */
-  on(type: string, handler: Function): Emitter {
+  on(type: EventNameType, handler: EventHandlerType): Emitter {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -25,7 +26,7 @@ export default class Emitter {
    * @param {Function} handler  The function registered with "on()" or "once()"
    * @return {Emitter}
    */
-  off(type: string, handler: Function): Emitter {
+  off(type: EventNameType, handler: EventHandlerType): Emitter {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -39,7 +40,7 @@ export default class Emitter {
    * @param {Function} handler  The function to be called when the event fires
    * @return {Emitter}
    */
-  once(type: string, handler: Function): Emitter {
+  once(type: EventNameType, handler: EventHandlerType): Emitter {
     const onceHandler = (event: PreventableEvent) => {
       this.off(type, onceHandler);
       handler.call(this, event);
@@ -55,7 +56,7 @@ export default class Emitter {
    * @return {PreventableEvent}  Returns the event object that was passed to handlers
    * @property isDefaultPrevented  Read to tell if event was canceled
    */
-  emit(type: string, data: any = null): PreventableEvent {
+  emit(type: EventNameType, data: any = null): PreventableEvent {
     if (
       (!this.#_handlers[type] || this.#_handlers[type].length === 0) &&
       this.#_handlers['*'].length === 0

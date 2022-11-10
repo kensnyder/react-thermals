@@ -1,5 +1,6 @@
 import Store from '../../Store/Store';
 import PreventableEvent from '../../PreventableEvent/PreventableEvent';
+import { EventNameType } from '../../types';
 
 export default function consoleLogger({ eventTypes = ['*'] } = {}) {
   return function plugin(store: Store) {
@@ -11,7 +12,7 @@ export default function consoleLogger({ eventTypes = ['*'] } = {}) {
     store.once('AfterPlugin', () => {
       // attach listeners, but only after this plugin is registered
       for (const type of eventTypes) {
-        store.on(type, (evt: PreventableEvent) => {
+        store.on(type as EventNameType, (evt: PreventableEvent) => {
           console.log({ storeId: store.id, eventType: evt.type, event: evt });
         });
       }

@@ -1,5 +1,7 @@
-export function omitUnknown(fields: string[], obj: Object) {
-  const known: Record<string, any> = {};
+import { PlainObjectType } from '../../../types';
+
+export function omitUnknown(fields: string[], obj: PlainObjectType) {
+  const known: PlainObjectType = {};
   for (const [key, value] of Object.entries(obj)) {
     if (fields.includes(key)) {
       known[key] = value;
@@ -8,8 +10,8 @@ export function omitUnknown(fields: string[], obj: Object) {
   return known;
 }
 
-export function omitKnown(fields: string[], obj: Object) {
-  const unknown: Record<string, any> = {};
+export function omitKnown(fields: string[], obj: PlainObjectType) {
+  const unknown: PlainObjectType = {};
   for (const [key, value] of Object.entries(obj)) {
     if (!fields.includes(key)) {
       unknown[key] = value;

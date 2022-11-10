@@ -6,7 +6,7 @@ import useStoreState from '../useStoreState/useStoreState';
 import { setter } from '../actions/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import MiddlewareContextInterface from './MiddlewareContext.interface';
+import { MiddlewareContextInterface, PluginFunctionType } from '../types';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
@@ -127,14 +127,14 @@ describe('new Store()', () => {
   it('should allow plugins', () => {
     const spy: Function = vitest.fn();
     const store = new Store();
-    store.plugin(spy);
+    store.plugin(spy as PluginFunctionType);
     expect(spy).toHaveBeenCalledWith(store);
   });
   it('should allow blocking plugins', () => {
     const spy: Function = vitest.fn();
     const store = new Store();
     store.on('BeforePlugin', (evt: PreventableEvent) => evt.preventDefault());
-    store.plugin(spy);
+    store.plugin(spy as PluginFunctionType);
     expect(spy).not.toHaveBeenCalled();
   });
   it('should throw on missing plugins', () => {
@@ -207,7 +207,7 @@ describe('new Store()', () => {
     });
     expect(store.getStateAt('books.*.authors.*.rating')).toEqual([2, 4, 5]);
   });
-  it('should extendState(moreState)', async () => {
+  it('should extendState(moreState)', () => {
     const initialState = { hello: { world: 42 } };
     const store = new Store({ state: initialState });
     const ret = store.extendState({ foo: 'bar' });
@@ -215,11 +215,31 @@ describe('new Store()', () => {
     expect(store.getState().foo).toBe('bar');
     expect(ret).toBe(store);
   });
-  it('should throw if extendState(moreState) moreState not an object', async () => {
+  it('should throw if extendState(moreState) moreState not an object', () => {
     const initialState = { hello: { world: 42 } };
     const store = new Store({ state: initialState });
     const thrower = () => {
+      // @ts-ignore
       store.extendState(42);
+    };
+    expect(thrower).toThrow();
+  });
+  it('should extendStateAt(path, moreState)', () => {
+    const initialState = { user: { permissions: { createPosts: true } } };
+    const store = new Store({ state: initialState });
+    const ret = store.extendStateAt('user.permissions', {
+      adminSettings: false,
+    });
+    expect(store.getState()).toBe(initialState);
+    expect(store.getState().user.permissions.adminSettings).toBe(false);
+    expect(ret).toBe(store);
+  });
+  it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
+    const initialState = { hello: { world: 42 } };
+    const store = new Store({ state: initialState });
+    const thrower = () => {
+      // @ts-ignore
+      store.extendStateAt('hello.world', 44);
     };
     expect(thrower).toThrow();
   });
@@ -391,7 +411,7 @@ describe('new Store() flushSync', () => {
             throw new Error('Scooby Doo');
           });
         });
-      }
+      },
     };
     store = new Store({
       state,

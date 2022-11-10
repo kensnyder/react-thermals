@@ -1,13 +1,20 @@
-import { StoreConfig } from './StoreConfig';
-import { PluginResult } from './PluginResult';
 import Emitter from '../Emitter/Emitter';
 import shallowCopy from '../shallowCopy/shallowCopy';
 import shallowOverride from '../shallowOverride/shallowOverride';
 import { updatePath } from '../updatePath/updatePath';
 import selectPath from '../selectPath/selectPath';
-import MiddlewareContextInterface from './MiddlewareContext.interface';
-import { SetterType } from './Setter.type';
-import { MergableStateAsyncType, MergableStateType} from "./MergableState.type";
+import {
+  StoreConfigType,
+  SetterType,
+  EventNameType,
+  MergeableStateAsyncType,
+  MergeableStateType,
+  MiddlewareContextInterface,
+  PlainObjectType,
+  PluginResultType,
+  PluginFunctionType,
+  EventHandlerType,
+} from '../types';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -18,8 +25,8 @@ export default class Store extends Emitter {
   #_idx: number;
   #_initialState: any;
   #_middlewares: Function[] = [];
-  #_options: Record<string, any>;
-  #_plugins: Function[] = [];
+  #_options: PlainObjectType;
+  #_plugins: PluginFunctionType[] = [];
   #_rawActions: Record<string, Function> = {};
   #_setters: SetterType[] = [];
   #_state: any;
@@ -38,19 +45,21 @@ export default class Store extends Emitter {
 
   /**
    * Create a new store with the given state and actions
-   * @param {any} initialState  The store's initial state; it can be of any type
-   * @param {Record<String, Function>} actions  Named functions that can be dispatched by name and arguments
-   * @param {Record<String, any>} options  Options that setters, plugins or event listeners might look for
-   * @param {Boolean} autoReset  True to reset state after all components unmount
-   * @param {String} id  An identifier that could be used by plugins or event listeners
+   * @param initialState  The store's initial state; it can be of any type
+   * @param actions  Named functions that can be dispatched by name and arguments
+   * @param options  Options that setters, plugins or event listeners might look for
+   * @param on  One or more handlers to add immediately
+   * @param autoReset  True to reset state after all components unmount
+   * @param id  An identifier that could be used by plugins or event listeners
    */
   constructor({
     state: initialState = {},
     actions = {},
     options = {},
+    on = undefined,
     autoReset = false,
     id = '',
-  }: StoreConfig = {}) {
+  }: StoreConfigType = {}) {
     super();
     this.once('BeforeInitialState', () => {
       this.#_hasInitialized = true;
@@ -62,6 +71,13 @@ export default class Store extends Emitter {
     this.addActions(actions);
     this.#_options = options;
     this.#_autoReset = autoReset;
+    if (on) {
+      for (const [event, handlerOrHandlers] of Object.entries(on)) {
+        for (const handler of [handlerOrHandlers].flat()) {
+          this.on(event as EventNameType, handler as EventHandlerType);
+        }
+      }
+    }
   }
 
   /**
@@ -113,10 +129,10 @@ export default class Store extends Emitter {
    * @param newState  The value to merge or function that will return value to merge
    * @chainable
    */
-  mergeState = (newState: MergableStateAsyncType) => {
+  mergeState = (newState: MergeableStateAsyncType) => {
     let updater;
     if (typeof newState === 'function') {
-      updater = (old: Object) => {
+      updater = (old: Record<string, any>) => {
         const partial = newState(old);
         if (typeof partial?.then === 'function') {
           return partial.then((promisedState: Object) =>
@@ -126,7 +142,7 @@ export default class Store extends Emitter {
         return shallowOverride(old, partial);
       };
     } else {
-      updater = (old: Object) => shallowOverride(old, newState);
+      updater = (old: Record<string, any>) => shallowOverride(old, newState);
     }
     this.#_updateQueue.push(updater);
     if (this.#_updateQueue.length === 1) {
@@ -139,13 +155,33 @@ export default class Store extends Emitter {
    * Schedule state to be merged in the next batch of updates
    * @param moreState The values to merge into the state (components will not be notified)
    */
-  extendState = (moreState: Object) => {
+  extendState = (moreState: PlainObjectType) => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
       throw new Error(
-        'react-thermals Store.extendState(): current state and given state must both be objects'
+        'react-thermals Store.extendState(moreState): current state and given state must both be objects'
       );
     }
     Object.assign(this.#_state, moreState);
+    return this;
+  };
+
+  /**
+   * Schedule state to be merged in the next batch of updates
+   * @param moreState The values to merge into the state (components will not be notified)
+   */
+  extendStateAt = (path: string, moreState: PlainObjectType) => {
+    if (typeof moreState !== 'object') {
+      throw new Error(
+        'react-thermals Store.extendStateAt(path, moreState): given state must an object'
+      );
+    }
+    const target = selectPath(path)(this.#_state);
+    if (typeof target !== 'object') {
+      throw new Error(
+        'react-thermals Store.extendStateAt(path, moreState): state at path must be an object'
+      );
+    }
+    Object.assign(target, moreState);
     return this;
   };
 
@@ -163,7 +199,7 @@ export default class Store extends Emitter {
    * Immediately merge the state with the given value
    * @param newState  The value to merge or function that will return value to merge
    */
-  mergeSync = (newState: MergableStateType) => {
+  mergeSync = (newState: MergeableStateType) => {
     this.mergeState(newState);
     this.flushSync();
     return this;
@@ -232,7 +268,7 @@ export default class Store extends Emitter {
    * @param withConfigOverrides  Any Store configuration you want to override
    * @return The cloned store
    */
-  clone = (withConfigOverrides: StoreConfig = {}): Store => {
+  clone = (withConfigOverrides: StoreConfigType = {}): Store => {
     const cloned = new Store({
       state: shallowCopy(this.#_state),
       actions: this.#_rawActions,
@@ -321,7 +357,7 @@ export default class Store extends Emitter {
    * Set store options
    * @param newOptions  clear all other options then set these
    */
-  setOptions = (newOptions: Object) => {
+  setOptions = (newOptions: Record<string, any>) => {
     this.#_options = newOptions;
     return this;
   };
@@ -330,7 +366,7 @@ export default class Store extends Emitter {
    * Add new store options (while leaving old ones intact)
    * @param addOptions  Add these options
    */
-  extendOptions = (addOptions: Object) => {
+  extendOptions = (addOptions: Record<string, any>) => {
     Object.assign(this.#_options, addOptions);
     return this;
   };
@@ -353,7 +389,7 @@ export default class Store extends Emitter {
    * @property {Boolean} initialized  True if the plugin was successfully registered
    * @property {any} result  The return value of the plugin initializer function
    */
-  plugin = (initializer: Function): PluginResult => {
+  plugin = (initializer: PluginFunctionType): PluginResultType => {
     const event = this.emit('BeforePlugin', initializer);
     if (event.defaultPrevented) {
       return { initialized: false, result: null };
@@ -388,7 +424,10 @@ export default class Store extends Emitter {
    * @param {Object} context  Object with prev, next, isAsync, store
    * @param {Function} callback  The function to call when all middlewares have called "next()"
    */
-  #_runMiddlewares = (context: MiddlewareContextInterface, callback: Function): void => {
+  #_runMiddlewares = (
+    context: MiddlewareContextInterface,
+    callback: Function
+  ): void => {
     let i = 0;
     const next = () => {
       if (i === this.#_middlewares.length) {
@@ -485,9 +524,8 @@ export default class Store extends Emitter {
 
   /**
    * Process the update queue and return a Promise that resolves to the new state
-   * @return {Promise<any>}
    */
-  #_getNextState = async () => {
+  #_getNextState = async (): Promise<any> => {
     let nextState = this.#_state;
     // process all updates or update functions
     // use while and shift in case setters trigger more setting
@@ -522,7 +560,7 @@ export default class Store extends Emitter {
   /**
    * Schedule updates for the next tick
    */
-  #_scheduleUpdates = () => {
+  #_scheduleUpdates = (): void => {
     // Use Promise to queue state update for next tick
     // see https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/queueMicrotask
     Promise.resolve()
@@ -579,9 +617,9 @@ export default class Store extends Emitter {
   /**
    * Process the update queue synchronously and return the new state
    * Note that any updater functions that return promises will be queued for later update.
-   * @return {any}  The new state OR the previous state if updating was blocked
+   * @return The new state OR the previous state if updating was blocked
    */
-  #_getNextStateSync = () => {
+  #_getNextStateSync = (): any => {
     let prev = this.#_state;
     let next = this.#_state;
     // process all updates or update functions

@@ -1,4 +1,4 @@
-export function tryParse(parse: Function, json: string) {
+export function tryParse(parse: Function, json: string): any {
   try {
     return parse(json);
   } catch (error) {
@@ -6,7 +6,7 @@ export function tryParse(parse: Function, json: string) {
     return undefined;
   }
 }
-export function tryStringify(stringify: Function, value: any) {
+export function tryStringify(stringify: Function, value: any): string {
   try {
     return stringify(value);
   } catch (error) {
