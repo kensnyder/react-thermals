@@ -28,7 +28,7 @@
     "build": "npx -p typescript tsc --project tsconfig.build.json",
     "coverage": "vitest run --coverage",
     "view-coverage": "open ./coverage/lcov-report/index.html",
-    "release": "npx realease-it"
+    "release": "release-it"
   },
   "peerDependencies": {
     "react": ">=16.8.0"
