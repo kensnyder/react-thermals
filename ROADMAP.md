@@ -1,2 +1,7 @@
 - Examples folder
-- Example Sandboxes?
+- Example Sandboxes
+- Fix release-it
+- Remove type annotations from jsdoc
+- Be consistent about imports sequence
+- jsdoc on syncUrl/libs/\*.ts
+- finalize folder structure
