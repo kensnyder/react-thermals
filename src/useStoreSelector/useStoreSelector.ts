@@ -4,10 +4,10 @@ import getMapperFunction from '../getMapperFunction/getMapperFunction';
 import { SetterType } from '../types';
 
 /**
- * @param {Object} store - A store created with createStore()
- * @param {Function|String|String[]} [mapState] - Function that returns a slice of data
- * @param {Function} [equalityFn] - Custom equality function that checks if state has change
- * @return {*} - The selected
+ * @param store - A store created with createStore()
+ * @param [mapState] - Function that returns a slice of data
+ * @param [equalityFn] - Custom equality function that checks if state has change
+ * @return The selected state
  */
 export default function useStoreSelector(
   store: any,

@@ -54,6 +54,10 @@
     "vitest-dom": "0.0.4"
   },
   "release-it": {
+    "github": {
+      "release": true,
+      "web": true
+    },
     "plugins": {
       "@release-it/bumper": {
         "out": "README.md"

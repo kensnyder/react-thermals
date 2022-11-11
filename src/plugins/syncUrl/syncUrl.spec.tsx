@@ -208,6 +208,13 @@ describe('syncUrl() error', () => {
         })
       );
     };
-    expect(toThrow).toThrowError();
+    expect(toThrow).toThrowError(/react-thermals/);
+  });
+  it('should throw when neither fields nor schema are given', async () => {
+    const store = new Store({});
+    const toThrow = () => {
+      store.plugin(syncUrl());
+    };
+    expect(toThrow).toThrowError(/react-thermals/);
   });
 });
