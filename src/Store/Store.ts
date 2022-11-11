@@ -56,7 +56,7 @@ export default class Store extends Emitter {
     state: initialState = {},
     actions = {},
     options = {},
-    on = undefined,
+    on = {},
     autoReset = false,
     id = '',
   }: StoreConfigType = {}) {
@@ -71,11 +71,9 @@ export default class Store extends Emitter {
     this.addActions(actions);
     this.#_options = options;
     this.#_autoReset = autoReset;
-    if (on) {
-      for (const [event, handlerOrHandlers] of Object.entries(on)) {
-        for (const handler of [handlerOrHandlers].flat()) {
-          this.on(event as EventNameType, handler as EventHandlerType);
-        }
+    for (const [event, handlerOrHandlers] of Object.entries(on)) {
+      for (const handler of [handlerOrHandlers].flat()) {
+        this.on(event as EventNameType, handler as EventHandlerType);
       }
     }
   }

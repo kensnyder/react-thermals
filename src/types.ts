@@ -18,13 +18,33 @@ export type EventNameType =
   | 'AfterPlugin'
   | '*';
 
+export type EventHandlerType = (evt: PreventableEvent) => void;
+
 export type EventHandlerOrHandlersType = EventHandlerType | EventHandlerType[];
+
+export type StoreConfigHandlersType = {
+  BeforeInitialState?: EventHandlerOrHandlersType;
+  AfterFirstUse?: EventHandlerOrHandlersType;
+  AfterFirstMount?: EventHandlerOrHandlersType;
+  AfterMount?: EventHandlerOrHandlersType;
+  AfterUnmount?: EventHandlerOrHandlersType;
+  AfterLastUnmount?: EventHandlerOrHandlersType;
+  SetterException?: EventHandlerOrHandlersType;
+  BeforeSet?: EventHandlerOrHandlersType;
+  BeforeUpdate?: EventHandlerOrHandlersType;
+  AfterUpdate?: EventHandlerOrHandlersType;
+  BeforeReset?: EventHandlerOrHandlersType;
+  AfterReset?: EventHandlerOrHandlersType;
+  BeforePlugin?: EventHandlerOrHandlersType;
+  AfterPlugin?: EventHandlerOrHandlersType;
+  '*'?: EventHandlerOrHandlersType;
+};
 
 export type StoreConfigType = {
   state?: any;
   actions?: Record<string, Function>;
   options?: PlainObjectType;
-  on?: Record<EventNameType, EventHandlerOrHandlersType>;
+  on?: StoreConfigHandlersType;
   autoReset?: boolean;
   id?: string;
 };
@@ -36,14 +56,12 @@ export interface MiddlewareContextInterface {
   store: Store;
 }
 
+export type PluginFunctionType = (store: Store) => any;
+
 export type PluginResultType = {
   initialized: boolean;
   result: any;
 };
-
-export type PluginFunctionType = (store: Store) => any;
-
-export type EventHandlerType = (evt: PreventableEvent) => void;
 
 export type SetterType = {
   handler: Function;

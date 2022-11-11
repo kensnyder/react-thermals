@@ -1,12 +1,16 @@
 import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
-import { vitest } from 'vitest';
+import { Mock, vitest } from 'vitest';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState';
 import { setter } from '../actions/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import { MiddlewareContextInterface, PluginFunctionType } from '../types';
+import {
+  EventHandlerType,
+  MiddlewareContextInterface,
+  PluginFunctionType,
+} from '../types';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
@@ -243,6 +247,15 @@ describe('new Store()', () => {
     };
     expect(thrower).toThrow();
   });
+  it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
+    const initialState = { hello: { world: 42 } };
+    const store = new Store({ state: initialState });
+    const thrower = () => {
+      // @ts-ignore
+      store.extendStateAt('hello.friend', { cool: true });
+    };
+    expect(thrower).toThrow();
+  });
 });
 describe('new Store() with autoReset', () => {
   // define store before each test
@@ -388,6 +401,34 @@ describe('new Store() with autoReset', () => {
     store.actions.promiseThatRejects();
     await new Promise(r => setTimeout(r, 15));
     expect(rejection).toBe('my rejection');
+  });
+});
+
+describe('new Store() defined with event handlers', () => {
+  it('should handle single function', () => {
+    const spy: Mock = vitest.fn();
+    const store = new Store({
+      on: {
+        BeforeUpdate: spy as EventHandlerType,
+      },
+    });
+    store.emit('BeforeUpdate', 42);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.lastCall[0].data).toBe(42);
+  });
+  it('should handle an array of functions', () => {
+    const spy1: Mock = vitest.fn();
+    const spy2: Mock = vitest.fn();
+    const store = new Store({
+      on: {
+        BeforeUpdate: [spy1 as EventHandlerType, spy2 as EventHandlerType],
+      },
+    });
+    store.emit('BeforeUpdate', 43);
+    expect(spy1).toHaveBeenCalledTimes(1);
+    expect(spy1.mock.lastCall[0].data).toBe(43);
+    expect(spy2).toHaveBeenCalledTimes(1);
+    expect(spy2.mock.lastCall[0].data).toBe(43);
   });
 });
 describe('new Store() flushSync', () => {
