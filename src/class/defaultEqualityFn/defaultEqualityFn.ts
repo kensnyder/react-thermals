@@ -1,4 +1,4 @@
-const directlyCompariable = [
+const directlyComparable = [
   'bigint',
   'boolean',
   'function',
@@ -13,7 +13,7 @@ const directlyCompariable = [
  * Used to determine if a component should rerender or not
  * @param prev - The previous value of the state
  * @param next - The next value of the state
- * @return True if values are shallowly equal
+ * @return  True if values are shallowly equal
  */
 export default function defaultEqualityFn(prev: any, next: any): boolean {
   // handle null specially since typeof null === 'object'
@@ -24,7 +24,7 @@ export default function defaultEqualityFn(prev: any, next: any): boolean {
     // one is null but not both
     return false;
   }
-  if (directlyCompariable.includes(typeof prev)) {
+  if (directlyComparable.includes(typeof prev)) {
     return prev === next;
   }
   if (Array.isArray(prev)) {

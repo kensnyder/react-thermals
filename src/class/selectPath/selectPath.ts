@@ -1,7 +1,7 @@
 /**
  * Build a function that will return state at a certain path
- * @param {string} path  Path string such as "cart" or "cart.total"
- * @return {Function}
+ * @param path  Path string such as "cart" or "cart.total"
+ * @return  A function that can be used to get the path on any object
  */
 export default function selectPath(path: string): Function {
   const allSegments = path.split(/[\[\].]/).filter(Boolean);

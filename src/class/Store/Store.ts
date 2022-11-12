@@ -80,7 +80,7 @@ export default class Store extends Emitter {
 
   /**
    * Return the current state of the store
-   * @return {any}
+   * @return  The current state
    */
   getState = (): any => {
     return this.#_state;
@@ -96,7 +96,7 @@ export default class Store extends Emitter {
   /**
    * Add functions that operate on state
    * @param actions
-   * @return The actions after binding "this" to "Store"
+   * @return  The actions after binding "this" to "Store"
    */
   addActions = (
     actions: Record<string, Function>
@@ -111,8 +111,9 @@ export default class Store extends Emitter {
 
   /**
    * Schedule state to be updated in the next batch of updates
-   * @param {Function|any} newState  The new value or function that will return the new value
-   * @return {Store}
+   * @param newState  The new value or function that will return the new value
+   * @return  This store
+   * @chainable
    */
   setState = (newState: any) => {
     this.#_updateQueue.push(newState);
@@ -125,6 +126,7 @@ export default class Store extends Emitter {
   /**
    * Schedule state to be merged in the next batch of updates
    * @param newState  The value to merge or function that will return value to merge
+   * @return  This store
    * @chainable
    */
   mergeState = (newState: MergeableStateAsyncType) => {
@@ -151,7 +153,7 @@ export default class Store extends Emitter {
 
   /**
    * Schedule state to be merged in the next batch of updates
-   * @param moreState The values to merge into the state (components will not be notified)
+   * @param moreState  The values to merge into the state (components will not be notified)
    */
   extendState = (moreState: PlainObjectType) => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
@@ -165,7 +167,9 @@ export default class Store extends Emitter {
 
   /**
    * Schedule state to be merged in the next batch of updates
-   * @param moreState The values to merge into the state (components will not be notified)
+   * @param moreState  The values to merge into the state (components will not be notified)
+   * @return  This store
+   * @chainable
    */
   extendStateAt = (path: string, moreState: PlainObjectType) => {
     if (typeof moreState !== 'object') {
@@ -186,6 +190,8 @@ export default class Store extends Emitter {
   /**
    * Immediately update the state to the given value
    * @param newState The new value or function that will return the new value
+   * @return  This store
+   * @chainable
    */
   setSync = (newState: any) => {
     this.setState(newState);
@@ -196,6 +202,8 @@ export default class Store extends Emitter {
   /**
    * Immediately merge the state with the given value
    * @param newState  The value to merge or function that will return value to merge
+   * @return  This store
+   * @chainable
    */
   mergeSync = (newState: MergeableStateType) => {
     this.mergeState(newState);
@@ -207,6 +215,8 @@ export default class Store extends Emitter {
    * Schedule a value to be updated in the next batch of updates at the given path inside the state
    * @param path  The path to the value
    * @param newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   * @return  This store
+   * @chainable
    */
   setStateAt = (path: string, newStateOrUpdater: any) => {
     const updater = updatePath(path);
@@ -218,6 +228,8 @@ export default class Store extends Emitter {
    * Immediately update a value at the given path inside the state
    * @param path  The path to the value
    * @param newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   * @return  This store
+   * @chainable
    */
   setSyncAt = (path: string, newStateOrUpdater: any) => {
     const updater = updatePath(path);
@@ -284,6 +296,8 @@ export default class Store extends Emitter {
   /**
    * Reset a store to its initial state
    * @param withStateOverrides  Additional state to override
+   * @return  This store
+   * @chainable
    */
   reset = (withStateOverrides: any = undefined) => {
     const current = this.#_state;
@@ -315,23 +329,21 @@ export default class Store extends Emitter {
   /**
    * Return the number of components that "use" this store data
    */
-  getUsedCount = () => {
+  getUsedCount = (): number => {
     return this.#_usedCount;
   };
 
   /**
    * Return true if any component has ever used this store
-   * @return {Boolean}
    */
-  hasInitialized = () => {
+  hasInitialized = (): boolean => {
     return this.#_hasInitialized;
   };
 
   /**
    * Return the number of *mounted* components that "use" this store
-   * @return {number}
    */
-  getMountCount = () => {
+  getMountCount = (): number => {
     return this.#_setters.length;
   };
 
@@ -354,6 +366,8 @@ export default class Store extends Emitter {
   /**
    * Set store options
    * @param newOptions  clear all other options then set these
+   * @return  This store
+   * @chainable
    */
   setOptions = (newOptions: Record<string, any>) => {
     this.#_options = newOptions;
@@ -363,6 +377,8 @@ export default class Store extends Emitter {
   /**
    * Add new store options (while leaving old ones intact)
    * @param addOptions  Add these options
+   * @return  This store
+   * @chainable
    */
   extendOptions = (addOptions: Record<string, any>) => {
     Object.assign(this.#_options, addOptions);
@@ -373,7 +389,8 @@ export default class Store extends Emitter {
    * Set a single store option
    * @param name  The name of the option
    * @param newValue  The value to set
-   * @return {Store}
+   * @return  This store
+   * @chainable
    */
   setOption = (name: string, newValue: any) => {
     this.#_options[name] = newValue;
@@ -382,10 +399,10 @@ export default class Store extends Emitter {
 
   /**
    * Register a plugin. Note that a handler attached to BeforePlugin can prevent the plugin from getting attached
-   * @param {Function} initializer  The function the plugin uses to configure and attach itself
-   * @return {Object}
-   * @property {Boolean} initialized  True if the plugin was successfully registered
-   * @property {any} result  The return value of the plugin initializer function
+   * @param initializer  The function the plugin uses to configure and attach itself
+   * @return  Result of plugin initialization
+   * @property initialized  True if the plugin was successfully registered
+   * @property result  The return value of the plugin initializer function
    */
   plugin = (initializer: PluginFunctionType): PluginResultType => {
     const event = this.emit('BeforePlugin', initializer);
@@ -400,16 +417,16 @@ export default class Store extends Emitter {
 
   /**
    * Get the array of plugin initializer functions
-   * @return {Array}
    */
-  getPlugins = () => {
+  getPlugins = (): Function[] => {
     return this.#_plugins;
   };
 
   /**
    * Register a middleware function
-   * @param {Function} middlewares  The middleware function to register
-   * @return {Store}
+   * @param middlewares  The middleware function to register
+   * @return  This store
+   * @chainable
    */
   use = (...middlewares: Function[]) => {
     this.#_middlewares.push(...middlewares);
@@ -419,8 +436,8 @@ export default class Store extends Emitter {
   /**
    * Run all the registered middleware
    * @private
-   * @param {Object} context  Object with prev, next, isAsync, store
-   * @param {Function} callback  The function to call when all middlewares have called "next()"
+   * @param context  Object with prev, next, isAsync, store
+   * @param callback  The function to call when all middlewares have called "next()"
    */
   #_runMiddlewares = (
     context: MiddlewareContextInterface,
@@ -441,7 +458,8 @@ export default class Store extends Emitter {
    * Run all the registered middleware synchronously. Any middleware that does not
    * immediately call "next()" will cancel the update
    * @private
-   * @param {Object} context  Object with prev, next, isAsync, store
+   * @param context  Object with prev, next, isAsync, store
+   * @return  True unless middleware did not return right away
    */
   #_runMiddlewaresSync = (context: MiddlewareContextInterface): boolean => {
     let i = 0;
@@ -462,7 +480,7 @@ export default class Store extends Emitter {
    * @param setState  A setState function from React.useState()
    * @note private but used by useStoreSelector()
    */
-  _subscribe = (setState: SetterType) => {
+  _subscribe = (setState: SetterType): void => {
     if (this.#_usedCount++ === 0) {
       this.emit('AfterFirstUse');
     }
@@ -480,7 +498,7 @@ export default class Store extends Emitter {
    * @param setState  The setState function used to _subscribe
    * @note private but used by useStoreSelector()
    */
-  _unsubscribe = (setState: SetterType) => {
+  _unsubscribe = (setState: SetterType): void => {
     const idx = this.#_setters.indexOf(setState);
     if (idx > -1) {
       this.#_setters.splice(idx, 1);
@@ -598,8 +616,8 @@ export default class Store extends Emitter {
 
   /**
    * Tell connected components to re-render if applicable
-   * @param {any} prev  The previous state value
-   * @param {any} next  The new state value
+   * @param prev  The previous state value
+   * @param next  The new state value
    */
   #_notifyComponents = (prev: any, next: any) => {
     // save final state result

@@ -7,7 +7,7 @@
  *   Append an item: getTranformerRunner((old, newItem) => ([...old, newItem]))
  *   Allow transforming later: getUpdateRunner(undefined)
  * @return A function that will update state
- * @throws {Error} if transform is not a valid type
+ * @throws  If transform is not a valid type
  */
 export default function getUpdateRunner(
   transform: Function | Function[] | undefined

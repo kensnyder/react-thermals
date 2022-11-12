@@ -4,8 +4,8 @@ import Store from '../../class/Store/Store';
 
 /**
  * Helper function to create a setState function that directly toggles one value
- * @param {String} path  The name of or path to the value to toggle
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the value to toggle
+ * @return  A function suitable for a store action
  */
 export function toggler(path: string) {
   const toggle = updatePath(path, function toggleHandler(old: boolean) {
@@ -18,7 +18,7 @@ export function toggler(path: string) {
 
 /**
  * Run toggler and then flush pending state changes
- * @param {String} path  The name of or path to the value to toggle
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the value to toggle
+ * @return  A function suitable for a store action
  */
 export const togglerSync = withFlushSync(toggler);

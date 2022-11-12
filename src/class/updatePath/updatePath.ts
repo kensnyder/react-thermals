@@ -2,11 +2,11 @@ import shallowCopy from '../shallowCopy/shallowCopy';
 import getUpdateRunner from './getUpdateRunner';
 
 /**
- * Deep updater takes a path and a transformer and returns a function
+ * Deep updater takes a path plus a transformer and returns a function
  *   that will take in an object and return a copy of that object
  *   with that transform applied to the value at "path"
- * @param {String} path
- * @param {Function|Function[]|undefined} transform
+ * @param path
+ * @param transform
  * @return {Function}
  */
 export function updatePath(

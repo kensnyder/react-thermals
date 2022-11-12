@@ -3,9 +3,10 @@ import Store from '../../class/Store/Store';
 import { SetterType } from '../../types';
 
 /**
- * @param {Store} store - An instance of Store
- * @return {Object} - The entire state value that will rerender the host
- *   Component when the state value changes
+ * Hook to request state values any time state changes
+ * @param store An instance of Store
+ * @return  The entire state value that will rerender the host Component
+ *   when the state value changes
  */
 export default function useStoreState(store: Store) {
   // use useState to get a method for triggering re-renders in consumer components

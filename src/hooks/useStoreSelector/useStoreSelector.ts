@@ -4,6 +4,7 @@ import getMapperFunction from '../../class/getMapperFunction/getMapperFunction';
 import { SetterType } from '../../types';
 
 /**
+ * Hook to request updated values any time a relevant portion of state changes
  * @param store - A store created with createStore()
  * @param [mapState] - Function that returns a slice of data
  * @param [equalityFn] - Custom equality function that checks if state has change

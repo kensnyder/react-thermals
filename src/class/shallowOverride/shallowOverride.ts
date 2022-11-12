@@ -1,8 +1,8 @@
 /**
  * Create a copy of the given value, shallowly overriding properties
- * @param {*} value  The value to copy
- * @param {*} overrides  Override values to extend the copy
- * @return {*}
+ * @param value  The value to copy
+ * @param overrides  Override values to extend the copy
+ * @return  The composite value
  */
 export default function shallowOverride(value: any, overrides: any): any {
   if (value instanceof Map) {

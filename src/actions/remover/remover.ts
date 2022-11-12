@@ -4,8 +4,8 @@ import Store from '../../class/Store/Store';
 
 /**
  * Build a setState function that removes the given item(s) from an array
- * @param {String} path  The name of or path to the property to update
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the property to remove
+ * @return  A function suitable for a store action
  */
 export function remover(path: string) {
   const remove = updatePath(
@@ -23,8 +23,8 @@ export function remover(path: string) {
 }
 
 /**
- * Helper function to create a mergeSync function that removes the given item from an array property synchronously
- * @param {String|Number} propName  The name of the array property to remove from
- * @return {Function}  A function suitable for a store action
+ * Run remover and then flush pending state changes
+ * @param path  The name of or path to the property to remove
+ * @return  A function suitable for a store action
  */
 export const removerSync = withFlushSync(remover);

@@ -4,10 +4,10 @@ import Store from '../../class/Store/Store';
 
 /**
  * Helper function to create a setState function that adds the given amount
- * @param {String} path  The name of or path to the value to set
- * @param {Number} baseAmount  A base amount to add
+ * @param path  The name of or path to the value to set
+ * @param baseAmount  A base amount to add
  *   e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
- * @return {Function}  A function suitable for a store action
+ * @return  A function suitable for a store action
  */
 export function adder(path: string, baseAmount = 0): Function {
   const add = updatePath(
@@ -24,7 +24,7 @@ export function adder(path: string, baseAmount = 0): Function {
 /**
  * Run adder and then flush pending state changes
  * e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
- * @param {String} path  The name of or path to the property to toggle
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the property to toggle
+ * @return  A function suitable for a store action
  */
 export const adderSync = withFlushSync(adder);

@@ -4,8 +4,8 @@ import Store from '../../class/Store/Store';
 
 /**
  * Build a setState function that runs a map function against an array value
- * @param {String} path  The name of or path to the property to update
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the property to update
+ * @return  A function suitable for a store action
  */
 export function mapper(path: string) {
   // we have to use { fn: mapFn } because updatePath getUpdateRunner would
@@ -24,7 +24,7 @@ export function mapper(path: string) {
 
 /**
  * Run mapper and then flush pending state changes
- * @param String} path  The name of or path to the property to update
- * @return {Function}  A function suitable for a store action
+ * @param path  The name of or path to the property to update
+ * @return  A function suitable for a store action
  */
 export const mapperSync = withFlushSync(mapper);

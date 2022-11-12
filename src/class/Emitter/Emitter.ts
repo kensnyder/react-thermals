@@ -8,9 +8,9 @@ export default class Emitter {
 
   /**
    * Add an event listener
-   * @param {String} type  The event name
-   * @param {Function} handler  The function to be called when the event fires
-   * @return {Emitter}
+   * @param type  The event name
+   * @param  handler  The function to be called when the event fires
+   * @return  The emitter instance
    */
   on(type: EventNameType, handler: EventHandlerType): Emitter {
     if (!this.#_handlers[type]) {
@@ -22,9 +22,9 @@ export default class Emitter {
 
   /**
    * Remove an event listener
-   * @param {String} type  The event name
-   * @param {Function} handler  The function registered with "on()" or "once()"
-   * @return {Emitter}
+   * @param type  The event name
+   * @param handler  The function registered with "on()" or "once()"
+   * @return  The emitter instance
    */
   off(type: EventNameType, handler: EventHandlerType): Emitter {
     if (!this.#_handlers[type]) {
@@ -36,9 +36,9 @@ export default class Emitter {
 
   /**
    * Add an event listener that should fire once and only once
-   * @param {String} type  The event name
-   * @param {Function} handler  The function to be called when the event fires
-   * @return {Emitter}
+   * @param type  The event name
+   * @param handler  The function to be called when the event fires
+   * @return  The emitter instance
    */
   once(type: EventNameType, handler: EventHandlerType): Emitter {
     const onceHandler = (event: PreventableEvent) => {
@@ -51,9 +51,9 @@ export default class Emitter {
 
   /**
    * Trigger handlers attached to the given event with the given data
-   * @param {String} type  The event name
-   * @param {any} data  The data to pass to evt.data
-   * @return {PreventableEvent}  Returns the event object that was passed to handlers
+   * @param type  The event name
+   * @param data  The data to pass to evt.data
+   * @return  The event object that was passed to handlers
    * @property isDefaultPrevented  Read to tell if event was canceled
    */
   emit(type: EventNameType, data: any = null): PreventableEvent {
