@@ -1,6 +1,6 @@
-import withFlushSync from './withFlushSync';
-import { updatePath } from '../updatePath/updatePath';
-import Store from '../Store/Store';
+import withFlushSync from '../withFlushSync/withFlushSync';
+import { updatePath } from '../../updatePath/updatePath';
+import Store from '../../Store/Store';
 
 /**
  * Helper function to create a setState function that directly sets one value

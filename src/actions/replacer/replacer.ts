@@ -1,6 +1,6 @@
-import withFlushSync from './withFlushSync';
-import { updatePath } from '../updatePath/updatePath';
-import Store from '../Store/Store';
+import withFlushSync from '../withFlushSync/withFlushSync';
+import { updatePath } from '../../updatePath/updatePath';
+import Store from '../../Store/Store';
 
 /**
  * Build a setState function that replaces a particular array item

@@ -3,6 +3,7 @@
     "module": "ESNext",
     "target": "ESNext",
     "outDir": "./dist",
+    "declaration": true,
     "removeComments": false,
     "noEmit": false,
     "pretty": true,

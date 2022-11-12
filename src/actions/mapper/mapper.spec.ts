@@ -1,4 +1,4 @@
-import Store from '../Store/Store';
+import Store from '../../Store/Store';
 import { mapper, mapperSync } from './mapper';
 
 function getTestStore(initialState) {

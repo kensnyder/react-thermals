@@ -3,7 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react';
 import { Mock, vitest } from 'vitest';
 import '@testing-library/jest-dom';
 import useStoreState from '../useStoreState/useStoreState';
-import { setter } from '../actions/setter';
+import { setter } from '../actions/setter/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
 import {

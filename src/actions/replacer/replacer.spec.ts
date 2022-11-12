@@ -1,4 +1,4 @@
-import Store from '../Store/Store';
+import Store from '../../Store/Store';
 import { replacer, replacerSync } from './replacer';
 
 describe('replacer()', () => {

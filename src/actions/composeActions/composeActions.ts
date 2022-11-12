@@ -1,4 +1,4 @@
-import Store from '../Store/Store';
+import Store from '../../Store/Store';
 
 export function composeActions(actions: Function[]) {
   return function actionCombiner(...args: any[]) {

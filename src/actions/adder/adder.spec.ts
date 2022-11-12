@@ -1,4 +1,4 @@
-import Store from '../Store/Store';
+import Store from '../../Store/Store';
 import { adder, adderSync } from './adder';
 
 function getTestStore(initialState) {

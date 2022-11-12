@@ -1,4 +1,4 @@
-import Store from '../Store/Store';
+import Store from '../../Store/Store';
 import { merger, mergerSync } from './merger';
 
 function getTestStore(initialState) {
