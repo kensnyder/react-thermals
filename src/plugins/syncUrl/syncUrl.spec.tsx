@@ -62,10 +62,12 @@ describe('syncUrl()', () => {
       '?answer=42&page=1&sort=-date',
     ]);
   });
-  it('should override initial state', () => {
+  it('should override initial state', async () => {
     location.search = '?page=2&sort=-modified&foo=bar';
     store.plugin(syncUrl({ fields: ['page', 'sort'] }));
     const { getByText } = render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
@@ -126,6 +128,8 @@ describe('syncUrl()', () => {
     location.search = '?rating=17';
     store.plugin(syncUrl({ schema: { rating: 'number' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ rating: 17, food: 'fruit' });
   });
   it('should cast from schema number[]', async () => {
@@ -133,6 +137,8 @@ describe('syncUrl()', () => {
     location.search = '?ids=3,4';
     store.plugin(syncUrl({ schema: { ids: 'number[]' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ ids: [3, 4] });
   });
   it('should cast from schema string', async () => {
@@ -140,6 +146,8 @@ describe('syncUrl()', () => {
     location.search = '?hello=there';
     store.plugin(syncUrl({ schema: { hello: 'string' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ hello: 'there' });
   });
   it('should cast from schema string[]', async () => {
@@ -147,6 +155,8 @@ describe('syncUrl()', () => {
     location.search = '?letters=d,e';
     store.plugin(syncUrl({ schema: { letters: 'string[]' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ letters: ['d', 'e'] });
   });
   it('should cast from schema boolean', async () => {
@@ -154,6 +164,8 @@ describe('syncUrl()', () => {
     location.search = '?isValid=true';
     store.plugin(syncUrl({ schema: { isValid: 'boolean' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ isValid: true });
   });
   it('should cast from schema boolean[]', async () => {
@@ -161,6 +173,8 @@ describe('syncUrl()', () => {
     location.search = '?flags=true,false';
     store.plugin(syncUrl({ schema: { flags: 'boolean[]' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState()).toEqual({ flags: [true, false] });
   });
   it('should cast from schema Date', async () => {
@@ -168,6 +182,8 @@ describe('syncUrl()', () => {
     location.search = '?start=2022-05-24';
     store.plugin(syncUrl({ schema: { start: 'Date' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState().start).toBeInstanceOf(Date);
     expect(store.getState().start.toJSON()).toBe('2022-05-24T00:00:00.000Z');
   });
@@ -176,6 +192,8 @@ describe('syncUrl()', () => {
     location.search = '?range=2022-05-23,2022-05-24';
     store.plugin(syncUrl({ schema: { range: 'Date[]' } }));
     render(<Component />);
+    // hook will see location then update and re-render component
+    await act(() => {});
     expect(store.getState().range[0]).toBeInstanceOf(Date);
     expect(store.getState().range[1]).toBeInstanceOf(Date);
     expect(JSON.stringify(store.getState().range)).toBe(
