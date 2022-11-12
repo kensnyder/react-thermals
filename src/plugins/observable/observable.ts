@@ -1,5 +1,5 @@
-import Store from '../../Store/Store';
-import PreventableEvent from '../../PreventableEvent/PreventableEvent';
+import Store from '../../class/Store/Store';
+import PreventableEvent from '../../class/PreventableEvent/PreventableEvent';
 
 type Observer = {
   next: Function;

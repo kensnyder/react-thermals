@@ -1,4 +1,4 @@
-import Store from '../../Store/Store';
+import Store from '../../class/Store/Store';
 import { setter, setterInput, setterSync } from './setter';
 
 function getTestStore(initialState) {

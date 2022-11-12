@@ -1,5 +1,5 @@
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import { EventHandlerType, EventNameType } from '../types';
+import { EventHandlerType, EventNameType } from '../../types';
 
 export default class Emitter {
   #_handlers: Record<string, EventHandlerType[]> = {

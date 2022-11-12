@@ -1,9 +1,9 @@
 import React, { FunctionComponent, MouseEventHandler } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Store from '../../Store/Store';
+import Store from '../../class/Store/Store';
 import observable from './observable';
-import useStoreState from '../../useStoreState/useStoreState';
+import useStoreState from '../../hooks/useStoreState/useStoreState';
 import { vitest } from 'vitest';
 
 describe('observable()', () => {

@@ -2,9 +2,9 @@ import { vitest, Mock, SpyInstance } from 'vitest';
 import React, { FunctionComponent } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Store from '../../Store/Store';
+import Store from '../../class/Store/Store';
 import persistState from './persistState';
-import useStoreState from '../../useStoreState/useStoreState';
+import useStoreState from '../../hooks/useStoreState/useStoreState';
 
 interface StorageMock extends Storage {
   value: any;
@@ -335,8 +335,9 @@ describe('persistState() with custom parse and stringify', () => {
     storage.value = 'page=2&sort=-date';
     render(<Component />);
     expect(store.getState()).toEqual({ page: '2', sort: '-date' });
-    expect(storage.setItem.mock.lastCall).toEqual(
-      ['params', 'page=2&sort=-date']
-    );
+    expect(storage.setItem.mock.lastCall).toEqual([
+      'params',
+      'page=2&sort=-date',
+    ]);
   });
 });

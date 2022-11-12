@@ -1,6 +1,6 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../updatePath/updatePath';
-import Store from '../../Store/Store';
+import { updatePath } from '../../class/updatePath/updatePath';
+import Store from '../../class/Store/Store';
 
 /**
  * Helper function to create a mergeState function that appends and item to an array property

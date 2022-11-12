@@ -1,7 +1,7 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import shallowOverride from '../../shallowOverride/shallowOverride';
-import { updatePath } from '../../updatePath/updatePath';
-import Store from '../../Store/Store';
+import shallowOverride from '../../class/shallowOverride/shallowOverride';
+import { updatePath } from '../../class/updatePath/updatePath';
+import Store from '../../class/Store/Store';
 
 /**
  * Build a setState function that merges the given object with the target object

@@ -6,8 +6,8 @@ import {
 import isEmpty from './libs/isEmpty';
 import { omitUnknown, omitKnown } from './libs/omit';
 import { pushState, replaceState } from './libs/windowHistory';
-import PreventableEvent from '../../PreventableEvent/PreventableEvent';
-import Store from '../../Store/Store';
+import PreventableEvent from '../../class/PreventableEvent/PreventableEvent';
+import Store from '../../class/Store/Store';
 
 export type SyncUrlConfig = {
   fields?: String[];

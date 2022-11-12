@@ -14,7 +14,7 @@ import {
   PluginResultType,
   PluginFunctionType,
   EventHandlerType,
-} from '../types';
+} from '../../types';
 
 // an internal counter for stores
 let storeIdx = 1;

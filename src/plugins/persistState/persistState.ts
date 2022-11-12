@@ -1,6 +1,6 @@
 import { tryParse, tryStringify } from './parseAndStringify';
-import Store from '../../Store/Store';
-import PreventableEvent from '../../PreventableEvent/PreventableEvent';
+import Store from '../../class/Store/Store';
+import PreventableEvent from '../../class/PreventableEvent/PreventableEvent';
 
 export type PersistStateConfig = {
   storage: Storage;

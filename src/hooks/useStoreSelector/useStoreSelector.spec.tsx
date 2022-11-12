@@ -1,10 +1,10 @@
 import React, { FunctionComponent, ReactElement, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Store from '../Store/Store';
+import Store from '../../class/Store/Store';
 import useStoreState from '../useStoreState/useStoreState';
 import useStoreSelector from './useStoreSelector';
-import PreventableEvent from '../PreventableEvent/PreventableEvent';
+import PreventableEvent from '../../class/PreventableEvent/PreventableEvent';
 
 describe('useStoreSelector(mapState)', () => {
   // define store before each test

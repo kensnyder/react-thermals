@@ -2,15 +2,15 @@ import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import { Mock, vitest } from 'vitest';
 import '@testing-library/jest-dom';
-import useStoreState from '../useStoreState/useStoreState';
-import { setter } from '../actions/setter/setter';
+import useStoreState from '../../hooks/useStoreState/useStoreState';
+import { setter } from '../../actions/setter/setter';
 import Store from './Store';
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
 import {
   EventHandlerType,
   MiddlewareContextInterface,
   PluginFunctionType,
-} from '../types';
+} from '../../types';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
