@@ -1,4 +1,4 @@
-import Emitter from '../Emitter/Emitter';
+import SimpleEmitter from '../SimpleEmitter/SimpleEmitter';
 import shallowCopy from '../../lib/shallowCopy/shallowCopy';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
 import { updatePath } from '../../lib/updatePath/updatePath';
@@ -19,7 +19,7 @@ import {
 // an internal counter for stores
 let storeIdx = 1;
 
-export default class Store extends Emitter {
+export default class Store extends SimpleEmitter {
   #_autoReset: boolean;
   #_hasInitialized = false;
   #_idx: number;

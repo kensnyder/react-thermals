@@ -5,7 +5,7 @@ import React, {
 } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import undo from './undo';
 

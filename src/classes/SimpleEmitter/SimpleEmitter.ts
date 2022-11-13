@@ -1,7 +1,7 @@
 import PreventableEvent from '../PreventableEvent/PreventableEvent';
 import { EventHandlerType, EventNameType } from '../../types';
 
-export default class Emitter {
+export default class SimpleEmitter {
   #_handlers: Record<string, EventHandlerType[]> = {
     '*': [],
   };
@@ -12,7 +12,7 @@ export default class Emitter {
    * @param  handler  The function to be called when the event fires
    * @return  The emitter instance
    */
-  on(type: EventNameType, handler: EventHandlerType): Emitter {
+  on(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -26,7 +26,7 @@ export default class Emitter {
    * @param handler  The function registered with "on()" or "once()"
    * @return  The emitter instance
    */
-  off(type: EventNameType, handler: EventHandlerType): Emitter {
+  off(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -40,7 +40,7 @@ export default class Emitter {
    * @param handler  The function to be called when the event fires
    * @return  The emitter instance
    */
-  once(type: EventNameType, handler: EventHandlerType): Emitter {
+  once(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
     const onceHandler = (event: PreventableEvent) => {
       this.off(type, onceHandler);
       handler.call(this, event);

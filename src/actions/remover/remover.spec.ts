@@ -1,4 +1,4 @@
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import { remover, removerSync } from './remover';
 
 function getTestStore(initialState) {

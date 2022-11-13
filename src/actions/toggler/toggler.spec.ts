@@ -1,4 +1,4 @@
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import { toggler, togglerSync } from './toggler';
 
 function getTestStore(initialState: Object) {

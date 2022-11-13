@@ -1,4 +1,4 @@
-export * as Store from './src/class/Store/Store';
+export * as Store from './src/classes/Store/Store';
 export * as useStoreSelector from './src/hooks/useStoreSelector/useStoreSelector';
 export * as useStoreState from './src/hooks/useStoreState/useStoreState';
 export { adder, adderSync } from './src/actions/adder/adder';

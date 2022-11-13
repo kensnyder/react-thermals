@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import { SetterType } from '../../types';
 
 /**

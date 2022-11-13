@@ -1,4 +1,4 @@
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 
 /**
  * Given an action creator function, flushSync after state has been updated

@@ -1,5 +1,5 @@
-import Store from './class/Store/Store';
-import PreventableEvent from './class/PreventableEvent/PreventableEvent';
+import Store from './classes/Store/Store';
+import PreventableEvent from './classes/PreventableEvent/PreventableEvent';
 
 export type EventNameType =
   | 'BeforeInitialState'

@@ -2,7 +2,7 @@ import { vitest, Mock, SpyInstance } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React, { FunctionComponent } from 'react';
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import syncUrl from './syncUrl';
 import '../../mocks/mock-location';

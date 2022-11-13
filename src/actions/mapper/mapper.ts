@@ -1,6 +1,6 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
 import { updatePath } from '../../lib/updatePath/updatePath';
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 
 /**
  * Build a setState function that runs a map function against an array value

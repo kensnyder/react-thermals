@@ -1,4 +1,4 @@
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 import { appender, appenderSync } from './appender';
 
 function getTestStore(initialState: Object) {

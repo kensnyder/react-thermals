@@ -1,4 +1,4 @@
-import Store from '../../class/Store/Store';
+import Store from '../../classes/Store/Store';
 
 /**
  * Given a list of actions, run them one after another, i.e. parallel
