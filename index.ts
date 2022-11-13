@@ -7,7 +7,7 @@ export { remover, removerSync } from './src/actions/remover/remover';
 export { setter, setterSync, setterInput } from './src/actions/setter/setter';
 export { toggler, togglerSync } from './src/actions/toggler/toggler';
 export { replacer, replacerSync } from './src/actions/replacer/replacer';
-export { updatePath } from './src/class/updatePath/updatePath';
+export { updatePath } from './src/lib/updatePath/updatePath';
 export {
   composeActions,
   pipeActions,

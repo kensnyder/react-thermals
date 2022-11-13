@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import defaultEqualityFn from '../../class/defaultEqualityFn/defaultEqualityFn';
-import getMapperFunction from '../../class/getMapperFunction/getMapperFunction';
+import defaultEqualityFn from '../../lib/defaultEqualityFn/defaultEqualityFn';
+import getMapperFunction from '../../lib/getMapperFunction/getMapperFunction';
 import { SetterType } from '../../types';
 
 /**

@@ -1,5 +1,5 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../class/updatePath/updatePath';
+import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../class/Store/Store';
 
 /**

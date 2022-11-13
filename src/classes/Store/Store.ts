@@ -1,8 +1,8 @@
 import Emitter from '../Emitter/Emitter';
-import shallowCopy from '../shallowCopy/shallowCopy';
-import shallowOverride from '../shallowOverride/shallowOverride';
-import { updatePath } from '../updatePath/updatePath';
-import selectPath from '../selectPath/selectPath';
+import shallowCopy from '../../lib/shallowCopy/shallowCopy';
+import shallowOverride from '../../lib/shallowOverride/shallowOverride';
+import { updatePath } from '../../lib/updatePath/updatePath';
+import selectPath from '../../lib/selectPath/selectPath';
 import {
   StoreConfigType,
   SetterType,

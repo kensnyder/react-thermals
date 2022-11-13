@@ -1,6 +1,6 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import shallowOverride from '../../class/shallowOverride/shallowOverride';
-import { updatePath } from '../../class/updatePath/updatePath';
+import shallowOverride from '../../lib/shallowOverride/shallowOverride';
+import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../class/Store/Store';
 
 /**
