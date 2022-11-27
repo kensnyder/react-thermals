@@ -1,7 +1,6 @@
-- Examples folder
 - Example Sandboxes
-- Fix release-it
-- Remove type annotations from jsdoc
+- Examples folder
+- Fix release-it configuration
 - Be consistent about imports sequence
-- jsdoc on syncUrl/libs/\*.ts
-- finalize folder structure
+- Generate jsdoc
+- Test and document cycler and mapper

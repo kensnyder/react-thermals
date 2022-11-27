@@ -230,7 +230,7 @@ React Thermals is designed for multiple use cases:
 
 ### Example 1: A store with global state
 
-In stores/globalStore/globalStore.js we create the store
+We create a store in stores/globalStore/globalStore.js
 
 ```js
 import { Store, useStoreSelector } from 'react-thermals';
@@ -248,16 +248,7 @@ property.
 
 ```js
 import globalStore, { useGlobalStore } from '../globalStore';
-import { persistState } from 'react-thermals';
-
-// add plugins to the root store at any time
-globalStore.plugin(
-  persistState({
-    storage: localStorage,
-    key: 'myTodos',
-    fields: ['todos'],
-  })
-);
+import { persistState, appender, merger, remover } from 'react-thermals';
 
 // extend the state at any time
 globalStore.extendState({ todos: [] });
@@ -276,12 +267,21 @@ export function useTodos() {
   // "todos" is equivalent to state => state.todos
   return useGlobalStore('todos');
 }
-// ...or parts of the state
+// ...or a hook to select parts of the state
 export function useTodoIncompleteCount() {
   return useGlobalStore(state => {
     return state.todos.filter(todo => !todo.isComplete).length;
   });
 }
+
+// add plugins to the root store at any time
+globalStore.plugin(
+  persistState({
+    storage: localStorage,
+    key: 'myTodos',
+    fields: ['todos'],
+  })
+);
 ```
 
 In components/Header.jsx we may only care about the TODO incomplete count
@@ -294,7 +294,7 @@ export default function Header() {
   const incompleteCount = useTodoIncompleteCount();
   return (
     <header>
-      <h1>My App</h1>
+      <h1>My TODO App</h1>
       <div>Tasks remaining: {incompleteCount}</div>
     </header>
   );
@@ -508,7 +508,7 @@ export function useCartTotal() {
 }
 ```
 
-In components/Header.jsx we may want to show how many items are on the
+In components/Header.jsx we may want to show how many items are in the cart
 
 ```js
 import React from 'react';
@@ -636,11 +636,9 @@ export const gameStore = new Store({
         x: old.x + x,
         y: old.y + y,
       }));
-      gameStore.flushSync();
-      const user = gameStore.getStateAt('board.user');
-      const flag = gameStore.getStateAt('board.flag');
+      const { user, flag } = gameStore.getStateAt('board');
       if (flag.x === user.x && flag.y === user.y) {
-        gameStore.mergeState({ hasWon: true });
+        gameStore.mergeSync({ hasWon: true });
       }
     },
   },
@@ -724,8 +722,8 @@ Many cross-component state patterns like Redux do not have built-in ways to code
 split. In React Thermals, code splitting happens naturally because components
 must `import` any stores they want to consume.
 
-React Thermals are useful for global state, state that goes across components
-or even state that is local to a single component.
+React Thermals is useful for a) global state, b) state that goes across
+components and c) state that is local to a single component.
 
 ### Action creators
 
@@ -739,18 +737,6 @@ create action functions. Supported state changes are:
 5. [Replace an item in a list](src/actions/README.md#replacer)
 6. [Add to or subtract from a number](src/actions/README.md#adder)
 7. [Merge one object into another](src/actions/README.md#merger)
-
-```js
-export default function cycle(path, values) {
-  let idx = 0;
-  const nextValue = updatePath(path, function doCycle() {
-    return values[idx % values.length];
-  });
-  return function updater(newValue) {
-    this.setState(old => nextValue());
-  };
-}
-```
 
 There are also two functions for combining action functions:
 
@@ -768,9 +754,9 @@ the next event loop. Since React rendering is also batched, actions work pretty
 intuitively.
 
 If you want to immediately flush the queue, you can call `store.flushSync()`.
-If any parts of the state returned `Promise`s, there will be a subsequent update
-after each `Promise`s resolves. See the next section for more information on
-`Promise`s.
+If any parts of the state returned `Promise`s, there will be an additional
+update after each `Promise`s resolves. See the next section for more information
+on `Promise`s.
 
 ### Asynchronous Actions
 
@@ -792,6 +778,7 @@ The `Store()` constructor takes an object with the following properties:
 - {Boolean} autoReset - If true, reset the store when all consumer components
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
+- {Object} on - Immediately add event handlers without calling `store.on(event, handler)`
 
 ### Common Store Methods
 
@@ -802,7 +789,7 @@ The `Store()` constructor takes an object with the following properties:
 | setState(valueOrFn)         | In an action function: set the store's state                                              |
 | setStateAt(path, valueOrFn) | In an action function: set the store's state at the given path                            |
 | setSync(valueOrFn)          | In an action function: set the store's state (synchronously)                              |
-| setSync(path, valueOrFn)    | In an action function: set the store's state at the given path (synchronously)            |
+| setSyncAt(path, valueOrFn)  | In an action function: set the store's state at the given path (synchronously)            |
 | mergeState(valueOrFn)       | In an action function: extend the store's state                                           |
 | mergeSync(valueOrFn)        | In an action function: extend the store's state (synchronously)                           |
 | flushSync()                 | Run queued updates immediately                                                            |
@@ -837,9 +824,9 @@ A store can be global or used by a number of components. Regardless, each
 component must import the store; that way, any components loaded from
 `React.lazy` will allow automatic code splitting.
 
-A global store can be extended at any time using `store.addActions(actions)` or
-`store.mergeState()` so a global store can be defined in one file but only
-extended when needed when loaded by a component.
+A global store can be extended at any time (using `store.addActions(actions)` for
+new actions and `store.extendState()` for new state), so a global store can be
+defined in one file but only extended when needed by a component.
 
 ### Suggested File Structure
 
@@ -850,14 +837,14 @@ For global or shared stores, e.g. a theme store:
 
 For reusable components or pages with private state, e.g. a header:
 
-- src/components/Header/Header.js
-- src/components/Header/Header.spec.js
+- src/components/Header/Header.jsx
+- src/components/Header/Header.spec.jsx
 - src/components/Header/store/headerStore.js
 - src/components/Header/store/headerStore.spec.js
 
 ### Testing stores
 
-Stores can be easily unit tested inside of or outside of a React Component.
+Stores can be easily unit tested inside or outside a React Component.
 
 #### Unit Test Examples
 
@@ -895,7 +882,7 @@ Stores fire a series of lifecycle events. For example:
 
 ```js
 store.on('BeforeFirstUse', () => {
-  store.setSync({ my: 'new', initial: 'state' });
+  store.setSync({ my: 'external', initial: 'state' });
 });
 store.on('BeforeUpdate', evt => {
   if (evt.data.name.length < 4) {
@@ -905,29 +892,30 @@ store.on('BeforeUpdate', evt => {
 });
 ```
 
-#### Event description & Cancelability
+#### Event description & Cancellability
 
-The following events fire during the life cycle of the store. Some events allow you call
-`event.preventDefault()` to block the next step. For example, canceling the BeforeSet event
-will block all pending state updates. Handlers can also call `event.stopPropagation()`to
-block other handlers from firing this particular event.
+The following events fire during the life cycle of the store. Some events allow
+you call `event.preventDefault()` to block the next step. For example,
+cancelling the BeforeSet event will block all pending state updates. Handlers
+can also call `event.stopPropagation()` to block other handlers from receiving
+this particular event.
 
-| Event            | Description                                                 | Cancelable? |
-| ---------------- | ----------------------------------------------------------- | ----------- |
-| BeforeFirstUse   | Can alter initial state for first component that uses state | No          |
-| AfterFirstUse    | Fires after store has been used by the first time           | No          |
-| AfterFirstMount  | Fires after first component mounts                          | No          |
-| AfterMount       | Fires after each component mounts                           | No          |
-| AfterUnmount     | Fires after each component unmounts                         | No          |
-| AfterLastUnmount | Fires when last component unmounts                          | No          |
-| SetterException  | Fires if a setter function throws an exception              | No          |
-| BeforeSet        | Fires before any queued setter functions run                | Yes         |
-| BeforeUpdate     | Fires before newly calculated state is propagated           | Yes         |
-| AfterUpdate      | Fires after state is finalized but before React re-renders  | Yes         |
-| BeforeReset      | Fires before state is reset (by reset() or by autoReset)    | Yes         |
-| AfterReset       | Fires after state is reset (by reset() or by autoReset)     | Yes         |
-| BeforePlugin     | Fires before a plugin is registered                         | Yes         |
-| AfterPlugin      | Fires after a plugin is registered                          | No          |
+| Event            | Description                                                 | Cancellable? |
+| ---------------- | ----------------------------------------------------------- | ------------ |
+| BeforeFirstUse   | Can alter initial state for first component that uses state | No           |
+| AfterFirstUse    | Fires after store has been used by the first time           | No           |
+| AfterFirstMount  | Fires after first component mounts                          | No           |
+| AfterMount       | Fires after each component mounts                           | No           |
+| AfterUnmount     | Fires after each component unmounts                         | No           |
+| AfterLastUnmount | Fires when last component unmounts                          | No           |
+| SetterException  | Fires if a setter function throws an exception              | No           |
+| BeforeSet        | Fires before any queued setter functions run                | Yes          |
+| BeforeUpdate     | Fires before newly calculated state is propagated           | Yes          |
+| AfterUpdate      | Fires after state is finalized but before React re-renders  | Yes          |
+| BeforeReset      | Fires before state is reset (by reset() or by autoReset)    | Yes          |
+| AfterReset       | Fires after state is reset (by reset() or by autoReset)     | Yes          |
+| BeforePlugin     | Fires before a plugin is registered                         | Yes          |
+| AfterPlugin      | Fires after a plugin is registered                          | No           |
 
 #### Event data
 
@@ -957,13 +945,18 @@ will affect what happens next
 The suite of events above allows powerful behavior using plugins. There are 5
 included plugins:
 
-1. [consoleLogger](src/plugins/README.md#consolelogger) - Logs state changes to the console
-2. [observable](src/plugins/README.md#observable) - Adds a subscribe function to turn store into a
-   observable subject
-3. [persistState](src/plugins/README.md#persiststate) - Persists state to localStorage or
-   sessionStorage
-4. [syncUrl](src/plugins/README.md#syncurl) - Persists state to URL using history API
-5. [undo](src/plugins/README.md#undo) - Adds undo and redo capability to the store
+1. [consoleLogger](src/plugins/README.md#consolelogger) - Logs state changes to
+   the console
+2. [observable](src/plugins/README.md#observable) - Adds a subscribe function to
+   observe the store as an observable subject
+3. [persistState](src/plugins/README.md#persiststate) - Persists state to
+   localStorage or sessionStorage
+4. [syncUrl](src/plugins/README.md#syncurl) - Persists state to URL using
+   the history API
+5. [undo](src/plugins/README.md#undo) - Adds undo and redo capability to the
+   store
+
+See examples of using [these plugins](src/plugins/README.md).
 
 Interested in writing your own plugins? Check out
 [how to write plugins](src/plugins/README.md#how-to-write-plugins).
