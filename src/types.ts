@@ -2,13 +2,12 @@ import Store from './classes/Store/Store';
 import PreventableEvent from './classes/PreventableEvent/PreventableEvent';
 
 export type EventNameType =
-  | 'BeforeInitialState'
+  | 'BeforeFirstUse'
   | 'AfterFirstUse'
   | 'AfterFirstMount'
   | 'AfterMount'
   | 'AfterUnmount'
   | 'AfterLastUnmount'
-  | 'SetterException'
   | 'BeforeSet'
   | 'BeforeUpdate'
   | 'AfterUpdate'
@@ -16,6 +15,7 @@ export type EventNameType =
   | 'AfterReset'
   | 'BeforePlugin'
   | 'AfterPlugin'
+  | 'SetterException'
   | '*';
 
 export type EventHandlerType = (evt: PreventableEvent) => void;
@@ -23,7 +23,7 @@ export type EventHandlerType = (evt: PreventableEvent) => void;
 export type EventHandlerOrHandlersType = EventHandlerType | EventHandlerType[];
 
 export type StoreConfigHandlersType = {
-  BeforeInitialState?: EventHandlerOrHandlersType;
+  BeforeFirstUse?: EventHandlerOrHandlersType;
   AfterFirstUse?: EventHandlerOrHandlersType;
   AfterFirstMount?: EventHandlerOrHandlersType;
   AfterMount?: EventHandlerOrHandlersType;

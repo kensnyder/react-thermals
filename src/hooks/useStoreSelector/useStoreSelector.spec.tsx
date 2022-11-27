@@ -149,7 +149,7 @@ describe('useStoreSelector(mapState)', () => {
     expect(store.getState()).toBe('hacked');
   });
   it('should allow overwrite part of initial state', () => {
-    store.on('BeforeInitialState', (evt: PreventableEvent) => {
+    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
       evt.data = { ...evt.data, planet: 'Neptune' };
     });
     const { getByTitle } = render(<PlanetComponent />);
@@ -229,7 +229,7 @@ describe('store.on(type, handler)', () => {
     };
   });
   it('should allow modifying initial state', () => {
-    store.on('BeforeInitialState', (evt: PreventableEvent) => {
+    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
       evt.data = { ...evt.data, target: 'Venus' };
     });
     const { getByText } = render(<TelescopeComponent />);

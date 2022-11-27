@@ -894,7 +894,7 @@ describe('myStore', () => {
 Stores fire a series of lifecycle events. For example:
 
 ```js
-store.on('BeforeInitialState', () => {
+store.on('BeforeFirstUse', () => {
   store.setSync({ my: 'new', initial: 'state' });
 });
 store.on('BeforeUpdate', evt => {
@@ -912,22 +912,22 @@ The following events fire during the life cycle of the store. Some events allow 
 will block all pending state updates. Handlers can also call `event.stopPropagation()`to
 block other handlers from firing this particular event.
 
-| Event              | Description                                                 | Cancelable? |
-| ------------------ | ----------------------------------------------------------- | ----------- |
-| BeforeInitialState | Can alter initial state for first component that uses state | No          |
-| AfterFirstUse      | Fires after store has been used by the first time           | No          |
-| AfterFirstMount    | Fires after first component mounts                          | No          |
-| AfterMount         | Fires after each component mounts                           | No          |
-| AfterUnmount       | Fires after each component unmounts                         | No          |
-| AfterLastUnmount   | Fires when last component unmounts                          | No          |
-| SetterException    | Fires if a setter function throws an exception              | No          |
-| BeforeSet          | Fires before any queued setter functions run                | Yes         |
-| BeforeUpdate       | Fires before newly calculated state is propagated           | Yes         |
-| AfterUpdate        | Fires after state is finalized but before React re-renders  | Yes         |
-| BeforeReset        | Fires before state is reset (by reset() or by autoReset)    | Yes         |
-| AfterReset         | Fires after state is reset (by reset() or by autoReset)     | Yes         |
-| BeforePlugin       | Fires before a plugin is registered                         | Yes         |
-| AfterPlugin        | Fires after a plugin is registered                          | No          |
+| Event            | Description                                                 | Cancelable? |
+| ---------------- | ----------------------------------------------------------- | ----------- |
+| BeforeFirstUse   | Can alter initial state for first component that uses state | No          |
+| AfterFirstUse    | Fires after store has been used by the first time           | No          |
+| AfterFirstMount  | Fires after first component mounts                          | No          |
+| AfterMount       | Fires after each component mounts                           | No          |
+| AfterUnmount     | Fires after each component unmounts                         | No          |
+| AfterLastUnmount | Fires when last component unmounts                          | No          |
+| SetterException  | Fires if a setter function throws an exception              | No          |
+| BeforeSet        | Fires before any queued setter functions run                | Yes         |
+| BeforeUpdate     | Fires before newly calculated state is propagated           | Yes         |
+| AfterUpdate      | Fires after state is finalized but before React re-renders  | Yes         |
+| BeforeReset      | Fires before state is reset (by reset() or by autoReset)    | Yes         |
+| AfterReset       | Fires after state is reset (by reset() or by autoReset)     | Yes         |
+| BeforePlugin     | Fires before a plugin is registered                         | Yes         |
+| AfterPlugin      | Fires after a plugin is registered                          | No          |
 
 #### Event data
 
@@ -935,22 +935,22 @@ Each event comes with a `data` property. Below is the available data for each ev
 Note the "Editable?" column which indicates events where altering event.data or its sub properties
 will affect what happens next
 
-| Event              | event.data property                                        | Editable?  |
-| ------------------ | ---------------------------------------------------------- | ---------- |
-| BeforeInitialState | The initial state (used by plugins to load persisted data) | data       |
-| AfterFirstUse      | null                                                       | N/A        |
-| AfterFirstMount    | null                                                       | N/A        |
-| AfterMount         | null                                                       | N/A        |
-| AfterUnmount       | null                                                       | N/A        |
-| AfterLastUnmount   | null                                                       | N/A        |
-| SetterException    | The Error object                                           | No         |
-| BeforeSet          | Previous state                                             | No         |
-| BeforeUpdate       | ({ prev, next }) => previous state and next state          | data.next  |
-| AfterUpdate        | ({ prev, next }) => previous state and next state          | No         |
-| BeforeReset        | ({ before, after }) => state before and after the reset    | data.after |
-| AfterReset         | ({ before, after }) => state before and after the reset    | No         |
-| BeforePlugin       | The plugin's initializer function (with name property)     | No         |
-| AfterPlugin        | The plugin's initializer function (with name property)     | No         |
+| Event            | event.data property                                        | Editable?  |
+| ---------------- | ---------------------------------------------------------- | ---------- |
+| BeforeFirstUse   | The initial state (used by plugins to load persisted data) | data       |
+| AfterFirstUse    | null                                                       | N/A        |
+| AfterFirstMount  | null                                                       | N/A        |
+| AfterMount       | null                                                       | N/A        |
+| AfterUnmount     | null                                                       | N/A        |
+| AfterLastUnmount | null                                                       | N/A        |
+| SetterException  | The Error object                                           | No         |
+| BeforeSet        | Previous state                                             | No         |
+| BeforeUpdate     | ({ prev, next }) => previous state and next state          | data.next  |
+| AfterUpdate      | ({ prev, next }) => previous state and next state          | No         |
+| BeforeReset      | ({ before, after }) => state before and after the reset    | data.after |
+| AfterReset       | ({ before, after }) => state before and after the reset    | No         |
+| BeforePlugin     | The plugin's initializer function (with name property)     | No         |
+| AfterPlugin      | The plugin's initializer function (with name property)     | No         |
 
 ### Plugins
 

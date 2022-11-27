@@ -48,7 +48,7 @@ export default function persistState({
     if (!key) {
       key = store.id;
     }
-    store.on('BeforeInitialState', (evt: PreventableEvent) => {
+    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
       const item = storage.getItem(key);
       const initial = item ? tryParse(parse, item) : evt.data;
       if (initial !== undefined) {

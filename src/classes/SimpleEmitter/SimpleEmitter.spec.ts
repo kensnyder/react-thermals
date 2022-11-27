@@ -8,7 +8,7 @@ describe('SimpleEmitter', () => {
   });
   it('should be chainable', () => {
     const emitter = new SimpleEmitter();
-    const context = emitter.on('BeforeInitialState', () => {});
+    const context = emitter.on('BeforeFirstUse', () => {});
     expect(context).toBe(emitter);
   });
   it('should return basic object from emit()', () => {
@@ -73,7 +73,7 @@ describe('SimpleEmitter', () => {
     const emitter = new SimpleEmitter();
     let numCalls = 0;
     emitter.on('*', () => numCalls++);
-    emitter.emit('BeforeInitialState');
+    emitter.emit('BeforeFirstUse');
     emitter.emit('BeforeUpdate');
     expect(numCalls).toBe(2);
   });

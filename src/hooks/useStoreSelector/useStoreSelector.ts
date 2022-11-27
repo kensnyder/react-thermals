@@ -25,7 +25,7 @@ export default function useStoreSelector(
   const [partialState, setPartialState] = useState(() => {
     const fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      const event = store.emit('BeforeInitialState', fullInitialState);
+      const event = store.emit('BeforeFirstUse', fullInitialState);
       const mapped = map(event.data);
       if (event.data !== fullInitialState) {
         store.mergeSync(mapped);

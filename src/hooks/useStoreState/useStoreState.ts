@@ -11,10 +11,10 @@ import { SetterType } from '../../types';
 export default function useStoreState(store: Store) {
   // use useState to get a method for triggering re-renders in consumer components
   const [state, setState] = useState(() => {
-    // derive the initial state, if different because of mapState or equalityFn
+    // read the initial state and emit BeforeFirstUse if not yet initialized
     const fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      const event = store.emit('BeforeInitialState', fullInitialState);
+      const event = store.emit('BeforeFirstUse', fullInitialState);
       if (event.data !== fullInitialState) {
         store.mergeSync(event.data);
       }
@@ -32,6 +32,6 @@ export default function useStoreState(store: Store) {
     return () => store._unsubscribe(setter);
   }, [store]);
 
-  // return that slice or whole bit of state
+  // the entire state value will then be here to return
   return state;
 }

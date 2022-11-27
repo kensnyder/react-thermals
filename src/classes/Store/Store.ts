@@ -61,7 +61,7 @@ export default class Store extends SimpleEmitter {
     id = '',
   }: StoreConfigType = {}) {
     super();
-    this.once('BeforeInitialState', () => {
+    this.once('BeforeFirstUse', () => {
       this.#_hasInitialized = true;
     });
     this.#_initialState = initialState;
@@ -418,7 +418,7 @@ export default class Store extends SimpleEmitter {
   /**
    * Get the array of plugin initializer functions
    */
-  getPlugins = (): Function[] => {
+  getPlugins = (): PluginFunctionType[] => {
     return this.#_plugins;
   };
 
