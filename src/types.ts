@@ -29,7 +29,6 @@ export type StoreConfigHandlersType = {
   AfterMount?: EventHandlerOrHandlersType;
   AfterUnmount?: EventHandlerOrHandlersType;
   AfterLastUnmount?: EventHandlerOrHandlersType;
-  SetterException?: EventHandlerOrHandlersType;
   BeforeSet?: EventHandlerOrHandlersType;
   BeforeUpdate?: EventHandlerOrHandlersType;
   AfterUpdate?: EventHandlerOrHandlersType;
@@ -37,6 +36,7 @@ export type StoreConfigHandlersType = {
   AfterReset?: EventHandlerOrHandlersType;
   BeforePlugin?: EventHandlerOrHandlersType;
   AfterPlugin?: EventHandlerOrHandlersType;
+  SetterException?: EventHandlerOrHandlersType;
   '*'?: EventHandlerOrHandlersType;
 };
 

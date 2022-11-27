@@ -1,6 +1,6 @@
-export * as Store from './src/classes/Store/Store';
-export * as useStoreSelector from './src/hooks/useStoreSelector/useStoreSelector';
-export * as useStoreState from './src/hooks/useStoreState/useStoreState';
+export { default as Store } from './src/classes/Store/Store';
+export { default as useStoreSelector } from './src/hooks/useStoreSelector/useStoreSelector';
+export { default as useStoreState } from './src/hooks/useStoreState/useStoreState';
 export { adder, adderSync } from './src/actions/adder/adder';
 export { appender, appenderSync } from './src/actions/appender/appender';
 export { remover, removerSync } from './src/actions/remover/remover';
@@ -12,5 +12,5 @@ export {
   composeActions,
   pipeActions,
 } from './src/actions/composeActions/composeActions';
-export * as consoleLogger from './src/plugins/consoleLogger/consoleLogger';
-export * as observable from './src/plugins/observable/observable';
+export { default as consoleLogger } from './src/plugins/consoleLogger/consoleLogger';
+export { default as observable } from './src/plugins/observable/observable';

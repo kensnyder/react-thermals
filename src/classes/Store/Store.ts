@@ -115,7 +115,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setState = (newState: any) => {
+  setState = (newState: any): Store => {
     this.#_updateQueue.push(newState);
     if (this.#_updateQueue.length === 1) {
       this.#_scheduleUpdates();
@@ -129,7 +129,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  mergeState = (newState: MergeableStateAsyncType) => {
+  mergeState = (newState: MergeableStateAsyncType): Store => {
     let updater;
     if (typeof newState === 'function') {
       updater = (old: Record<string, any>) => {
@@ -155,7 +155,7 @@ export default class Store extends SimpleEmitter {
    * Schedule state to be merged in the next batch of updates
    * @param moreState  The values to merge into the state (components will not be notified)
    */
-  extendState = (moreState: PlainObjectType) => {
+  extendState = (moreState: PlainObjectType): Store => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
       throw new Error(
         'react-thermals Store.extendState(moreState): current state and given state must both be objects'
@@ -171,7 +171,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  extendStateAt = (path: string, moreState: PlainObjectType) => {
+  extendStateAt = (path: string, moreState: PlainObjectType): Store => {
     if (typeof moreState !== 'object') {
       throw new Error(
         'react-thermals Store.extendStateAt(path, moreState): given state must an object'
@@ -193,7 +193,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setSync = (newState: any) => {
+  setSync = (newState: any): Store => {
     this.setState(newState);
     this.flushSync();
     return this;
@@ -205,7 +205,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  mergeSync = (newState: MergeableStateType) => {
+  mergeSync = (newState: MergeableStateType): Store => {
     this.mergeState(newState);
     this.flushSync();
     return this;
@@ -218,7 +218,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setStateAt = (path: string, newStateOrUpdater: any) => {
+  setStateAt = (path: string, newStateOrUpdater: any): Store => {
     const updater = updatePath(path);
     this.setState((old: any) => updater(old, newStateOrUpdater));
     return this;
@@ -231,7 +231,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setSyncAt = (path: string, newStateOrUpdater: any) => {
+  setSyncAt = (path: string, newStateOrUpdater: any): Store => {
     const updater = updatePath(path);
     this.setSync((old: any) => updater(old, newStateOrUpdater));
     return this;
@@ -243,7 +243,7 @@ export default class Store extends SimpleEmitter {
    * synchronously.
    * @return The resulting state
    */
-  flushSync = () => {
+  flushSync = (): any => {
     const prevState = this.#_state;
     const event1 = this.emit('BeforeSet', prevState);
     if (event1.defaultPrevented) {
@@ -299,7 +299,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  reset = (withStateOverrides: any = undefined) => {
+  reset = (withStateOverrides: any = undefined): Store => {
     const current = this.#_state;
     const event = this.emit('BeforeReset', {
       before: current,
@@ -349,9 +349,9 @@ export default class Store extends SimpleEmitter {
 
   /**
    * Get all the store options
-   * @return {Object}
+   * @return
    */
-  getOptions = () => {
+  getOptions = (): PlainObjectType => {
     return this.#_options;
   };
 
@@ -359,7 +359,7 @@ export default class Store extends SimpleEmitter {
    * Get a single store option
    * @param name  The name of the option
    */
-  getOption = (name: string) => {
+  getOption = (name: string): any => {
     return this.#_options[name];
   };
 
@@ -369,7 +369,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setOptions = (newOptions: Record<string, any>) => {
+  setOptions = (newOptions: PlainObjectType): Store => {
     this.#_options = newOptions;
     return this;
   };
@@ -380,7 +380,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  extendOptions = (addOptions: Record<string, any>) => {
+  extendOptions = (addOptions: PlainObjectType): Store => {
     Object.assign(this.#_options, addOptions);
     return this;
   };
@@ -392,7 +392,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setOption = (name: string, newValue: any) => {
+  setOption = (name: string, newValue: any): Store => {
     this.#_options[name] = newValue;
     return this;
   };
@@ -428,7 +428,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  use = (...middlewares: Function[]) => {
+  use = (...middlewares: Function[]): Store => {
     this.#_middlewares.push(...middlewares);
     return this;
   };
@@ -619,7 +619,7 @@ export default class Store extends SimpleEmitter {
    * @param prev  The previous state value
    * @param next  The new state value
    */
-  #_notifyComponents = (prev: any, next: any) => {
+  #_notifyComponents = (prev: any, next: any): void => {
     // save final state result
     this.#_state = next;
     // update components with no selector or with matching selector

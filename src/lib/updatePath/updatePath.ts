@@ -5,9 +5,9 @@ import getUpdateRunner from './getUpdateRunner';
  * Deep updater takes a path plus a transformer and returns a function
  *   that will take in an object and return a copy of that object
  *   with that transform applied to the value at "path"
- * @param path
- * @param transform
- * @return {Function}
+ * @param path  Path string such as "cart" or "cart.total"
+ * @param transform  Transform function(s) to update the value at the given path
+ * @return
  */
 export function updatePath(
   path: string,
