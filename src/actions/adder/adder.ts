@@ -27,4 +27,4 @@ export function adder(path: string, baseAmount = 0): Function {
  * @param path  The name of or path to the property to toggle
  * @return  A function suitable for a store action
  */
-export const adderSync = withFlushSync(adder);
+export const adderSync: Function = withFlushSync(adder);

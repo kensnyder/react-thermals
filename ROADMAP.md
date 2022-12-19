@@ -1,4 +1,6 @@
 - Example Sandboxes
+- Example of how to use multiple instances of one store (i.e. a store factory function)
+- Example of using hooks or actions from another store
 - Examples folder
 - Fix release-it configuration
 - Be consistent about imports sequence

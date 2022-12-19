@@ -79,6 +79,21 @@ export default class Store extends SimpleEmitter {
   }
 
   /**
+   * Return the initial state of the store
+   */
+  getInitialState = (): any => {
+    return this.#_initialState;
+  };
+
+  /**
+   * Return the initial state of the store at the given path
+   * @param path  Path string such as "cart" or "cart.total"
+   */
+  getInitialStateAt = (path: string): any => {
+    return selectPath(path)(this.#_initialState);
+  };
+
+  /**
    * Return the current state of the store
    * @return  The current state
    */
@@ -87,7 +102,8 @@ export default class Store extends SimpleEmitter {
   };
 
   /**
-   * Return the current state of the store
+   * Return the current state of the store at the given path
+   * @param path  Path string such as "cart" or "cart.total"
    */
   getStateAt = (path: string): any => {
     return selectPath(path)(this.#_state);
