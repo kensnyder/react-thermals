@@ -1,9 +1,9 @@
 <img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png" height="64" />
 
-[![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.19)](https://npmjs.com/package/react-thermals)
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.19)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.19)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.19)](https://opensource.org/licenses/ISC)
+[![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.20)](https://npmjs.com/package/react-thermals)
+[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.20)](https://ci.appveyor.com/project/kensnyder/react-thermals)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.20)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.20)](https://opensource.org/licenses/ISC)
 
 React thermals is a simple and extensible way to manage state in React
 
