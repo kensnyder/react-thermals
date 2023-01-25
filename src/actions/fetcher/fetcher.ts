@@ -4,17 +4,17 @@ import Store from '../../classes/Store/Store';
  * Helper function to send a fetch() request and add the response to the state
  * @param path  The name of or path that will accept { response, error }
  * @param url  The url to fetch data from
- * @param options  The options for fetch
+ * @param init  The initialization options for fetch
  * @return  A function suitable for a store action
  */
 export function fetcher(
   path: string,
   url: string | URL,
-  options: RequestInit = {}
+  init: RequestInit = {}
 ) {
   return async function updater(this: Store) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, init);
       this.setStateAt(path, { response, error: null });
     } catch (error) {
       this.setStateAt(path, { response: null, error });

@@ -1,9 +1,11 @@
+import SimpleCache from '../../classes/SimpleCache/SimpleCache';
+
 /**
  * Build a function that will return state at a certain path
  * @param path  Path string such as "cart" or "cart.total"
  * @return  A function that can be used to get the path on any object
  */
-export default function selectPath(path: string): Function {
+export function doSelect(path: string): Function {
   const allSegments = path.split(/[\[\].]/).filter(Boolean);
   if (allSegments.length === 1) {
     // simplified function for the trivial case when path is just a prop name
@@ -29,3 +31,7 @@ export default function selectPath(path: string): Function {
     }
   }
 }
+
+const selectPath = SimpleCache.memoize(5000, doSelect);
+
+export default selectPath;

@@ -1,5 +1,8 @@
 import shallowCopy from '../shallowCopy/shallowCopy';
 import getUpdateRunner from './getUpdateRunner';
+import SimpleCache from '../../classes/SimpleCache/SimpleCache';
+
+const cache = new SimpleCache(5000);
 
 /**
  * Deep updater takes a path plus a transformer and returns a function
@@ -11,8 +14,11 @@ import getUpdateRunner from './getUpdateRunner';
  */
 export function updatePath(
   path: string,
-  transform: undefined | Function | Function[] = undefined
+  transform: undefined | Function = undefined
 ): Function {
+  if (transform === undefined && cache.has(path)) {
+    return cache.get(path);
+  }
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: updatePath(path,transform) - path must be a string'
@@ -34,14 +40,22 @@ export function updatePath(
   if (allSegments[0] === '@') {
     allSegments.shift();
   }
+  const descend = createDescender(runTransform);
   // the actual update function that takes an object
   // and recursively creates shallow copies
   // and runs the given update function on the target segment
-  return function updater<T>(object: T, ...callTimeArgs: any[]): T {
+  function updater<T>(object: T, ...callTimeArgs: any[]): T {
     return descend(object, allSegments, callTimeArgs);
-  };
+  }
+  if (transform === undefined) {
+    cache.set(path, updater);
+  }
+  return updater;
+}
+
+function createDescender(runTransform: Function) {
   // the recursive copy/update function
-  function descend(object: any, segments: string[], args: any[]): any {
+  return function descend(object: any, segments: string[], args: any[]): any {
     const copy = shallowCopy(object);
     if (segments[0] === '*' && copy instanceof Array) {
       // we need to map over array items
@@ -78,5 +92,5 @@ export function updatePath(
       }
     }
     return copy;
-  }
+  };
 }

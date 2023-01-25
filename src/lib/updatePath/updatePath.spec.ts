@@ -163,14 +163,6 @@ describe('deepUpdater', () => {
     expect(updated).not.toBe(state);
     expect(updated).toEqual([15]);
   });
-  it('should allow a transform to be an array of functions', () => {
-    const state = { cart: [{ price: 35 }] };
-    const applyDiscount = updatePath('cart[0].price', [p => p / 5, p => p / 7]);
-    const updated = applyDiscount(state);
-    expect(updated).not.toBe(state);
-    expect(updated.cart).not.toBe(state.cart);
-    expect(updated).toEqual({ cart: [{ price: 1 }] });
-  });
   it('should allow transforming with a function at run time', () => {
     const state = { cart: [{ price: 36 }] };
     const applyDiscount = updatePath('cart[0].price');

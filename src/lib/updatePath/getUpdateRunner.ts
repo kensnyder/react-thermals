@@ -36,13 +36,15 @@ export default function getUpdateRunner(
     // transform is an object or primitive: ignore the old value and always
     // use the new value. Or if new value is a function, use it to transform
     // the old value
-    return function setValue(old: any, newValue: any) {
-      return typeof newValue === 'function' ? newValue(old) : newValue;
-    };
+    return defaultTransform;
   } else {
     /* istanbul ignore next @preserve */
     throw new Error(
       'react-thermals: updatePath(path,transform) - transform must be a function, an array of functions or undefined'
     );
   }
+}
+
+function defaultTransform(old: any, newValue: any) {
+  return typeof newValue === 'function' ? newValue(old) : newValue;
 }

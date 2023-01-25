@@ -1,7 +1,7 @@
 import Store from '../../classes/Store/Store';
 
 /**
- * Given a list of actions, run them one after another, i.e. parallel
+ * Given a list of actions, run them all, i.e. parallel
  * @param actions
  * @return  A function to run the actions
  */

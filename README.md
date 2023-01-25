@@ -258,13 +258,13 @@ import { persistState, appender, merger, remover } from 'react-thermals';
 globalStore.extendState({ todos: [] });
 
 // add actions at any time
-export const addTodo = globalStore.bind(appender('todos'));
-export const toggleTodoComplete = globalStore.bind(
+export const addTodo = globalStore.connect(appender('todos'));
+export const toggleTodoComplete = globalStore.connect(
   merger('todos', todo => ({
     isComplete: !todo.isComplete,
   }))
 );
-export const removeTodo = globalStore.bind(remover('todos'));
+export const removeTodo = globalStore.connect(remover('todos'));
 
 // you can provide a hook for conveniently selecting this state
 export function useTodos() {
@@ -467,13 +467,16 @@ import {
   composeActions,
 } from 'react-thermals';
 
-const cartStore = new Store({
-  state: { items: [], discount: 0 },
+const store = new Store({
+  state: {
+    items: [],
+    discount: 0,
+  },
 });
 
-export default cartStore;
+export default store;
 
-export const add = cartStore.bind(
+export const addToCart = store.connect(
   composeActions([
     appender('items'),
     newItem => {
@@ -482,7 +485,7 @@ export const add = cartStore.bind(
   ])
 );
 
-export const remove = cartStore.bind(
+export const removeFromCart = store.connect(
   composeActions([
     remover('items'),
     oldItem => {
@@ -491,18 +494,18 @@ export const remove = cartStore.bind(
   ])
 );
 
-export const setDiscount = cartStore.bind(setter('discount'));
+export const setDiscount = store.connect(setter('discount'));
 
 export function useCartItems() {
-  return useStoreSelector(cartStore, 'items');
+  return useStoreSelector(store, 'items');
 }
 
 export function useCartItemCount() {
-  return useStoreSelector(cartStore, state => state.items.length);
+  return useStoreSelector(store, state => state.items.length);
 }
 
 export function useCartTotal() {
-  return useStoreSelector(cartStore, state => {
+  return useStoreSelector(store, state => {
     let total = 0;
     state.items.forEach(item => {
       total += item.quantity * item.price * (1 - state.discount);
@@ -537,7 +540,11 @@ an item from the cart.
 
 ```js
 import React from 'react';
-import { useCartItems, useCartTotal, cartActions } from '../stores/cartStore';
+import {
+  useCartItems,
+  useCartTotal,
+  removeFromCart,
+} from '../stores/cartStore';
 
 export default function CartDetails() {
   // only re-render when list or total changes
@@ -548,7 +555,7 @@ export default function CartDetails() {
       {items.map(item => (
         <li key={item.id}>
           {item.name}: ${item.price.toFixed(2)}{' '}
-          <button onClick={() => cartActions.remove(item)}>Delete</button>
+          <button onClick={() => removeFromCart(item)}>Delete</button>
         </li>
       ))}
       <li>Total: ${total.toFixed(2)}</li>
@@ -562,7 +569,7 @@ add an item to the cart.
 
 ```js
 import React from 'react';
-import { cartActions } from '../stores/cartStore';
+import { addToCart } from '../stores/cartStore';
 
 export default function Product({ product }) {
   return (
@@ -570,7 +577,7 @@ export default function Product({ product }) {
       <h3>{product.name}</h3>
       <p>{product.description}</p>
       <p>${product.price.toFixed(2)}</p>
-      <button onClick={() => cartActions.add(product)}>Add to cart</button>
+      <button onClick={() => addToCart(product)}>Add to cart</button>
     </div>
   );
 }
@@ -581,7 +588,7 @@ way and test any side effects like an http request.
 
 ```js
 import axios from 'axios';
-import { cartStore } from './cartStore';
+import { default as cartStore } from './cartStore';
 
 jest.mock('axios');
 
@@ -612,8 +619,8 @@ describe('cartStore', () => {
 
 Even if a store is only used by one component, it can be a nice way to separate
 concerns. And the store file doesn't necessarily need to be exported. You might
-want other code to interact with the store only through its exported hooks and
-action functions.
+want your application to interact with the store only through its exported hooks
+and functions.
 
 In components/Game/gameStore.ts
 
@@ -735,13 +742,14 @@ components and c) state that is local to a single component.
 For common types of state changes, React Thermals has 7 functions that will
 create action functions. Supported state changes are:
 
-1. [Set a single value](src/actions/README.md#setter)
-2. [Toggle a boolean value](src/actions/README.md#toggler)
-3. [Append an item to a list](src/actions/README.md#appender)
-4. [Remove an item from a list](src/actions/README.md#remover)
-5. [Replace an item in a list](src/actions/README.md#replacer)
-6. [Add to or subtract from a number](src/actions/README.md#adder)
-7. [Merge one object into another](src/actions/README.md#merger)
+1. [setter(path)](src/actions/README.md#setter) - Set a single value
+2. [toggler(path)](src/actions/README.md#toggler) - Toggle a boolean value
+3. [appender(path)](src/actions/README.md#appender) - Append an item to a list
+4. [remover(path)](src/actions/README.md#remover) - Remove an item from a list
+5. [replacer(path)](src/actions/README.md#replacer) - Replace an item in a list (i.e. edit)
+6. [adder(path)](src/actions/README.md#adder) - Add to or subtract from a number
+7. [merger(path)](src/actions/README.md#merger) - Merge one object into another
+8. [fetcher(path, url, init)](src/actions/README.md#fetcher) - Fetch and store data from an API
 
 There are also two functions for combining action functions:
 

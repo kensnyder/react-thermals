@@ -108,7 +108,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Bind an action creator function to this store
    * @param creator  The function to bind
    */
-  bind = (creator: Function) => {
+  connect = (creator: Function) => {
     return creator.bind(this);
   };
 
