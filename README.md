@@ -30,19 +30,21 @@ npm install react-thermals
    2. [Action Creators](#action-creators)
    3. [Action Batching](#action-batching)
    4. [Asynchronous Actions](#asynchronous-actions)
-5. [Full Documentation](#all-store-options)
+5. [Strongly typed state](#strongly-typed-state)
+   1. [TypeScript definitions](#typescript-definitions)
+6. [Full Documentation](#all-store-options)
    1. [All Store Options](#all-store-options)
    2. [Common Store Methods](#common-store-methods)
    3. [Other Store Methods](#other-store-methods)
-6. [Best Practices](#best-practices)
+7. [Best Practices](#best-practices)
    1. [Code Splitting](#code-splitting)
    2. [Suggested File Structure](#suggested-file-structure)
    3. [Testing Stores](#testing-stores)
-7. [Extending Store Behavior](#extending-store-behavior)
+8. [Extending Store Behavior](#extending-store-behavior)
    1. [Events](#events)
    2. [Plugins](#plugins)
    3. [Middleware](#middleware)
-8. [Community](#community)
+9. [Community](#community)
    1. [Contributing](#contributing)
    2. [ISC License](#isc-license)
    3. [Credits](#credits)
@@ -59,9 +61,10 @@ npm install react-thermals
 7. Stores persist data even if all consumers unmount (optional)
 8. Stores allow worry-free code splitting
 9. Store actions are easily testable
-10. Stores can respond to component lifecycle events including unmount
+10. Store state can be strongly typed with TypeScript
+11. Stores can respond to component lifecycle events including unmount
     (e.g. to abort fetching data)
-11. No higher-order functions are needed in `<App />` or elsewhere
+12. No higher-order functions are needed in `<App />` or elsewhere
 
 Also see the
 [changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
@@ -255,17 +258,17 @@ import { persistState, appender, merger, remover } from 'react-thermals';
 globalStore.extendState({ todos: [] });
 
 // add actions at any time
-export const todoActions = globalStore.addActions({
-  addTodo: appender('todos'),
-  toggleTodoComplete: merger('todos', todo => ({
+export const addTodo = globalStore.bind(appender('todos'));
+export const toggleTodoComplete = globalStore.bind(
+  merger('todos', todo => ({
     isComplete: !todo.isComplete,
-  })),
-  removeTodo: remover('todos'),
-});
+  }))
+);
+export const removeTodo = globalStore.bind(remover('todos'));
 
 // you can provide a hook for conveniently selecting this state
 export function useTodos() {
-  // "todos" is equivalent to state => state.todos
+  // The string 'todos' is equivalent to state => state.todos
   return useGlobalStore('todos');
 }
 // ...or a hook to select parts of the state
@@ -295,7 +298,7 @@ export default function Header() {
   const incompleteCount = useTodoIncompleteCount();
   return (
     <header>
-      <h1>My TODO App</h1>
+      <h1>My Tasks</h1>
       <div>Tasks remaining: {incompleteCount}</div>
     </header>
   );
@@ -307,9 +310,11 @@ way to toggle completeness and delete a todo
 
 ```js
 import React from 'react';
-import useTodos, { todoActions } from '../stores/globalStore/slices/todos';
+import useTodos, {
+  toggleTodoComplete,
+  removeTodo,
+} from '../stores/globalStore/slices/todos';
 import NewTodoForm from './NewTodoForm.jsx';
-const { toggleTodoComplete, removeTodo } = todoActions;
 
 export default function TodoList() {
   const todos = useTodos();
@@ -339,7 +344,7 @@ the action for adding a TODO.
 
 ```js
 import React, { useCallback } from 'react';
-import { todoActions } from '../stores/globalStore/slices/todos';
+import { addTodo } from '../stores/globalStore/slices/todos';
 
 export default function NewTodoForm() {
   const addTodoAndClear = useCallback(evt => {
@@ -349,7 +354,7 @@ export default function NewTodoForm() {
     const newTodo = Object.fromEntries(data);
     newTodo.isComplete = false;
     form.reset();
-    todoActions.add(newTodo);
+    addTodo(newTodo);
   }, []);
   return (
     <form onSubmit={addTodoAndClear}>
@@ -379,36 +384,29 @@ globalStore.extendState({
   },
 });
 
-export const authActions = globalStore.addActions({
-  // actions can be async
-  async login(form) {
-    const formData = Object.fromEntries(new FormData(form));
-    globalStore.mergeState({
-      user: {
-        isLoggedIn: false,
-        isCheckingLogin: true,
-      },
-    });
-    const { data } = await axios.post('/api/users/login', formData);
-    localStorage.setItem('jwt', data.jwt);
-    globalStore.mergeState({
-      user: {
-        ...data.user,
-        isLoggedIn: true,
-        isCheckingLogin: false,
-      },
-    });
-  },
-});
+// actions can be async
+export async function login(form) {
+  const formData = Object.fromEntries(new FormData(form));
+  globalStore.setStateAt('user', {
+    isLoggedIn: false,
+    isCheckingLogin: true,
+  });
+  const { data } = await axios.post('/api/users/login', formData);
+  localStorage.setItem('jwt', data.jwt);
+  globalStore.mergeStateAt('user', {
+    ...data.user,
+    isLoggedIn: true,
+    isCheckingLogin: false,
+  });
+}
 ```
 
 In components/Login/Login.jsx we need to know information about the user and
 connect the login action to a form submission.
 
 ```js
-import { useAuth, authActions } from '../../stores/slices/auth';
+import { useAuth, login } from '../../stores/slices/auth';
 import Loader from '../Loader/Loader.jsx';
-const { login } = authActions;
 
 export default function Login() {
   const { isCheckingLogin } = useAuth();
@@ -437,7 +435,7 @@ In components/SubHeader.jsx we might show the user's name or a link to log in.
 
 ```js
 import React from 'react';
-import { useAuth, authActions } from '../stores/slices/auth';
+import { useAuth } from '../stores/slices/auth';
 
 export default function SubHeader() {
   const user = useAuth();
@@ -469,26 +467,31 @@ import {
   composeActions,
 } from 'react-thermals';
 
-export const cartStore = new Store({
+const cartStore = new Store({
   state: { items: [], discount: 0 },
-  actions: {
-    add: composeActions([
-      appender('items'),
-      newItem => {
-        axios.post('/api/v1/carts/item', newItem);
-      },
-    ]),
-    remove: composeActions([
-      remover('items'),
-      oldItem => {
-        axios.delete(`/api/v1/carts/items/${oldItem.id}`);
-      },
-    ]),
-    setDiscount: setter('discount'),
-  },
 });
 
-export const cartActions = store.actions;
+export default cartStore;
+
+export const add = cartStore.bind(
+  composeActions([
+    appender('items'),
+    newItem => {
+      axios.post('/api/v1/carts/item', newItem);
+    },
+  ])
+);
+
+export const remove = cartStore.bind(
+  composeActions([
+    remover('items'),
+    oldItem => {
+      axios.delete(`/api/v1/carts/items/${oldItem.id}`);
+    },
+  ])
+);
+
+export const setDiscount = cartStore.bind(setter('discount'));
 
 export function useCartItems() {
   return useStoreSelector(cartStore, 'items');
@@ -587,18 +590,18 @@ describe('cartStore', () => {
   beforeEach(() => {
     store = cartStore.clone();
   });
-  it('should add item', () => {
+  it('should add item', async () => {
     const item = { id: 123, name: 'Pencil', price: 2.99 };
     store.actions.add(item);
-    store.flushSync();
+    await store.nextState();
     expect(store.getState().items[0]).toBe(item);
     expect(axios.post).toHaveBeenCalledWith('/api/v1/carts/item', item);
   });
-  it('should remove item', () => {
+  it('should remove item', async () => {
     const item = { id: 123, name: 'Pencil', price: 2.99 };
     store.setStateAt('items', [item]);
     store.actions.remove(item);
-    store.flushSync();
+    await store.nextState();
     expect(store.getState().items).toEqual([]);
     expect(axios.delete).toHaveBeenCalledWith(`/api/v1/carts/items/${item.id}`);
   });
@@ -608,7 +611,9 @@ describe('cartStore', () => {
 ### Example 3: A store used by one component
 
 Even if a store is only used by one component, it can be a nice way to separate
-concerns.
+concerns. And the store file doesn't necessarily need to be exported. You might
+want other code to interact with the store only through its exported hooks and
+action functions.
 
 In components/Game/gameStore.ts
 
@@ -616,7 +621,7 @@ In components/Game/gameStore.ts
 import { Store, useStoreState } from 'react-thermals';
 import random from 'random-int';
 
-export const gameStore = new Store({
+const store = new Store({
   state: {
     board: {
       user: { x: 0, y: 0 },
@@ -624,30 +629,30 @@ export const gameStore = new Store({
     },
     hasWon: false,
   },
-  actions: {
-    restart(): void {
-      gameStore.reset();
-      gameStore.setStateAt('board.flag', {
-        x: random(1, 10),
-        y: random(1, 10),
-      });
-    },
-    moveBy(x: number, y: number): void {
-      gameStore.setSyncAt('board.user', (old: Record<string, number>) => ({
-        x: old.x + x,
-        y: old.y + y,
-      }));
-      const { user, flag } = gameStore.getStateAt('board');
-      if (flag.x === user.x && flag.y === user.y) {
-        gameStore.mergeSync({ hasWon: true });
-      }
-    },
-  },
   autoReset: true,
 });
 
+export function restart() {
+  store.reset();
+  store.setStateAt('board.flag', {
+    x: random(1, 10),
+    y: random(1, 10),
+  });
+}
+
+export function moveBy(x: number, y: number): void {
+  store.setSyncAt('board.user', (old: Record<string, number>) => ({
+    x: old.x + x,
+    y: old.y + y,
+  }));
+  const { user, flag } = store.getStateAt('board');
+  if (flag.x === user.x && flag.y === user.y) {
+    store.mergeSync({ hasWon: true });
+  }
+}
+
 export function useGameState() {
-  return useStoreState(gameStore);
+  return useStoreState(store);
 }
 ```
 
@@ -657,8 +662,7 @@ In components/Game/Game.tsx
 import React from 'react';
 import range from '../range';
 import './Game.css';
-import { gameStore, useGameState } from './gameStore';
-const { restart, moveBy } = gameStore.actions;
+import { useGameState, restart, moveBy } from './gameStore';
 
 export default function Game(): React.Element {
   const state = useGameState();
@@ -703,7 +707,7 @@ export default function Game(): React.Element {
 
 ### Writing Actions
 
-For most actions, you can use action creators as introduced in the next
+For many actions, you can use action creators as introduced in the next
 section and as documented [here](src/actions/README.md).
 
 `store.setState` works exactly like a setter function from a `useState()` pair.
@@ -774,8 +778,6 @@ all batched promises have resolved.
 The `Store()` constructor takes an object with the following properties:
 
 - {Object} state - The store's initial state. It can be of any type.
-- {Object} actions - Named functions that can be dispatched by name and arguments.
-- {Object} options - Options that setters, plugins or event listeners might look for
 - {Boolean} autoReset - If true, reset the store when all consumer components
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
@@ -783,39 +785,36 @@ The `Store()` constructor takes an object with the following properties:
 
 ### Common Store Methods
 
-| Method                      | Description                                                                               |
-| --------------------------- | ----------------------------------------------------------------------------------------- |
-| extendState(moreState)      | Extend state to a store after it has been instantiated. Useful for global stores.         |
-| addActions(actions)         | Add action functions to a store after it has been instantiated. Useful for global stores. |
-| setState(valueOrFn)         | In an action function: set the store's state                                              |
-| setStateAt(path, valueOrFn) | In an action function: set the store's state at the given path                            |
-| setSync(valueOrFn)          | In an action function: set the store's state (synchronously)                              |
-| setSyncAt(path, valueOrFn)  | In an action function: set the store's state at the given path (synchronously)            |
-| mergeState(valueOrFn)       | In an action function: extend the store's state                                           |
-| mergeSync(valueOrFn)        | In an action function: extend the store's state (synchronously)                           |
-| flushSync()                 | Run queued updates immediately                                                            |
-| on(type, handler)           | Register a handler to be called for the given event type                                  |
-| off(type, handler)          | De-register a handler for the given event type                                            |
-| once(type, handler)         | Register a handler to be called ONCE for the given event type                             |
-| plugin(initializer)         | Register a plugin                                                                         |
-| use(...middlewares)         | Register one or more middlewares                                                          |
+| Method                 | Description                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| setState(valueOrFn)    | In an action function: set the store's state                                         |
+| mergeState(valueOrFn)  | In an action function: extend the store's state                                      |
+| extendState(moreState) | Extend state to a store after it has been instantiated. Useful for global stores.    |
+| nextState()            | Return a promise that resolves when queued updates finish running                    |
+| getState()             | Get state. Generally your action functions should use store.setState(old => { ... }) |
+| flushSync()            | Run queued updates immediately                                                       |
+| reset()                | Reset store to its original condition and original state                             |
+| use(...middlewares)    | Register one or more middlewares                                                     |
 
 ### Other Store Methods
 
-| Method                 | Description                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| getState()             | Get state. Generally your action functions should use store.setState(old => { ... })                 |
-| getStateAt(path)       | Get state at path. Generally your action functions should use store.setStateAt(path, old => { ... }) |
-| clone(withOverrides)   | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
-| reset(withOverrides)   | Reset store state (cancelable by BeforeReset event)                                                  |
-| nextState()            | Return a promise that resolves when queued updates finish running                                    |
-| hasInitialized()       | True if any component has ever used this store (but may not have mounted yet)                        |
-| getOptions()           | Get all options that may have been set by a plugin                                                   |
-| getOption(name)        | Get an option that may have been set by a plugin                                                     |
-| setOptions(options)    | Set options from the given object. May be used by plugins                                            |
-| setOption(name, value) | Set an option with the given name. May be used by plugins                                            |
-| getMountCount()        | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
-| getPlugins()           | Get the list of initializer functions registered as plugins                                          |
+| Method                        | Description                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| setSync(valueOrFn)            | In an action function: set the store's state (synchronously)                                         |
+| mergeSync(valueOrFn)          | In an action function: extend the store's state (synchronously)                                      |
+| setSyncAt(path, valueOrFn)    | In an action function: set the store's state at the given path (synchronously)                       |
+| getStateAt(path)              | Get state at path. Generally your action functions should use store.setStateAt(path, old => { ... }) |
+| setStateAt(path, valueOrFn)   | In an action function: set the store's state at the given path                                       |
+| clone(withOverrides)          | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
+| resetState(valueOrFn)         | Reset store state to original value                                                                  |
+| resetStateAt(path, valueOrFn) | Reset part of a store's state to its original value                                                  |
+| hasInitialized()              | True if any component has ever used this store (but may not have mounted yet)                        |
+| getMountCount()               | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
+| on(type, handler)             | Register a handler to be called for the given event type                                             |
+| off(type, handler)            | De-register a handler for the given event type                                                       |
+| once(type, handler)           | Register a handler to be called ONCE for the given event type                                        |
+| plugin(initializer)           | Register a plugin                                                                                    |
+| getPlugins()                  | Get the list of initializer functions registered as plugins                                          |
 
 ## Best Practices
 
@@ -825,9 +824,9 @@ A store can be global or used by a number of components. Regardless, each
 component must import the store; that way, any components loaded from
 `React.lazy` will allow automatic code splitting.
 
-A global store can be extended at any time (using `store.addActions(actions)` for
-new actions and `store.extendState()` for new state), so a global store can be
-defined in one file but only extended when needed by a component.
+A global store can be extended at any time using `store.extendState()`
+so a global store can be defined in one file but only extended when
+needed by a component.
 
 ### Suggested File Structure
 
@@ -836,7 +835,7 @@ For global or shared stores, e.g. a theme store:
 - src/stores/theme/themeStore.js
 - src/stores/theme/themeStore.spec.js
 
-For reusable components or pages with private state, e.g. a header:
+For reusable components or pages with private stores, e.g. a header:
 
 - src/components/Header/Header.jsx
 - src/components/Header/Header.spec.jsx
@@ -850,12 +849,12 @@ Stores can be easily unit tested inside or outside a React Component.
 #### Unit Test Examples
 
 ```js
-import myStore from './myStore';
+import myStore, { addToCart } from './myStore';
 
 describe('myStore', () => {
   it('should add to cart with addToCart(item)', () => {
     myStore.setSync({ cart: [], total: 0 });
-    myStore.actions.addToCart({
+    addToCart({
       id: 101,
       name: 'White Shoe',
       cost: 123,
@@ -885,11 +884,8 @@ Stores fire a series of lifecycle events. For example:
 store.on('BeforeFirstUse', () => {
   store.setSync({ my: 'external', initial: 'state' });
 });
-store.on('BeforeUpdate', evt => {
-  if (evt.data.name.length < 4) {
-    alert('name must be at least 4 characters');
-    evt.preventDefault();
-  }
+store.on('AfterLastUnmount', evt => {
+  cancelPendingStuff();
 });
 ```
 
@@ -901,45 +897,29 @@ cancelling the BeforeSet event will block all pending state updates. Handlers
 can also call `event.stopPropagation()` to block other handlers from receiving
 this particular event.
 
-| Event            | Description                                                 | Cancellable? |
-| ---------------- | ----------------------------------------------------------- | ------------ |
-| BeforeFirstUse   | Can alter initial state for first component that uses state | No           |
-| AfterFirstUse    | Fires after store has been used by the first time           | No           |
-| AfterFirstMount  | Fires after first component mounts                          | No           |
-| AfterMount       | Fires after each component mounts                           | No           |
-| AfterUnmount     | Fires after each component unmounts                         | No           |
-| AfterLastUnmount | Fires when last component unmounts                          | No           |
-| SetterException  | Fires if a setter function throws an exception              | No           |
-| BeforeSet        | Fires before any queued setter functions run                | Yes          |
-| BeforeUpdate     | Fires before newly calculated state is propagated           | Yes          |
-| AfterUpdate      | Fires after state is finalized but before React re-renders  | Yes          |
-| BeforeReset      | Fires before state is reset (by reset() or by autoReset)    | Yes          |
-| AfterReset       | Fires after state is reset (by reset() or by autoReset)     | Yes          |
-| BeforePlugin     | Fires before a plugin is registered                         | Yes          |
-| AfterPlugin      | Fires after a plugin is registered                          | No           |
+| Event            | Description                                                 |
+| ---------------- | ----------------------------------------------------------- |
+| BeforeFirstUse   | Can alter initial state for first component that uses state |
+| AfterFirstUse    | Fires after store has been used by the first time           |
+| AfterFirstMount  | Fires after first component mounts                          |
+| AfterMount       | Fires after each component mounts                           |
+| AfterUnmount     | Fires after each component unmounts                         |
+| AfterUpdate      | Fires after each update to state                            |
+| AfterLastUnmount | Fires when last component unmounts                          |
+| SetterException  | Fires if a setter function throws an exception              |
 
 #### Event data
 
-Each event comes with a `data` property. Below is the available data for each event that carries some.
-Note the "Editable?" column which indicates events where altering event.data or its sub properties
-will affect what happens next
+Note that some events with a `data` property. Below is the available data for
+events that support it.
 
-| Event            | event.data property                                        | Editable?  |
-| ---------------- | ---------------------------------------------------------- | ---------- |
-| BeforeFirstUse   | The initial state (used by plugins to load persisted data) | data       |
-| AfterFirstUse    | null                                                       | N/A        |
-| AfterFirstMount  | null                                                       | N/A        |
-| AfterMount       | null                                                       | N/A        |
-| AfterUnmount     | null                                                       | N/A        |
-| AfterLastUnmount | null                                                       | N/A        |
-| SetterException  | The Error object                                           | No         |
-| BeforeSet        | Previous state                                             | No         |
-| BeforeUpdate     | ({ prev, next }) => previous state and next state          | data.next  |
-| AfterUpdate      | ({ prev, next }) => previous state and next state          | No         |
-| BeforeReset      | ({ before, after }) => state before and after the reset    | data.after |
-| AfterReset       | ({ before, after }) => state before and after the reset    | No         |
-| BeforePlugin     | The plugin's initializer function (with name property)     | No         |
-| AfterPlugin      | The plugin's initializer function (with name property)     | No         |
+| Event           | event.data property                                        |
+| --------------- | ---------------------------------------------------------- |
+| BeforeFirstUse  | The initial state (used by plugins to load persisted data) |
+| AfterMount      | The number of components currently mounted                 |
+| AfterUnmount    | The number of components currently mounted                 |
+| AfterUpdate     | { prev: previous state, next: new state }                  |
+| SetterException | The Error object                                           |
 
 ### Plugins
 
@@ -964,33 +944,36 @@ Interested in writing your own plugins? Check out
 
 ### Middleware
 
-React Thermals has a simple middleware system. Often it is simpler to just
-subscribe to the `BeforeUpdate` event, but middleware is more intuitive in
-some circumstances.
+React Thermals has a simple middleware system for modifying state before it is
+saved and propagated to components.
 
 Middleware examples:
 
 ```js
 // observe the state but do not alter
-myStore.use((context, next) => {
+myStore.use((context, done) => {
   context.prev; // the old state value
   context.next; // the new state value
   context.isAsync; // true if middleware is expected to call next right away
   logToServer(context.next);
-  next();
+  done();
 });
 
 // alter the state
-myStore.use((context, next) => {
+myStore.use((context, done) => {
   context.next = mockStore.nextState();
-  next();
+  done();
 });
 
 // call next asynchronously
-myStore.use((context, next) => {
-  debounceState(context.next, next);
+myStore.use((context, done) => {
+  debounceState(context.next, done);
 });
 ```
+
+Note that if middleware is asynchronous, it will block any updates initiated by
+flushSync(), setSync(), setSyncAt(), mergeSync(), mergeSyncAt(), resetSync(),
+resetSyncAt()
 
 ## Community
 
@@ -1008,5 +991,5 @@ Contributions welcome! Please see
 Inspired by
 [@jhonnymichel's react-hookstore](https://github.com/jhonnymichel/react-hookstore/blob/6d23d2fcb0e7cf8a3929a01e0c543fe5e05ecf05/src/index.js)
 
-Why start at version 4? React Thermals is an evolution of
+Why did we start at version 4? React Thermals is an evolution of
 [react-create-use-store version 3](https://npmjs.com/package/react-create-use-store).

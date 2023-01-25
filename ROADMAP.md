@@ -8,7 +8,9 @@
   - BeforeUpdate
   - AfterUpdate - Needed by nextState
 - Add locals
+- Examine behavior of BeforeFirstUse event.data
 - check SetterException args
+- Remove preventDefault function
 - memoize selectPath and updatePath
 - Remove setOptions, extendOptions
 - remove actions from config object

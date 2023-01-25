@@ -11,23 +11,18 @@ export type PersistStateConfig = {
 };
 
 //
-// TO USE:
-// store.plugin(persistState({
-//   storage: localStorage,
-//   key: 'myState',
-//   fields: ['prefs'],
-// }));
+// Basic usage:
+// store.plugin(persistState('preferences');
 //
-// where storage is localStorage, sessionStorage,
-// or another object that implements getItem and setItem
-//
-export default function persistState({
-  storage,
-  fields = [],
-  key = '',
-  parse = JSON.parse,
-  stringify = JSON.stringify,
-}: PersistStateConfig) {
+export default function persistState(
+  path: string,
+  {
+    storage = localStorage,
+    key = '',
+    parse = JSON.parse,
+    stringify = JSON.stringify,
+  }: PersistStateConfig
+) {
   // validate options
   if (
     !storage ||
@@ -38,12 +33,7 @@ export default function persistState({
       'react-thermals: persistState plugin must receive a Storage object such as localStorage or sessionStorage'
     );
   }
-  if (!Array.isArray(fields)) {
-    throw new Error(
-      'react-thermals: persistState plugin fields must be an array'
-    );
-  }
-  // return the actual plugin
+  // return the actual plugin initializer
   return function plugin(store: Store) {
     if (!key) {
       key = store.id;
@@ -52,28 +42,14 @@ export default function persistState({
       const item = storage.getItem(key);
       const initial = item ? tryParse(parse, item) : evt.data;
       if (initial !== undefined) {
-        if (fields.length === 0) {
-          evt.data = initial;
-        } else {
-          evt.data = { ...evt.data, ...initial };
-        }
+        store.setSyncAt(path, initial);
       }
-      write(evt.data);
+      write(initial);
     });
     store.on('AfterUpdate', (evt: PreventableEvent) => write(evt.data.next));
   };
   // some helper functions
   function write(newValue: any) {
-    if (fields.length > 0) {
-      newValue = deriveSubset(newValue);
-    }
     storage.setItem(key, tryStringify(stringify, newValue));
-  }
-  function deriveSubset(obj: Record<string, any>) {
-    const subset: Record<string, any> = {};
-    for (const field of fields) {
-      subset[field] = obj[field];
-    }
-    return subset;
   }
 }

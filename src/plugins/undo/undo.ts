@@ -1,10 +1,10 @@
 import Store from '../../classes/Store/Store';
 import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
-//
-// TO USE:
-// store.plugin(undo({ maxSize: 100 }));
-//
 
+//
+// Basic usage:
+// store.plugin(undo({ maxSize: 50 }));
+//
 export default function undo({ maxSize = 100 } = {}) {
   return function plugin(store: Store) {
     let currIndex = 0;

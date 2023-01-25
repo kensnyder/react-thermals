@@ -108,7 +108,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Bind an action creator function to this store
    * @param creator  The function to bind
    */
-  createAction = (creator: Function) => {
+  bind = (creator: Function) => {
     return creator.bind(this);
   };
 
@@ -290,19 +290,22 @@ export default class Store<StateType = any> extends SimpleEmitter {
   };
 
   /**
-   * Reset a store to its initial state
-   * @param withStateOverrides  Additional state to override
+   * Reset a store to its initial condition and initial state values,
+   *   and notifies all consumer components
    * @return  This store
    * @chainable
    */
-  reset = (withStateOverrides: Partial<StateType> = undefined): Store => {
-    this.setState(shallowOverride(this.#_initialState, withStateOverrides));
+  reset = (): Store => {
+    this.setSync(this.#_initialState);
+    // TODO: should we allow middleware to run?
     this.#_hasInitialized = false;
     this.#_usedCount = 0;
     return this;
   };
 
+  resetState = () => {};
   resetStateAt = () => {};
+  resetSync = () => {};
   resetSyncAt = () => {};
 
   /**
@@ -376,14 +379,14 @@ export default class Store<StateType = any> extends SimpleEmitter {
     callback: Function
   ): void => {
     let i = 0;
-    const next = () => {
+    const done = () => {
       if (i === this.#_middlewares.length) {
         callback();
       } else {
-        this.#_middlewares[i++](context, next);
+        this.#_middlewares[i++](context, done);
       }
     };
-    next();
+    done();
   };
 
   /**
@@ -416,14 +419,17 @@ export default class Store<StateType = any> extends SimpleEmitter {
    */
   _subscribe = (setState: SetterType): void => {
     if (this.#_usedCount++ === 0) {
-      this.emit('AfterFirstUse');
+      this.emit('BeforeFirstUse', this.#_state);
     }
     if (this.#_setters.length === 0) {
       this.emit('AfterFirstMount');
     }
-    if (this.#_setters.indexOf(setState) === -1) {
+    if (!this.#_setters.includes(setState)) {
       this.#_setters.push(setState);
-      this.emit('AfterMount');
+      this.emit('AfterMount', this.#_setters.length);
+    }
+    if (this.#_usedCount === 1) {
+      this.emit('AfterFirstUse', this.#_state);
     }
   };
 
@@ -437,7 +443,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
     if (idx > -1) {
       this.#_setters.splice(idx, 1);
     }
-    this.emit('AfterUnmount');
+    this.emit('AfterUnmount', this.#_setters.length);
     if (this.#_setters.length === 0) {
       if (this.#_autoReset) {
         this.reset();

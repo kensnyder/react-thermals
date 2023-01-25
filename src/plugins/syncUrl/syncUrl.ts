@@ -18,8 +18,10 @@ export type SyncUrlConfig = {
 };
 
 //
-// TO USE:
-// store.plugin(syncUrl({ fields: ['term', 'sort'] }));
+// Basic usage:
+// store.plugin(syncUrl({ fields: ['term', 'ids'] }));
+// OR
+// store.plugin(syncUrl({ schema: { term: 'string', ids: 'number[]' }}));
 //
 export default function syncUrl({
   fields: givenFields = undefined,
@@ -33,15 +35,15 @@ export default function syncUrl({
       'react-thermals: syncUrl must receive "fields" or "schema" but not both'
     );
   }
-  const schema: CastableSchema = givenSchema || {};
-  const fields: String[] = givenFields || Object.keys(schema);
+  const schema = givenSchema || {};
+  const fields = givenFields || Object.keys(schema);
 
   return function plugin(store: Store) {
     store.on('BeforeFirstUse', (evt: PreventableEvent) => {
       const urlData = parse(location.search.slice(1));
       const known = omitUnknown(fields as string[], urlData);
       if (known && !isEmpty(known)) {
-        evt.data = { ...evt.data, ...castFromStrings(schema, known) };
+        store.mergeSync(castFromStrings(schema, known));
       }
       writeUrl(castToStrings(schema, { ...urlData, ...evt.data }));
     });
