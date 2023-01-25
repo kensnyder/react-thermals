@@ -26,7 +26,7 @@ export function updatePath(
   if (allSegments.length === 0) {
     throw new Error('updatePath path string cannot be empty');
   }
-  const runTransform: Function = getUpdateRunner(transform);
+  const runTransform = getUpdateRunner(transform);
   // root path is denoted with at symbol
   if (path === '@') {
     return runTransform;

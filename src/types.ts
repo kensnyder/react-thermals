@@ -1,5 +1,6 @@
 import Store from './classes/Store/Store';
 import PreventableEvent from './classes/PreventableEvent/PreventableEvent';
+import { Get } from 'type-fest';
 
 export type EventNameType =
   | 'BeforeFirstUse'
@@ -8,13 +9,7 @@ export type EventNameType =
   | 'AfterMount'
   | 'AfterUnmount'
   | 'AfterLastUnmount'
-  | 'BeforeSet'
-  | 'BeforeUpdate'
   | 'AfterUpdate'
-  | 'BeforeReset'
-  | 'AfterReset'
-  | 'BeforePlugin'
-  | 'AfterPlugin'
   | 'SetterException'
   | '*';
 
@@ -29,19 +24,13 @@ export type StoreConfigHandlersType = {
   AfterMount?: EventHandlerOrHandlersType;
   AfterUnmount?: EventHandlerOrHandlersType;
   AfterLastUnmount?: EventHandlerOrHandlersType;
-  BeforeSet?: EventHandlerOrHandlersType;
-  BeforeUpdate?: EventHandlerOrHandlersType;
   AfterUpdate?: EventHandlerOrHandlersType;
-  BeforeReset?: EventHandlerOrHandlersType;
-  AfterReset?: EventHandlerOrHandlersType;
-  BeforePlugin?: EventHandlerOrHandlersType;
-  AfterPlugin?: EventHandlerOrHandlersType;
   SetterException?: EventHandlerOrHandlersType;
   '*'?: EventHandlerOrHandlersType;
 };
 
-export type StoreConfigType = {
-  state?: any;
+export type StoreConfigType<StateType = any> = {
+  state?: StateType;
   actions?: Record<string, Function>;
   options?: PlainObjectType;
   on?: StoreConfigHandlersType;
@@ -49,19 +38,19 @@ export type StoreConfigType = {
   id?: string;
 };
 
-export interface MiddlewareContextInterface {
-  prev: any;
-  next: any;
+export interface MiddlewareContextInterface<StateType> {
+  prev: StateType;
+  next: StateType;
   isAsync: boolean;
   store: Store;
 }
 
-export type PluginFunctionType = (store: Store) => any;
+export type MiddlewareType<StateType> = (
+  context: MiddlewareContextInterface<StateType>,
+  next: Function
+) => StateType;
 
-export type PluginResultType = {
-  initialized: boolean;
-  result: any;
-};
+export type PluginFunctionType = (store: Store) => any;
 
 export type SetterType = {
   handler: Function;
@@ -71,10 +60,36 @@ export type SetterType = {
 
 export type PlainObjectType = Record<string, any>;
 
-export type MergeableStateType =
-  | PlainObjectType
-  | ((newState: PlainObjectType) => PlainObjectType);
+export type SettableStateType<StateType> =
+  | StateType
+  | Promise<StateType>
+  | ((newState: StateType) => StateType)
+  | ((newState: StateType) => Promise<StateType>);
 
-export type MergeableStateAsyncType =
-  | MergeableStateType
-  | Promise<PlainObjectType>;
+export type MergeableStateType<StateType> =
+  | Partial<StateType>
+  | Promise<Partial<StateType>>
+  | ((newState: StateType) => Partial<StateType>)
+  | ((newState: StateType) => Promise<Partial<StateType>>);
+
+export type StateMapperType = undefined | null | Function | string;
+
+export type StateMapperOrMappersType = StateMapperType | StateMapperType[];
+
+export type SelectByStringType<StateType> = Get<
+  StateType,
+  string,
+  { strict: true }
+>;
+
+export type SelectByFunctionType<StateType> =
+  | StateType
+  | Partial<StateType>
+  | any;
+
+export type SelectedStateType<StateType> =
+  | SelectByStringType<StateType>
+  | SelectByStringType<StateType>[]
+  | SelectByFunctionType<StateType>;
+
+// TODO: types for intellisense on Action functions

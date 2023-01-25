@@ -245,16 +245,6 @@ describe('store.on(type, handler)', () => {
     });
     expect(store.getState().zoom).toBe(10);
   });
-  it('should allow blocking set', async () => {
-    store.on('BeforeSet', (evt: PreventableEvent) => {
-      evt.preventDefault();
-    });
-    const { getByText } = render(<TelescopeComponent />);
-    await act(() => {
-      fireEvent.click(getByText('Zoom 2x'));
-    });
-    expect(store.getState().zoom).toBe(10);
-  });
   it('should fire mount/unmount events properly', async () => {
     let afterFirstUse = false;
     let firstMountCount = 0;
@@ -342,21 +332,5 @@ describe('store.on(type, handler)', () => {
     );
     expect(store.getUsedCount()).toBe(3);
     expect(store.getMountCount()).toBe(3);
-  });
-  it('should fire before set', async () => {
-    const { getByText } = render(
-      <>
-        <button onClick={() => store.actions.pointAt('Mercury')}>
-          Look at Mercury
-        </button>
-        <TelescopeComponent />
-      </>
-    );
-    await act(() => {
-      fireEvent.click(getByText('Look at Mercury'));
-    });
-    store.on('BeforeSet', (evt: PreventableEvent) => {
-      expect(evt.data).toEqual({ target: 'moon', zoom: 10 });
-    });
   });
 });

@@ -2,9 +2,15 @@ import Store from '../../classes/Store/Store';
 import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
 import { EventNameType } from '../../types';
 
+type LoggerDataType = {
+  storeId: string;
+  eventType: EventNameType;
+  event: PreventableEvent;
+};
+
 type LoggerConfigType = {
   eventTypes?: EventNameType[];
-  logHandler?: Function;
+  logHandler?: (message: LoggerDataType) => {};
 };
 
 /**
@@ -13,7 +19,7 @@ type LoggerConfigType = {
  */
 export default function consoleLogger({
   eventTypes = ['*'],
-  logHandler = console.log,
+  logHandler = console.log.bind(console),
 }: LoggerConfigType = {}) {
   return function plugin(store: Store) {
     if (!Array.isArray(eventTypes) || eventTypes.length === 0) {
@@ -21,13 +27,14 @@ export default function consoleLogger({
         'react-thermals: consoleLogger must receive one or more eventTypes'
       );
     }
-    store.once('AfterPlugin', () => {
-      // attach listeners, but only after this plugin is registered
-      for (const type of eventTypes) {
-        store.on(type as EventNameType, (evt: PreventableEvent) => {
-          logHandler({ storeId: store.id, eventType: evt.type, event: evt });
+    for (const type of eventTypes) {
+      store.on(type as EventNameType, (evt: PreventableEvent) => {
+        logHandler({
+          storeId: store.id,
+          eventType: evt.type as EventNameType,
+          event: evt,
         });
-      }
-    });
+      });
+    }
   };
 }

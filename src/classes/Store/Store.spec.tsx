@@ -21,7 +21,7 @@ describe('new Store()', () => {
   });
   it('should make setters from actions', async () => {
     const store = new Store({
-      state: { age: 14 },
+      state: { age: 14, name: { fname: 'me' } },
       actions: {
         setAge: setter('age'),
         setName: setter('name'),
@@ -109,37 +109,11 @@ describe('new Store()', () => {
     store.mergeSync((old: TestState) => ({ count: old.count + 1 }));
     expect(store.getState()).toEqual({ count: 6, mode: 'up' });
   });
-  it('should get and set options', () => {
-    const options = { debug: false };
-    const store = new Store({ options });
-    expect(store.getOptions()).toEqual({ debug: false });
-    expect(store.setOptions({ debug: true })).toBe(store);
-    expect(store.getOptions()).toEqual({ debug: true });
-    store.setOption('another', 1);
-    expect(store.getOptions()).toEqual({ debug: true, another: 1 });
-    expect(store.getOption('debug')).toEqual(true);
-    expect(store.getOption('another')).toEqual(1);
-  });
-  it('should extend options', () => {
-    const options = { debug: false };
-    const store = new Store({ options });
-    expect(store.getOptions()).toEqual({ debug: false });
-    expect(store.extendOptions({ debug: true, foo: 'bar' })).toBe(store);
-    expect(store.getOptions()).toEqual({ debug: true, foo: 'bar' });
-    store.setOption('another', 1);
-  });
   it('should allow plugins', () => {
     const spy: Function = vitest.fn();
     const store = new Store();
     store.plugin(spy as PluginFunctionType);
     expect(spy).toHaveBeenCalledWith(store);
-  });
-  it('should allow blocking plugins', () => {
-    const spy: Function = vitest.fn();
-    const store = new Store();
-    store.on('BeforePlugin', (evt: PreventableEvent) => evt.preventDefault());
-    store.plugin(spy as PluginFunctionType);
-    expect(spy).not.toHaveBeenCalled();
   });
   it('should throw on missing plugins', () => {
     const store = new Store();
@@ -216,6 +190,7 @@ describe('new Store()', () => {
     const store = new Store({ state: initialState });
     const ret = store.extendState({ foo: 'bar' });
     expect(store.getState()).toBe(initialState);
+    // @ts-ignore
     expect(store.getState().foo).toBe('bar');
     expect(ret).toBe(store);
   });
@@ -235,6 +210,7 @@ describe('new Store()', () => {
       adminSettings: false,
     });
     expect(store.getState()).toBe(initialState);
+    // @ts-ignore
     expect(store.getState().user.permissions.adminSettings).toBe(false);
     expect(ret).toBe(store);
   });
@@ -327,43 +303,6 @@ describe('new Store() with autoReset', () => {
       fireEvent.click(getByText('Show'));
     });
     expect(store.getState().page).toBe(1);
-  });
-  it('should fire BeforeReset and AfterReset', async () => {
-    let before = false;
-    let after = false;
-    store.on('BeforeReset', () => (before = true));
-    store.on('AfterReset', () => (after = true));
-    const { getByText } = render(<PageComponent />);
-    expect(before).toBe(false);
-    expect(after).toBe(false);
-    await act(() => {
-      fireEvent.click(getByText('Next'));
-    });
-    await act(() => {
-      fireEvent.click(getByText('Hide'));
-    });
-    expect(before).toBe(true);
-    expect(after).toBe(true);
-  });
-  it('should allow preventing reset', async () => {
-    let before = false;
-    let after = false;
-    store.on('BeforeReset', (evt: PreventableEvent) => {
-      before = true;
-      evt.preventDefault();
-    });
-    store.on('AfterReset', () => (after = true));
-    const { getByText } = render(<PageComponent />);
-    expect(before).toBe(false);
-    expect(after).toBe(false);
-    await act(() => {
-      fireEvent.click(getByText('Next'));
-    });
-    await act(() => {
-      fireEvent.click(getByText('Hide'));
-    });
-    expect(before).toBe(true);
-    expect(after).toBe(false);
   });
   it('should fire SetterException', async () => {
     let error: any;
@@ -511,24 +450,6 @@ describe('new Store() flushSync', () => {
     expect(store.getState().page).toBe(1);
     await new Promise(r => setTimeout(r, 30));
     expect(sawError).toBeInstanceOf(Error);
-    expect(store.getState().page).toBe(1);
-  });
-  it('should handle BeforeSet with preventDefault in flushSync', () => {
-    store.on('BeforeSet', (evt: PreventableEvent) => {
-      evt.preventDefault();
-    });
-    store.actions.setPage((old: number) => old + 1);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState().page).toBe(1);
-  });
-  it('should handle BeforeUpdate with preventDefault in flushSync', () => {
-    store.on('BeforeUpdate', (evt: PreventableEvent) => {
-      evt.preventDefault();
-    });
-    store.actions.setPage((old: number) => old + 1);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
     expect(store.getState().page).toBe(1);
   });
 });

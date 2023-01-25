@@ -14,31 +14,31 @@ describe('SimpleEmitter', () => {
   it('should return basic object from emit()', () => {
     const foo = {};
     const emitter = new SimpleEmitter();
-    const evt = emitter.emit('BeforeSet', foo);
+    const evt = emitter.emit('AfterUpdate', foo);
     expect(evt.data).toBe(foo);
-    expect(evt.type).toBe('BeforeSet');
+    expect(evt.type).toBe('AfterUpdate');
   });
   it('should return a Preventable event from emit()', () => {
     const foo = {};
     const emitter = new SimpleEmitter();
-    emitter.on('BeforeSet', () => {});
-    const evt = emitter.emit('BeforeSet', foo);
+    emitter.on('AfterUpdate', () => {});
+    const evt = emitter.emit('AfterUpdate', foo);
     expect(evt).toBeInstanceOf(PreventableEvent);
     expect(evt.target).toBe(emitter);
-    expect(evt.type).toBe('BeforeSet');
+    expect(evt.type).toBe('AfterUpdate');
   });
   it('should return the event from emit()', () => {
     const foo = {};
     const emitter = new SimpleEmitter();
-    const evt = emitter.emit('BeforeSet', foo);
+    const evt = emitter.emit('AfterUpdate', foo);
     expect(evt).toBeInstanceOf(Object);
     expect(evt.data).toBe(foo);
-    expect(evt.type).toBe('BeforeSet');
+    expect(evt.type).toBe('AfterUpdate');
   });
   it('should allow preventing default', () => {
     const emitter = new SimpleEmitter();
-    emitter.on('BeforeSet', evt => evt.preventDefault());
-    const evt = emitter.emit('BeforeSet');
+    emitter.on('AfterUpdate', evt => evt.preventDefault());
+    const evt = emitter.emit('AfterUpdate');
     expect(evt.defaultPrevented).toBe(true);
     expect(evt.isPropagationStopped()).toBe(false);
   });
@@ -46,26 +46,26 @@ describe('SimpleEmitter', () => {
     const emitter = new SimpleEmitter();
     let numCalls = 0;
     const handler = () => numCalls++;
-    emitter.on('BeforeSet', handler);
-    emitter.off('BeforeSet', handler);
-    emitter.emit('BeforeSet');
+    emitter.on('AfterUpdate', handler);
+    emitter.off('AfterUpdate', handler);
+    emitter.emit('AfterUpdate');
     expect(numCalls).toBe(0);
   });
   it('should support once()', () => {
     const emitter = new SimpleEmitter();
     let numCalls = 0;
     const handler = () => numCalls++;
-    emitter.once('BeforeSet', handler);
-    emitter.emit('BeforeSet');
+    emitter.once('AfterUpdate', handler);
+    emitter.emit('AfterUpdate');
     expect(numCalls).toBe(1);
-    emitter.emit('BeforeSet');
+    emitter.emit('AfterUpdate');
     expect(numCalls).toBe(1);
   });
   it('should do noop when calling off() without calling on() first', () => {
     const emitter = new SimpleEmitter();
     const remove = () => {
       const handler = () => {};
-      emitter.off('BeforeSet', handler);
+      emitter.off('AfterUpdate', handler);
     };
     expect(remove).not.toThrowError();
   });
@@ -84,9 +84,9 @@ describe('SimpleEmitter', () => {
       numCalls++;
       evt.stopPropagation();
     };
-    emitter.on('BeforeSet', handler);
-    emitter.on('BeforeSet', handler);
-    const event = emitter.emit('BeforeSet');
+    emitter.on('AfterUpdate', handler);
+    emitter.on('AfterUpdate', handler);
+    const event = emitter.emit('AfterUpdate');
     expect(numCalls).toBe(1);
     expect(event.isPropagationStopped()).toBe(true);
   });
@@ -97,9 +97,9 @@ describe('SimpleEmitter', () => {
       numCalls++;
       evt.stopImmediatePropagation();
     };
-    emitter.on('BeforeSet', handler);
-    emitter.on('BeforeSet', handler);
-    const event = emitter.emit('BeforeSet');
+    emitter.on('AfterUpdate', handler);
+    emitter.on('AfterUpdate', handler);
+    const event = emitter.emit('AfterUpdate');
     expect(numCalls).toBe(1);
     expect(event.isPropagationStopped()).toBe(true);
   });

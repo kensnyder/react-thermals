@@ -8,7 +8,9 @@ import { SetterType } from '../../types';
  * @return  The entire state value that will rerender the host Component
  *   when the state value changes
  */
-export default function useStoreState(store: Store) {
+export default function useStoreState<StateType>(
+  store: Store<StateType>
+): StateType {
   // use useState to get a method for triggering re-renders in consumer components
   const [state, setState] = useState(() => {
     // read the initial state and emit BeforeFirstUse if not yet initialized

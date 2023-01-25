@@ -1,7 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import defaultEqualityFn from '../../lib/defaultEqualityFn/defaultEqualityFn';
 import getMapperFunction from '../../lib/getMapperFunction/getMapperFunction';
-import { SetterType } from '../../types';
+import {
+  SelectedStateType,
+  SetterType,
+  StateMapperOrMappersType,
+} from '../../types';
+import Store from '../../classes/Store/Store';
 
 /**
  * Hook to request updated values any time a relevant portion of state changes
@@ -10,11 +15,11 @@ import { SetterType } from '../../types';
  * @param [equalityFn] - Custom equality function that checks if state has change
  * @return The selected state
  */
-export default function useStoreSelector(
-  store: any,
-  mapState: Function | null = null,
+export default function useStoreSelector<StateType>(
+  store: Store<StateType>,
+  mapState: StateMapperOrMappersType = null,
   equalityFn: Function | null = null
-) {
+): SelectedStateType<StateType> {
   // derive and cache the mapState and equalityFn
   const [map, isEqual] = useMemo(() => {
     return [getMapperFunction(mapState), equalityFn || defaultEqualityFn];

@@ -7,36 +7,31 @@ import {
   StoreConfigType,
   SetterType,
   EventNameType,
-  MergeableStateAsyncType,
+  SettableStateType,
   MergeableStateType,
   MiddlewareContextInterface,
+  MiddlewareType,
   PlainObjectType,
-  PluginResultType,
   PluginFunctionType,
   EventHandlerType,
 } from '../../types';
+import { Get } from 'type-fest';
 
 // an internal counter for stores
 let storeIdx = 1;
 
-export default class Store extends SimpleEmitter {
-  #_autoReset: boolean;
+export default class Store<StateType = any> extends SimpleEmitter {
+  readonly #_autoReset: boolean;
   #_hasInitialized = false;
   #_idx: number;
-  #_initialState: any;
-  #_middlewares: Function[] = [];
-  #_options: PlainObjectType;
+  readonly #_initialState: StateType;
+  #_middlewares: MiddlewareType<StateType>[] = [];
   #_plugins: PluginFunctionType[] = [];
-  #_rawActions: Record<string, Function> = {};
   #_setters: SetterType[] = [];
-  #_state: any;
-  #_updateQueue: Function[] = [];
+  #_state: StateType;
+  #_updateQueue: SettableStateType<StateType>[] = [];
   #_usedCount = 0;
-
-  /**
-   * The actions that interact with the store
-   */
-  actions: Record<string, Function> = {};
+  locals: PlainObjectType;
 
   /**
    * A string to identify the store by
@@ -53,24 +48,22 @@ export default class Store extends SimpleEmitter {
    * @param id  An identifier that could be used by plugins or event listeners
    */
   constructor({
-    state: initialState = {},
-    actions = {},
+    state: initialState,
     options = {},
     on = {},
     autoReset = false,
     id = '',
-  }: StoreConfigType = {}) {
+  }: StoreConfigType<StateType> = {}) {
     super();
-    this.once('BeforeFirstUse', () => {
+    this.on('BeforeFirstUse', () => {
       this.#_hasInitialized = true;
     });
     this.#_initialState = initialState;
     this.#_state = initialState;
     this.id = String(id || `store-${storeIdx}`);
     this.#_idx = storeIdx++;
-    this.addActions(actions);
-    this.#_options = options;
     this.#_autoReset = autoReset;
+    this.locals = {};
     for (const [event, handlerOrHandlers] of Object.entries(on)) {
       for (const handler of [handlerOrHandlers].flat()) {
         this.on(event as EventNameType, handler as EventHandlerType);
@@ -81,7 +74,7 @@ export default class Store extends SimpleEmitter {
   /**
    * Return the initial state of the store
    */
-  getInitialState = (): any => {
+  getInitialState = (): StateType => {
     return this.#_initialState;
   };
 
@@ -89,7 +82,9 @@ export default class Store extends SimpleEmitter {
    * Return the initial state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getInitialStateAt = (path: string): any => {
+  getInitialStateAt = (
+    path: string
+  ): Get<StateType, string, { strict: true }> => {
     return selectPath(path)(this.#_initialState);
   };
 
@@ -97,7 +92,7 @@ export default class Store extends SimpleEmitter {
    * Return the current state of the store
    * @return  The current state
    */
-  getState = (): any => {
+  getState = (): StateType => {
     return this.#_state;
   };
 
@@ -105,24 +100,16 @@ export default class Store extends SimpleEmitter {
    * Return the current state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getStateAt = (path: string): any => {
+  getStateAt = (path: string): Get<StateType, string, { strict: true }> => {
     return selectPath(path)(this.#_state);
   };
 
   /**
-   * Add functions that operate on state
-   * @param actions
-   * @return  The actions after binding "this" to "Store"
+   * Bind an action creator function to this store
+   * @param creator  The function to bind
    */
-  addActions = (
-    actions: Record<string, Function>
-  ): Record<string, Function> => {
-    Object.assign(this.#_rawActions, actions);
-    const boundActions: Record<string, Function> = {};
-    for (const [name, fn] of Object.entries(actions)) {
-      this.actions[name] = boundActions[name] = fn.bind(this);
-    }
-    return boundActions;
+  createAction = (creator: Function) => {
+    return creator.bind(this);
   };
 
   /**
@@ -131,7 +118,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setState = (newState: any): Store => {
+  setState = (newState: SettableStateType<StateType>): Store => {
     this.#_updateQueue.push(newState);
     if (this.#_updateQueue.length === 1) {
       this.#_scheduleUpdates();
@@ -145,12 +132,12 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  mergeState = (newState: MergeableStateAsyncType): Store => {
+  mergeState = (newState: MergeableStateType<StateType>): Store => {
     let updater;
     if (typeof newState === 'function') {
-      updater = (old: Record<string, any>) => {
+      updater = (old: StateType) => {
         const partial = newState(old);
-        if (typeof partial?.then === 'function') {
+        if (partial instanceof Promise) {
           return partial.then((promisedState: Object) =>
             shallowOverride(old, promisedState)
           );
@@ -158,7 +145,8 @@ export default class Store extends SimpleEmitter {
         return shallowOverride(old, partial);
       };
     } else {
-      updater = (old: Record<string, any>) => shallowOverride(old, newState);
+      updater = (old: MergeableStateType<StateType>) =>
+        shallowOverride(old, newState);
     }
     this.#_updateQueue.push(updater);
     if (this.#_updateQueue.length === 1) {
@@ -171,7 +159,7 @@ export default class Store extends SimpleEmitter {
    * Schedule state to be merged in the next batch of updates
    * @param moreState  The values to merge into the state (components will not be notified)
    */
-  extendState = (moreState: PlainObjectType): Store => {
+  extendState = (moreState: Partial<StateType>): Store => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
       throw new Error(
         'react-thermals Store.extendState(moreState): current state and given state must both be objects'
@@ -183,11 +171,12 @@ export default class Store extends SimpleEmitter {
 
   /**
    * Schedule state to be merged in the next batch of updates
+   * @param path  The path to the value
    * @param moreState  The values to merge into the state (components will not be notified)
    * @return  This store
    * @chainable
    */
-  extendStateAt = (path: string, moreState: PlainObjectType): Store => {
+  extendStateAt = (path: string, moreState: Partial<StateType>): Store => {
     if (typeof moreState !== 'object') {
       throw new Error(
         'react-thermals Store.extendStateAt(path, moreState): given state must an object'
@@ -205,24 +194,24 @@ export default class Store extends SimpleEmitter {
 
   /**
    * Immediately update the state to the given value
-   * @param newState The new value or function that will return the new value
+   * @param newStateOrUpdater The new value or function that will return the new value
    * @return  This store
    * @chainable
    */
-  setSync = (newState: any): Store => {
-    this.setState(newState);
+  setSync = (newStateOrUpdater: SettableStateType<StateType>): Store => {
+    this.setState(newStateOrUpdater);
     this.flushSync();
     return this;
   };
 
   /**
    * Immediately merge the state with the given value
-   * @param newState  The value to merge or function that will return value to merge
+   * @param newStateOrUpdater  The value to merge or function that will return value to merge
    * @return  This store
    * @chainable
    */
-  mergeSync = (newState: MergeableStateType): Store => {
-    this.mergeState(newState);
+  mergeSync = (newStateOrUpdater: MergeableStateType<StateType>): Store => {
+    this.mergeState(newStateOrUpdater);
     this.flushSync();
     return this;
   };
@@ -234,9 +223,12 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setStateAt = (path: string, newStateOrUpdater: any): Store => {
+  setStateAt = (
+    path: string,
+    newStateOrUpdater: SettableStateType<StateType>
+  ): Store => {
     const updater = updatePath(path);
-    this.setState((old: any) => updater(old, newStateOrUpdater));
+    this.setState((old: StateType) => updater(old, newStateOrUpdater));
     return this;
   };
 
@@ -247,7 +239,10 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setSyncAt = (path: string, newStateOrUpdater: any): Store => {
+  setSyncAt = (
+    path: string,
+    newStateOrUpdater: SettableStateType<StateType>
+  ): Store => {
     const updater = updatePath(path);
     this.setSync((old: any) => updater(old, newStateOrUpdater));
     return this;
@@ -259,14 +254,8 @@ export default class Store extends SimpleEmitter {
    * synchronously.
    * @return The resulting state
    */
-  flushSync = (): any => {
+  flushSync = (): StateType => {
     const prevState = this.#_state;
-    const event1 = this.emit('BeforeSet', prevState);
-    if (event1.defaultPrevented) {
-      // handler wants to block running state updaters
-      this.#_updateQueue.length = 0;
-      return prevState;
-    }
     let nextState;
     try {
       nextState = this.#_getNextStateSync();
@@ -274,18 +263,11 @@ export default class Store extends SimpleEmitter {
       this.emit('SetterException', err);
       return prevState;
     }
-    const event2 = this.emit('BeforeUpdate', {
-      prev: prevState,
-      next: nextState,
-    });
-    if (event2.defaultPrevented) {
-      // handler wants to block saving new state
-      return prevState;
-    }
     // save final state result (a handler may have altered the final result)
     // then notify affected components
-    this.#_notifyComponents(prevState, event2.data.next);
-    // _notifyComponents sets #_state and we return it here for convenience
+    this.#_notifyComponents(prevState, nextState);
+    // _notifyComponents sets #_state equal to nextState,
+    // and we return the new state here for convenience
     return this.#_state;
   };
 
@@ -297,9 +279,7 @@ export default class Store extends SimpleEmitter {
   clone = (withConfigOverrides: StoreConfigType = {}): Store => {
     const cloned = new Store({
       state: shallowCopy(this.#_state),
-      actions: this.#_rawActions,
       autoReset: this.#_autoReset,
-      options: this.#_options,
       id: this.id,
       ...withConfigOverrides,
     });
@@ -315,28 +295,21 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  reset = (withStateOverrides: any = undefined): Store => {
-    const current = this.#_state;
-    const event = this.emit('BeforeReset', {
-      before: current,
-      after: shallowOverride(this.#_initialState, withStateOverrides),
-    });
-    if (event.defaultPrevented) {
-      return this;
-    }
-    this.setState(event.data.after);
-    this.emit('AfterReset', {
-      before: current,
-      after: event.data.after,
-    });
+  reset = (withStateOverrides: Partial<StateType> = undefined): Store => {
+    this.setState(shallowOverride(this.#_initialState, withStateOverrides));
+    this.#_hasInitialized = false;
+    this.#_usedCount = 0;
     return this;
   };
+
+  resetStateAt = () => {};
+  resetSyncAt = () => {};
 
   /**
    * Return a promise that will resolve once the store gets a new state
    * @return Resolves with the new state value
    */
-  nextState = (): Promise<any> => {
+  nextState = (): Promise<StateType> => {
     return new Promise(resolve => {
       this.once('AfterUpdate', () => resolve(this.#_state));
     });
@@ -364,71 +337,14 @@ export default class Store extends SimpleEmitter {
   };
 
   /**
-   * Get all the store options
-   * @return
-   */
-  getOptions = (): PlainObjectType => {
-    return this.#_options;
-  };
-
-  /**
-   * Get a single store option
-   * @param name  The name of the option
-   */
-  getOption = (name: string): any => {
-    return this.#_options[name];
-  };
-
-  /**
-   * Set store options
-   * @param newOptions  clear all other options then set these
-   * @return  This store
-   * @chainable
-   */
-  setOptions = (newOptions: PlainObjectType): Store => {
-    this.#_options = newOptions;
-    return this;
-  };
-
-  /**
-   * Add new store options (while leaving old ones intact)
-   * @param addOptions  Add these options
-   * @return  This store
-   * @chainable
-   */
-  extendOptions = (addOptions: PlainObjectType): Store => {
-    Object.assign(this.#_options, addOptions);
-    return this;
-  };
-
-  /**
-   * Set a single store option
-   * @param name  The name of the option
-   * @param newValue  The value to set
-   * @return  This store
-   * @chainable
-   */
-  setOption = (name: string, newValue: any): Store => {
-    this.#_options[name] = newValue;
-    return this;
-  };
-
-  /**
-   * Register a plugin. Note that a handler attached to BeforePlugin can prevent the plugin from getting attached
+   * Register a plugin
    * @param initializer  The function the plugin uses to configure and attach itself
-   * @return  Result of plugin initialization
-   * @property initialized  True if the plugin was successfully registered
-   * @property result  The return value of the plugin initializer function
+   * @return  The return value of the plugin initializer function
    */
-  plugin = (initializer: PluginFunctionType): PluginResultType => {
-    const event = this.emit('BeforePlugin', initializer);
-    if (event.defaultPrevented) {
-      return { initialized: false, result: null };
-    }
+  plugin = (initializer: PluginFunctionType): any => {
     const result = initializer(this);
     this.#_plugins.push(initializer);
-    this.emit('AfterPlugin', { initializer, result });
-    return { initialized: true, result };
+    return result;
   };
 
   /**
@@ -444,7 +360,7 @@ export default class Store extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  use = (...middlewares: Function[]): Store => {
+  use = (...middlewares: MiddlewareType<StateType>[]): Store => {
     this.#_middlewares.push(...middlewares);
     return this;
   };
@@ -456,7 +372,7 @@ export default class Store extends SimpleEmitter {
    * @param callback  The function to call when all middlewares have called "next()"
    */
   #_runMiddlewares = (
-    context: MiddlewareContextInterface,
+    context: MiddlewareContextInterface<StateType>,
     callback: Function
   ): void => {
     let i = 0;
@@ -477,7 +393,9 @@ export default class Store extends SimpleEmitter {
    * @param context  Object with prev, next, isAsync, store
    * @return  True unless middleware did not return right away
    */
-  #_runMiddlewaresSync = (context: MiddlewareContextInterface): boolean => {
+  #_runMiddlewaresSync = (
+    context: MiddlewareContextInterface<StateType>
+  ): boolean => {
     let i = 0;
     const timesCalled = () => i++;
     for (const middleware of this.#_middlewares) {
@@ -571,9 +489,9 @@ export default class Store extends SimpleEmitter {
         );
       }
       const updatedState = this.#_updateQueue.shift();
-      if (typeof updatedState === 'function') {
+      if (updatedState instanceof Function) {
         const maybeNext = updatedState(nextState);
-        if (typeof maybeNext?.then === 'function') {
+        if (maybeNext instanceof Promise) {
           try {
             nextState = await maybeNext;
           } catch (rejection) {
@@ -581,6 +499,12 @@ export default class Store extends SimpleEmitter {
           }
         } else {
           nextState = maybeNext;
+        }
+      } else if (updatedState instanceof Promise) {
+        try {
+          nextState = await updatedState;
+        } catch (rejection) {
+          this.emit('SetterException', rejection);
         }
       } else {
         nextState = updatedState;
@@ -605,24 +529,13 @@ export default class Store extends SimpleEmitter {
    */
   #_runUpdates = async (): Promise<void> => {
     const prevState = this.#_state;
-    const event1 = this.emit('BeforeSet', prevState);
-    if (event1.defaultPrevented) {
-      // handler wants to block running state updaters
-      this.#_updateQueue.length = 0;
-      return;
-    }
     const nextState = await this.#_getNextState();
-    const context: MiddlewareContextInterface = {
+    const context: MiddlewareContextInterface<StateType> = {
       prev: prevState,
       next: nextState,
       isAsync: true,
       store: this,
     };
-    const event2 = this.emit('BeforeUpdate', context);
-    if (event2.defaultPrevented) {
-      // handler wants to block setting new state
-      return;
-    }
     this.#_runMiddlewares(context, () => {
       // save final state result (a handler may have altered the final result)
       // then notify affected components
@@ -635,7 +548,7 @@ export default class Store extends SimpleEmitter {
    * @param prev  The previous state value
    * @param next  The new state value
    */
-  #_notifyComponents = (prev: any, next: any): void => {
+  #_notifyComponents = (prev: StateType, next: StateType): void => {
     // save final state result
     this.#_state = next;
     // update components with no selector or with matching selector
@@ -666,11 +579,11 @@ export default class Store extends SimpleEmitter {
         );
       }
       const updatedState = this.#_updateQueue.shift();
-      if (typeof updatedState === 'function') {
+      if (updatedState instanceof Function) {
         const maybeNext = updatedState(next);
-        if (typeof maybeNext?.then === 'function') {
-          // we want to call all state mutator functions synchronously
-          // but we have a mutator that returned a Promise so we need
+        if (maybeNext instanceof Promise) {
+          // we want to call all state mutator functions synchronously,
+          // but we have a mutator that returned a Promise, so we need
           // to circle back and set state after the Promise resolves
           maybeNext
             .then(this.setState)
@@ -678,6 +591,13 @@ export default class Store extends SimpleEmitter {
         } else {
           next = maybeNext;
         }
+      } else if (updatedState instanceof Promise) {
+        // we want to call all state synchronously
+        // but the returned state is a Promise, so we need
+        // to circle back and set state after the Promise resolves
+        updatedState
+          .then(this.setState)
+          .catch((err: Error) => this.emit('SetterException', err));
       } else {
         next = updatedState;
       }

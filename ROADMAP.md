@@ -1,3 +1,21 @@
+- TypeScript generics for StateType
+- Remove events:
+  - BeforePlugin ✅
+  - AfterPlugin ✅
+  - BeforeSet
+  - BeforeReset
+  - AfterReset
+  - BeforeUpdate
+  - AfterUpdate - Needed by nextState
+- Add locals
+- check SetterException args
+- memoize selectPath and updatePath
+- Remove setOptions, extendOptions
+- remove actions from config object
+- check memory footprint for updatePath
+- Allow escaping brackets and asterisks in path expressions
+- resetSync, resetAt, resetSyncAt
+- Consider memoization for selectPath
 - Example Sandboxes
 - Example of how to use multiple instances of one store (i.e. a store factory function)
 - Example of using hooks or actions from another store
