@@ -905,16 +905,16 @@ cancelling the BeforeSet event will block all pending state updates. Handlers
 can also call `event.stopPropagation()` to block other handlers from receiving
 this particular event.
 
-| Event            | Description                                                 |
-| ---------------- | ----------------------------------------------------------- |
-| BeforeFirstUse   | Can alter initial state for first component that uses state |
-| AfterFirstUse    | Fires after store has been used by the first time           |
-| AfterFirstMount  | Fires after first component mounts                          |
-| AfterMount       | Fires after each component mounts                           |
-| AfterUnmount     | Fires after each component unmounts                         |
-| AfterUpdate      | Fires after each update to state                            |
-| AfterLastUnmount | Fires when last component unmounts                          |
-| SetterException  | Fires if a setter function throws an exception              |
+| Event            | Description                                                         |
+| ---------------- | ------------------------------------------------------------------- |
+| BeforeFirstUse   | Allows changing initial state before first component sees the state |
+| AfterFirstUse    | Fires after store has been used by the first time                   |
+| AfterFirstMount  | Fires after first component mounts                                  |
+| AfterMount       | Fires after each component mounts                                   |
+| AfterUnmount     | Fires after each component unmounts                                 |
+| AfterUpdate      | Fires after each update to state                                    |
+| AfterLastUnmount | Fires when last component unmounts                                  |
+| SetterException  | Fires if a setter function throws an exception                      |
 
 #### Event data
 

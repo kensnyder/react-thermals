@@ -1,5 +1,4 @@
 import Store from './classes/Store/Store';
-import PreventableEvent from './classes/PreventableEvent/PreventableEvent';
 import { Get } from 'type-fest';
 
 export type EventNameType =
@@ -13,27 +12,15 @@ export type EventNameType =
   | 'SetterException'
   | '*';
 
-export type EventHandlerType = (evt: PreventableEvent) => void;
-
-export type EventHandlerOrHandlersType = EventHandlerType | EventHandlerType[];
-
-export type StoreConfigHandlersType = {
-  BeforeFirstUse?: EventHandlerOrHandlersType;
-  AfterFirstUse?: EventHandlerOrHandlersType;
-  AfterFirstMount?: EventHandlerOrHandlersType;
-  AfterMount?: EventHandlerOrHandlersType;
-  AfterUnmount?: EventHandlerOrHandlersType;
-  AfterLastUnmount?: EventHandlerOrHandlersType;
-  AfterUpdate?: EventHandlerOrHandlersType;
-  SetterException?: EventHandlerOrHandlersType;
-  '*'?: EventHandlerOrHandlersType;
+export type EventType = {
+  target: Store;
+  type: EventNameType;
+  data?: any;
 };
 
-export type StoreConfigType<StateType = any> = {
-  state?: StateType;
-  actions?: Record<string, Function>;
-  options?: PlainObjectType;
-  on?: StoreConfigHandlersType;
+export type EventHandlerType = (evt: EventType) => void;
+
+export type StoreConfigType = {
   autoReset?: boolean;
   id?: string;
 };
@@ -66,17 +53,24 @@ export type SettableStateType<StateType> =
   | ((newState: StateType) => StateType)
   | ((newState: StateType) => Promise<StateType>);
 
+// export type SettableAtType =
+
+// const get = <StateType, Path extends string>(object: StateType, path: Path): Get<StateType, Path> =>
+// 	lodash.get(object, path);
+
 export type MergeableStateType<StateType> =
   | Partial<StateType>
   | Promise<Partial<StateType>>
   | ((newState: StateType) => Partial<StateType>)
   | ((newState: StateType) => Promise<Partial<StateType>>);
 
+// export type MergeableAtType =
+
 export type StateMapperType = undefined | null | Function | string;
 
 export type StateMapperOrMappersType = StateMapperType | StateMapperType[];
 
-export type SelectByStringType<StateType> = Get<
+export type SelectedByStringType<StateType> = Get<
   StateType,
   string,
   { strict: true }
@@ -88,8 +82,8 @@ export type SelectByFunctionType<StateType> =
   | any;
 
 export type SelectedStateType<StateType> =
-  | SelectByStringType<StateType>
-  | SelectByStringType<StateType>[]
+  | SelectedByStringType<StateType>
+  | SelectedByStringType<StateType>[]
   | SelectByFunctionType<StateType>;
 
 // TODO: types for intellisense on Action functions

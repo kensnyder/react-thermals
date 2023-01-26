@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import Store from '../../classes/Store/Store';
 import useStoreState from '../useStoreState/useStoreState';
 import useStoreSelector from './useStoreSelector';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
 
 describe('useStoreSelector(mapState)', () => {
   // define store before each test
@@ -14,6 +13,9 @@ describe('useStoreSelector(mapState)', () => {
   let TripComponent: FunctionComponent;
   let TripWithEqualityFnComponent: FunctionComponent;
   let renderCounts: Record<string, number>;
+  let visit: Function;
+  let upgradeRocket: Function;
+  let pwn: Function;
   beforeEach(() => {
     type TransportState = {
       planet: string;
@@ -25,21 +27,16 @@ describe('useStoreSelector(mapState)', () => {
       rocket: 12,
       seats: ['a', 'b', 'c'],
     };
-    const actions = {
-      visit(planet: string) {
-        store.mergeState({ planet });
-      },
-      upgradeRocket() {
-        store.mergeState((old: TransportState) => ({ rocket: old.rocket + 1 }));
-      },
-      pwn(to: any) {
-        store.setState(to);
-      },
+    visit = (planet: string) => {
+      store.mergeState({ planet });
     };
-    store = new Store({
-      state,
-      actions,
-    });
+    upgradeRocket = () => {
+      store.mergeState((old: TransportState) => ({ rocket: old.rocket + 1 }));
+    };
+    pwn = (to: any) => {
+      store.setState(to);
+    };
+    store = new Store({ state });
     renderCounts = {
       planet: 0,
       rocket: 0,
@@ -52,7 +49,6 @@ describe('useStoreSelector(mapState)', () => {
         store,
         (state: TransportState) => state.planet
       );
-      const { visit } = store.actions;
       return (
         <div className="Planet">
           <button onClick={() => visit('Mars')}>Visit Mars</button>
@@ -67,7 +63,6 @@ describe('useStoreSelector(mapState)', () => {
         store,
         (state: TransportState) => state.rocket
       );
-      const { upgradeRocket, pwn } = store.actions;
       return (
         <div className="Rocket">
           <button onClick={() => upgradeRocket()}>Upgrade Rocket</button>
@@ -149,8 +144,8 @@ describe('useStoreSelector(mapState)', () => {
     expect(store.getState()).toBe('hacked');
   });
   it('should allow overwrite part of initial state', () => {
-    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
-      evt.data = { ...evt.data, planet: 'Neptune' };
+    store.on('BeforeFirstUse', () => {
+      store.extendState({ planet: 'Neptune' });
     });
     const { getByTitle } = render(<PlanetComponent />);
     expect(getByTitle('planet')).toHaveTextContent(/^Neptune$/);
@@ -167,6 +162,10 @@ describe('store.on(type, handler)', () => {
   };
   let Toggleable: FunctionComponent<ToggleableProps>;
   let renderCounts: Record<string, number>;
+  let pointAt: Function;
+  let zoomIn: Function;
+  let pwn: Function;
+  let throwIt: Function;
   beforeEach(() => {
     type TelescopeState = {
       target: string;
@@ -178,28 +177,25 @@ describe('store.on(type, handler)', () => {
       zoom: 10,
       seats: ['a', 'b', 'c'],
     };
-    const actions = {
-      pointAt(target: string) {
-        store.mergeState({ target });
-      },
-      zoomIn(factor: number) {
-        store.mergeState((old: TelescopeState) => ({
-          zoom: old.zoom * factor,
-        }));
-      },
-      pwn(newState: TelescopeState) {
-        store.setState(newState);
-      },
-      throw(message: string) {
-        store.setState(() => {
-          throw new Error(message);
-        });
-      },
+
+    pointAt = (target: string) => {
+      store.mergeState({ target });
     };
-    store = new Store({
-      state,
-      actions,
-    });
+    zoomIn = (factor: number) => {
+      store.mergeState((old: TelescopeState) => ({
+        zoom: old.zoom * factor,
+      }));
+    };
+    pwn = (newState: TelescopeState) => {
+      store.setState(newState);
+    };
+    throwIt = (message: string) => {
+      store.setState(() => {
+        throw new Error(message);
+      });
+    };
+
+    store = new Store({ state });
     renderCounts = {
       telescope: 0,
       toggle: 0,
@@ -207,7 +203,6 @@ describe('store.on(type, handler)', () => {
     TelescopeComponent = () => {
       renderCounts.telescope++;
       const state = useStoreState(store);
-      const { pointAt, zoomIn } = store.actions;
       return (
         <div className="Telescope">
           <button onClick={() => pointAt('Mars')}>Look at Mars</button>
@@ -229,21 +224,11 @@ describe('store.on(type, handler)', () => {
     };
   });
   it('should allow modifying initial state', () => {
-    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
-      evt.data = { ...evt.data, target: 'Venus' };
+    store.on('BeforeFirstUse', () => {
+      store.extendState({ target: 'Venus' });
     });
     const { getByText } = render(<TelescopeComponent />);
     expect(getByText('current target=Venus')).toBeInTheDocument();
-  });
-  it('should allow blocking update', async () => {
-    store.on('BeforeUpdate', (evt: PreventableEvent) => {
-      evt.preventDefault();
-    });
-    const { getByText } = render(<TelescopeComponent />);
-    await act(() => {
-      fireEvent.click(getByText('Zoom 2x'));
-    });
-    expect(store.getState().zoom).toBe(10);
   });
   it('should fire mount/unmount events properly', async () => {
     let afterFirstUse = false;
@@ -307,15 +292,12 @@ describe('store.on(type, handler)', () => {
   it('should fire on setter exceptions', async () => {
     const { getByText } = render(
       <>
-        <button onClick={() => store.actions.throw('foobar')}>Throw</button>
+        <button onClick={() => throwIt('foobar')}>Throw</button>
         <TelescopeComponent />
       </>
     );
     let caught = null;
-    store.on(
-      'SetterException',
-      (evt: PreventableEvent) => (caught = evt.data.message)
-    );
+    store.on('SetterException', evt => (caught = evt.data.message));
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });

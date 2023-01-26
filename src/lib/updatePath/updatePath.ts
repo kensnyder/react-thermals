@@ -1,6 +1,7 @@
 import shallowCopy from '../shallowCopy/shallowCopy';
 import getUpdateRunner from './getUpdateRunner';
 import SimpleCache from '../../classes/SimpleCache/SimpleCache';
+import { SelectedByStringType } from '../../types';
 
 const cache = new SimpleCache(5000);
 
@@ -16,13 +17,13 @@ export function updatePath(
   path: string,
   transform: undefined | Function = undefined
 ): Function {
-  if (transform === undefined && cache.has(path)) {
-    return cache.get(path);
-  }
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: updatePath(path,transform) - path must be a string'
     );
+  }
+  if (transform === undefined && cache.has(path)) {
+    return cache.get(path);
   }
   // split path string on dots and brackets
   // e.g. 'users[0].isActive' => ['users', '0', 'isActive']

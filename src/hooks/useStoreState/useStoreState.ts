@@ -14,13 +14,11 @@ export default function useStoreState<StateType>(
   // use useState to get a method for triggering re-renders in consumer components
   const [state, setState] = useState(() => {
     // read the initial state and emit BeforeFirstUse if not yet initialized
-    const fullInitialState = store.getState();
+    let fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      const event = store.emit('BeforeFirstUse', fullInitialState);
-      if (event.data !== fullInitialState) {
-        store.mergeSync(event.data);
-      }
-      return event.data;
+      store.emit('BeforeFirstUse', fullInitialState);
+      // re-assign state in case a handler changed it
+      fullInitialState = store.getState();
     }
     return fullInitialState;
   });

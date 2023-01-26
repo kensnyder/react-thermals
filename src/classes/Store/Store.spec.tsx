@@ -5,29 +5,23 @@ import '@testing-library/jest-dom';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import { setter } from '../../actions/setter/setter';
 import Store from './Store';
-import PreventableEvent from '../PreventableEvent/PreventableEvent';
 import {
   EventHandlerType,
   MiddlewareContextInterface,
   PluginFunctionType,
 } from '../../types';
+import { Get } from "type-fest";
 
 describe('new Store()', () => {
   it('should have required properties', () => {
     const store = new Store();
     expect(typeof store.reset).toBe('function');
-    expect(typeof store.actions).toBe('object');
     expect(typeof store.getState).toBe('function');
   });
   it('should make setters from actions', async () => {
-    const store = new Store({
-      state: { age: 14, name: { fname: 'me' } },
-      actions: {
-        setAge: setter('age'),
-        setName: setter('name'),
-      },
-    });
-    const { setAge, setName } = store.actions;
+    const store = new Store({ age: 14, name: { fname: 'me' } });
+    const setAge = store.connect(setter('age'));
+    const setName = store.connect(setter('name'));
     expect(typeof setAge).toBe('function');
     expect(typeof setName).toBe('function');
     setAge(15);
@@ -42,13 +36,8 @@ describe('new Store()', () => {
     });
   });
   it('should reset state', async () => {
-    const store = new Store({
-      state: { age: 10 },
-      actions: {
-        setAge: setter('age'),
-      },
-    });
-    const { setAge } = store.actions;
+    const store = new Store({ age: 10 });
+    const setAge = store.connect(setter('age'));
     setAge(11);
     await store.nextState();
     store.reset();
@@ -56,9 +45,8 @@ describe('new Store()', () => {
     expect(store.getState()).toEqual({ age: 10 });
   });
   it('should setState with Promise', async () => {
-    const state = 42;
-    const store = new Store({ state });
-    expect(store.getState()).toBe(state);
+    const store = new Store(42);
+    expect(store.getState()).toBe(42);
     store.setState((old: number) => Promise.resolve(old + 1));
     const newState = await store.nextState();
     expect(newState).toBe(43);
@@ -66,10 +54,10 @@ describe('new Store()', () => {
   it('should mergeState with Promise', async () => {
     type TestState = {
       count: number;
-      view: string;
+      view: 'list' | 'grid';
     };
     const state = { count: 42, view: 'list' };
-    const store = new Store({ state });
+    const store = new Store(state);
     expect(store.getState()).toBe(state);
     store.mergeState((old: TestState) =>
       Promise.resolve({ count: old.count + 1 })
@@ -79,21 +67,21 @@ describe('new Store()', () => {
   });
   it('should setSync', () => {
     const state = { count: 5 };
-    const store = new Store({ state });
+    const store = new Store(state);
     expect(store.getState()).toBe(state);
     store.setSync({ count: 6 });
     expect(store.getState()).toEqual({ count: 6 });
   });
   it('should setSync with function', () => {
     const state = 42;
-    const store = new Store({ state });
+    const store = new Store(state);
     expect(store.getState()).toBe(state);
     store.setSync((old: number) => old + 1);
     expect(store.getState()).toBe(43);
   });
   it('should mergeSync', () => {
     const state = { count: 5, mode: 'up' };
-    const store = new Store({ state });
+    const store = new Store(state);
     expect(store.getState()).toBe(state);
     store.mergeSync({ count: 6 });
     expect(store.getState()).toEqual({ count: 6, mode: 'up' });
@@ -104,7 +92,7 @@ describe('new Store()', () => {
       mode: string;
     };
     const state = { count: 5, mode: 'up' };
-    const store = new Store({ state });
+    const store = new Store(state);
     expect(store.getState()).toBe(state);
     store.mergeSync((old: TestState) => ({ count: old.count + 1 }));
     expect(store.getState()).toEqual({ count: 6, mode: 'up' });
@@ -130,31 +118,31 @@ describe('new Store()', () => {
     }
   });
   it('should setSyncAt(path, value)', async () => {
-    const store = new Store({
-      state: { hello: { world: 42 } },
-    });
+    const store = new Store({ hello: { world: 42 });
     store.setSyncAt('hello.world', 44);
+    expect(store.getStateAt('hello.world')).toBe(44);
     expect(store.getState().hello.world).toBe(44);
   });
   it('should setSyncAt(path, transformer)', async () => {
-    const store = new Store({
-      state: { hello: { world: 42 } },
-    });
-    store.setSyncAt('hello.world', (s: number) => s + 1);
+    type HelloStateType = {
+      hello: {
+       world: number;
+      }
+    };
+    const state : HelloStateType = { hello: { world: 42 } }
+    const store = new Store(state);
+    store.setSyncAt('hello.world', (num: number) => num + 1);
     expect(store.getState().hello.world).toBe(43);
+    expect(store.getStateAt('hello.world')).toBe(43);
   });
   it('should setStateAt(path, value)', async () => {
-    const store = new Store({
-      state: { hello: { world: 42 } },
-    });
+    const store = new Store({ hello: { world: 42 } });
     store.setStateAt('hello.world', 44);
     store.flushSync();
     expect(store.getState().hello.world).toBe(44);
   });
   it('should setStateAt(path, transformer)', async () => {
-    const store = new Store({
-      state: { hello: { world: 42 } },
-    });
+    const store = new Store({ hello: { world: 42 } });
     store.setStateAt('hello.world', (s: number) => s + 1);
     store.flushSync();
     expect(store.getState().hello.world).toBe(43);
@@ -306,7 +294,7 @@ describe('new Store() with autoReset', () => {
   });
   it('should fire SetterException', async () => {
     let error: any;
-    store.on('SetterException', (evt: PreventableEvent) => (error = evt.data));
+    store.on('SetterException', evt => (error = evt.data));
     const { getByText } = render(<ListComponent />);
     await act(() => {
       fireEvent.click(getByText('Throw'));
@@ -316,7 +304,7 @@ describe('new Store() with autoReset', () => {
   });
   it('should fire SetterException on flushSync', async () => {
     let error: any;
-    store.on('SetterException', (evt: PreventableEvent) => (error = evt.data));
+    store.on('SetterException', evt => (error = evt.data));
     const { getByText } = render(<ListComponent />);
     await act(() => {
       fireEvent.click(getByText('syncThrow'));
@@ -328,7 +316,7 @@ describe('new Store() with autoReset', () => {
     let rejection;
     store.on(
       'SetterException',
-      (evt: PreventableEvent) => (rejection = evt.data)
+      evt => (rejection = evt.data)
     );
     store.addActions({
       promiseThatRejects: () => {
@@ -443,7 +431,7 @@ describe('new Store() flushSync', () => {
     let sawError;
     store.on(
       'SetterException',
-      (evt: PreventableEvent) => (sawError = evt.data)
+      evt => (sawError = evt.data)
     );
     store.actions.promiseError();
     store.flushSync();

@@ -5,7 +5,7 @@
  */
 export default function shallowCopy(value: any): any {
   if (!value || typeof value === 'string') {
-    // falsy scalar
+    // falsy scalar or a string
     return value;
   } else if (value instanceof Map) {
     return new Map(value);

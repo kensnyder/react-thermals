@@ -1,5 +1,4 @@
 import Store from '../../classes/Store/Store';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
 
 type Observer = {
   next: Function;
@@ -53,12 +52,12 @@ export default function observable() {
         },
       };
     };
-    store.on('AfterUpdate', (event: PreventableEvent) => {
+    store.on('AfterUpdate', event => {
       for (const observer of observers) {
         observer.next(event.data.next);
       }
     });
-    store.on('SetterException', (event: PreventableEvent) => {
+    store.on('SetterException', event => {
       for (const observer of observers) {
         observer.error?.(event.data);
       }

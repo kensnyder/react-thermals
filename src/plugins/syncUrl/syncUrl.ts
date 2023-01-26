@@ -6,7 +6,6 @@ import {
 import isEmpty from './libs/isEmpty';
 import { omitUnknown, omitKnown } from './libs/omit';
 import { pushState, replaceState } from './libs/windowHistory';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
 import Store from '../../classes/Store/Store';
 
 export type SyncUrlConfig = {
@@ -39,15 +38,15 @@ export default function syncUrl({
   const fields = givenFields || Object.keys(schema);
 
   return function plugin(store: Store) {
-    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
+    store.on('BeforeFirstUse', evt => {
       const urlData = parse(location.search.slice(1));
       const known = omitUnknown(fields as string[], urlData);
       if (known && !isEmpty(known)) {
-        store.mergeSync(castFromStrings(schema, known));
+        store.extendState(castFromStrings(schema, known));
       }
       writeUrl(castToStrings(schema, { ...urlData, ...evt.data }));
     });
-    store.on('AfterUpdate', (evt: PreventableEvent) => {
+    store.on('AfterUpdate', evt => {
       navigate(evt.data.next);
     });
     store.on('AfterLastUnmount', clearUrl);

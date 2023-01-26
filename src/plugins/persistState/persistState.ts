@@ -1,6 +1,5 @@
 import { tryParse, tryStringify } from './parseAndStringify';
 import Store from '../../classes/Store/Store';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
 
 export type PersistStateConfig = {
   storage: Storage;
@@ -38,15 +37,15 @@ export default function persistState(
     if (!key) {
       key = store.id;
     }
-    store.on('BeforeFirstUse', (evt: PreventableEvent) => {
+    store.on('BeforeFirstUse', evt => {
       const item = storage.getItem(key);
       const initial = item ? tryParse(parse, item) : evt.data;
       if (initial !== undefined) {
-        store.setSyncAt(path, initial);
+        store.extendStateAt(path, initial);
       }
       write(initial);
     });
-    store.on('AfterUpdate', (evt: PreventableEvent) => write(evt.data.next));
+    store.on('AfterUpdate', evt => write(evt.data.next));
   };
   // some helper functions
   function write(newValue: any) {

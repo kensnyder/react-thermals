@@ -1,8 +1,4 @@
-import React, {
-  ComponentProps,
-  FunctionComponent,
-  MouseEventHandler,
-} from 'react';
+import React, { FunctionComponent, MouseEventHandler } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Store from '../../classes/Store/Store';
@@ -14,31 +10,27 @@ describe('undo()', () => {
   let store: Store;
   let KeyboardComponent: FunctionComponent;
   let KeyComponent: FunctionComponent<{ character: string }>;
+  let pressKey: Function;
+  let addMinutes: Function;
   beforeEach(() => {
     type MyState = {
       keys: string[];
       minutes: number;
     };
     const state: MyState = { keys: [], minutes: 60 };
-    const actions = {
-      pressKey: (character: string) => {
-        store.mergeState((old: MyState) => ({
-          keys: [...old.keys, character],
-        }));
-      },
-      addMinutes: (num: number) => {
-        store.mergeState((old: MyState) => ({ minutes: old.minutes + num }));
-      },
+    pressKey = (character: string) => {
+      store.mergeState((old: MyState) => ({
+        keys: [...old.keys, character],
+      }));
     };
-    store = new Store({
-      state,
-      actions,
-    });
+    addMinutes = (num: number) => {
+      store.mergeState((old: MyState) => ({ minutes: old.minutes + num }));
+    };
+    store = new Store({ state });
     KeyboardComponent = () => {
       const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
       const numbers = '0123456789'.split('');
       const state = useStoreState(store);
-      const { addMinutes } = store.actions;
       return (
         <div className="Keyboard">
           <span title="output">output={state.keys.join('')}</span>
@@ -58,7 +50,6 @@ describe('undo()', () => {
       );
     };
     KeyComponent = ({ character }) => {
-      const { pressKey } = store.actions;
       return <button onClick={() => pressKey(character)}>{character}</button>;
     };
   });

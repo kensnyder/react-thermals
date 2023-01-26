@@ -1,5 +1,4 @@
-import PreventableEvent from '../PreventableEvent/PreventableEvent';
-import { EventHandlerType, EventNameType } from '../../types';
+import { EventHandlerType, EventNameType, EventType } from '../../types';
 
 export default class SimpleEmitter {
   #_handlers: Record<string, EventHandlerType[]> = {
@@ -41,7 +40,7 @@ export default class SimpleEmitter {
    * @return  The emitter instance
    */
   once(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
-    const onceHandler = (event: PreventableEvent) => {
+    const onceHandler = (event: EventType) => {
       this.off(type, onceHandler);
       handler.call(this, event);
     };
@@ -53,17 +52,15 @@ export default class SimpleEmitter {
    * Trigger handlers attached to the given event with the given data
    * @param type  The event name
    * @param data  The data to pass to evt.data
-   * @return  The event object that was passed to handlers
-   * @property isDefaultPrevented  Read to tell if event was canceled
    */
-  emit(type: EventNameType, data: any = null): PreventableEvent {
+  emit(type: EventNameType, data: any = null) {
     if (
       (!this.#_handlers[type] || this.#_handlers[type].length === 0) &&
       this.#_handlers['*'].length === 0
     ) {
-      return new PreventableEvent(this, type, data);
+      return;
     }
-    const event = new PreventableEvent(this, type, data);
+    const event = { target: this, type, data };
     // run callbacks registered to both "*" and "type"
     const handlers = [
       ...this.#_handlers['*'],
@@ -71,10 +68,6 @@ export default class SimpleEmitter {
     ];
     for (const handler of handlers) {
       handler.call(this, event);
-      if (event.propagationStopped) {
-        break;
-      }
     }
-    return event;
   }
 }

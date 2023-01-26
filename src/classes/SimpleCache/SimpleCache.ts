@@ -1,30 +1,28 @@
 export default class SimpleCache {
-  #_cache = {};
-  #_stack = [];
+  #_cache: Record<string, any> = {};
+  #_stack: string[] = [];
   maxSize: number;
-
   constructor(maxSize = 1000) {
     this.maxSize = maxSize;
   }
-
-  has(key) {
+  has(key: string): boolean {
     return key in this.#_cache;
   }
-  get(key) {
+  get(key: string): any {
     return this.#_cache[key];
   }
-  set(key, value) {
+  set(key: string, value: any): void {
     if (this.#_stack.length >= this.maxSize) {
       this.#_prune();
     }
     this.#_cache[key] = value;
     this.#_stack.push(key);
   }
-  #_prune() {
+  #_prune(): void {
     const oldestKey = this.#_stack.unshift();
     this.#_cache[oldestKey] = undefined;
   }
-  static memoize(maxSize, fn) {
+  static memoize(maxSize: number, fn: Function): Function {
     const cache = new SimpleCache(maxSize);
     return function memoized(key) {
       if (cache.has(key)) {

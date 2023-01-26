@@ -1,19 +1,19 @@
 import SimpleEmitter from '../SimpleEmitter/SimpleEmitter';
 import shallowCopy from '../../lib/shallowCopy/shallowCopy';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
+import shallowAssign from '../../lib/shallowAssign/shallowAssign';
 import { updatePath } from '../../lib/updatePath/updatePath';
 import selectPath from '../../lib/selectPath/selectPath';
 import {
   StoreConfigType,
   SetterType,
-  EventNameType,
   SettableStateType,
   MergeableStateType,
   MiddlewareContextInterface,
   MiddlewareType,
   PlainObjectType,
   PluginFunctionType,
-  EventHandlerType,
+  SelectedByStringType,
 } from '../../types';
 import { Get } from 'type-fest';
 
@@ -41,19 +41,14 @@ export default class Store<StateType = any> extends SimpleEmitter {
   /**
    * Create a new store with the given state and actions
    * @param initialState  The store's initial state; it can be of any type
-   * @param actions  Named functions that can be dispatched by name and arguments
-   * @param options  Options that setters, plugins or event listeners might look for
-   * @param on  One or more handlers to add immediately
-   * @param autoReset  True to reset state after all components unmount
-   * @param id  An identifier that could be used by plugins or event listeners
+   * @param options
+   * @property options.autoReset  True to reset state after all components unmount
+   * @property options.id  An identifier that could be used by plugins or event listeners
    */
-  constructor({
-    state: initialState,
-    options = {},
-    on = {},
-    autoReset = false,
-    id = '',
-  }: StoreConfigType<StateType> = {}) {
+  constructor(
+    initialState: StateType = undefined,
+    { autoReset = false, id = '' }: StoreConfigType = {}
+  ) {
     super();
     this.on('BeforeFirstUse', () => {
       this.#_hasInitialized = true;
@@ -64,11 +59,6 @@ export default class Store<StateType = any> extends SimpleEmitter {
     this.#_idx = storeIdx++;
     this.#_autoReset = autoReset;
     this.locals = {};
-    for (const [event, handlerOrHandlers] of Object.entries(on)) {
-      for (const handler of [handlerOrHandlers].flat()) {
-        this.on(event as EventNameType, handler as EventHandlerType);
-      }
-    }
   }
 
   /**
@@ -82,9 +72,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Return the initial state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getInitialStateAt = (
-    path: string
-  ): Get<StateType, string, { strict: true }> => {
+  getInitialStateAt = (path: string): SelectedByStringType<StateType> => {
     return selectPath(path)(this.#_initialState);
   };
 
@@ -100,7 +88,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Return the current state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getStateAt = (path: string): Get<StateType, string, { strict: true }> => {
+  getStateAt = (path: string): SelectedByStringType<StateType> => {
     return selectPath(path)(this.#_state);
   };
 
@@ -156,7 +144,8 @@ export default class Store<StateType = any> extends SimpleEmitter {
   };
 
   /**
-   * Schedule state to be merged in the next batch of updates
+   * Update state immediately without triggering re-renders.
+   * Good for sub-stores and plugins that subscribe to BeforeFirstUse.
    * @param moreState  The values to merge into the state (components will not be notified)
    */
   extendState = (moreState: Partial<StateType>): Store => {
@@ -165,12 +154,13 @@ export default class Store<StateType = any> extends SimpleEmitter {
         'react-thermals Store.extendState(moreState): current state and given state must both be objects'
       );
     }
-    Object.assign(this.#_state, moreState);
+    shallowAssign(this.#_state, moreState);
     return this;
   };
 
   /**
-   * Schedule state to be merged in the next batch of updates
+   * Update state at the given path immediately without triggering re-renders.
+   * Good for sub-stores and plugins that subscribe to BeforeFirstUse.
    * @param path  The path to the value
    * @param moreState  The values to merge into the state (components will not be notified)
    * @return  This store
@@ -188,7 +178,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
         'react-thermals Store.extendStateAt(path, moreState): state at path must be an object'
       );
     }
-    Object.assign(target, moreState);
+    shallowAssign(target, moreState);
     return this;
   };
 
@@ -244,7 +234,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
     newStateOrUpdater: SettableStateType<StateType>
   ): Store => {
     const updater = updatePath(path);
-    this.setSync((old: any) => updater(old, newStateOrUpdater));
+    this.setSync((old: Get<StateType, any>) => updater(old, newStateOrUpdater));
     return this;
   };
 
@@ -296,17 +286,29 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @chainable
    */
   reset = (): Store => {
-    this.setSync(this.#_initialState);
-    // TODO: should we allow middleware to run?
+    this.setState(this.#_initialState);
+    // TODO: should we block middleware from running?
     this.#_hasInitialized = false;
     this.#_usedCount = 0;
     return this;
   };
 
-  resetState = () => {};
-  resetStateAt = () => {};
-  resetSync = () => {};
-  resetSyncAt = () => {};
+  resetState = () => {
+    this.setState(this.#_initialState);
+    return this;
+  };
+  resetStateAt = (path: string) => {
+    this.setStateAt(path, this.#_initialState);
+    return this;
+  };
+  resetSync = () => {
+    this.setSync(this.#_initialState);
+    return this;
+  };
+  resetSyncAt = (path: string) => {
+    this.setStateAt(path, this.#_initialState);
+    return this;
+  };
 
   /**
    * Return a promise that will resolve once the store gets a new state

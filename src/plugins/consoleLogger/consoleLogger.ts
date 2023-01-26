@@ -1,11 +1,10 @@
 import Store from '../../classes/Store/Store';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
-import { EventNameType } from '../../types';
+import { EventNameType, EventType } from '../../types';
 
 type LoggerDataType = {
   storeId: string;
   eventType: EventNameType;
-  event: PreventableEvent;
+  event: EventType;
 };
 
 type LoggerConfigType = {
@@ -28,7 +27,7 @@ export default function consoleLogger({
       );
     }
     for (const type of eventTypes) {
-      store.on(type as EventNameType, (evt: PreventableEvent) => {
+      store.on(type as EventNameType, evt => {
         logHandler({
           storeId: store.id,
           eventType: evt.type as EventNameType,

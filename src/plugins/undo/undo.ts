@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import PreventableEvent from '../../classes/PreventableEvent/PreventableEvent';
+import { EventType } from '../../types';
 
 //
 // Basic usage:
@@ -22,7 +22,7 @@ export default function undo({ maxSize = 100 } = {}) {
       history.length = 0;
       currIndex = 0;
     });
-    store.on('AfterUpdate', (evt: PreventableEvent) => {
+    store.on('AfterUpdate', (evt: EventType) => {
       if (isUpdating) {
         isUpdating = false;
         return;

@@ -28,14 +28,11 @@ export default function useStoreSelector<StateType>(
 
   // use useState to get a method for triggering re-renders in consumer components
   const [partialState, setPartialState] = useState(() => {
-    const fullInitialState = store.getState();
+    let fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      const event = store.emit('BeforeFirstUse', fullInitialState);
-      const mapped = map(event.data);
-      if (event.data !== fullInitialState) {
-        store.mergeSync(mapped);
-      }
-      return mapped;
+      store.emit('BeforeFirstUse', fullInitialState);
+      // re-assign state in case a handler changed it
+      fullInitialState = store.getState();
     }
     return map(fullInitialState);
   });

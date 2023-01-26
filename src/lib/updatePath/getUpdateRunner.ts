@@ -12,7 +12,15 @@
 export default function getUpdateRunner(
   transform: Function | Function[] | undefined
 ): Function {
-  if (
+  if (typeof transform === 'function') {
+    // run transform directly
+    return function runTransform(old: any, newValue: any, ...args: any[]) {
+      if (typeof newValue === 'function') {
+        newValue = newValue(old, ...args);
+      }
+      return transform(old, newValue, ...args);
+    };
+  } else if (
     Array.isArray(transform) &&
     transform.every(t => typeof t === 'function')
   ) {
@@ -23,14 +31,6 @@ export default function getUpdateRunner(
         newVal = fn(newVal, ...args);
       }
       return newVal;
-    };
-  } else if (typeof transform === 'function') {
-    // run transform directly
-    return function runTransform(old: any, newValue: any, ...args: any[]) {
-      if (typeof newValue === 'function') {
-        newValue = newValue(old, ...args);
-      }
-      return transform(old, newValue, ...args);
     };
   } else if (transform === undefined) {
     // transform is an object or primitive: ignore the old value and always
