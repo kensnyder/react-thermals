@@ -16,37 +16,37 @@ npm install react-thermals
 1. [Features](#features)
    1. [Changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
    1. [Roadmap](https://github.com/kensnyder/react-thermals/blob/master/ROADMAP.md)
-2. [Core Concepts](#features)
-   1. [Properties and Paths](#properties-and-paths)
+2. [Core concepts](#features)
+   1. [Properties and paths](#properties-and-paths)
    2. [Selectors](#selectors)
    3. [Immutability](#immutability)
    4. [Persistence](#persistence)
-3. [Example Usage](#example-usage)
+3. [Example usage](#example-usage)
    1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
    2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
    3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
-4. [Action Functions](#action-functions)
-   1. [Writing Actions](#writing-actions)
-   2. [Action Creators](#action-creators)
-   3. [Action Batching](#action-batching)
-   4. [Asynchronous Actions](#asynchronous-actions)
+4. [Action functions](#action-functions)
+   1. [Writing actions](#writing-actions)
+   2. [Action creators](#action-creators)
+   3. [Action batching](#action-batching)
+   4. [Asynchronous actions](#asynchronous-actions)
 5. [Strongly typed state](#strongly-typed-state)
    1. [TypeScript definitions](#typescript-definitions)
-6. [Full Documentation](#all-store-options)
-   1. [All Store Options](#all-store-options)
-   2. [Common Store Methods](#common-store-methods)
-   3. [Other Store Methods](#other-store-methods)
+6. [Full documentation](#all-store-options)
+   1. [All store options](#all-store-options)
+   2. [Common store methods](#common-store-methods)
+   3. [Other store methods](#other-store-methods)
 7. [Best Practices](#best-practices)
-   1. [Code Splitting](#code-splitting)
-   2. [Suggested File Structure](#suggested-file-structure)
-   3. [Testing Stores](#testing-stores)
-8. [Extending Store Behavior](#extending-store-behavior)
+   1. [Code splitting](#code-splitting)
+   2. [Suggested file structure](#suggested-file-structure)
+   3. [Testing stores](#testing-stores)
+8. [Extending store behavior](#extending-store-behavior)
    1. [Events](#events)
    2. [Plugins](#plugins)
    3. [Middleware](#middleware)
 9. [Community](#community)
    1. [Contributing](#contributing)
-   2. [ISC License](#isc-license)
+   2. [ISC license](#isc-license)
    3. [Credits](#credits)
 
 ## Features
@@ -167,6 +167,33 @@ const [subject, sender, recipientsEmails] = useStoreSelector(myStore, [
 If your component would like to receive the entire state, you can utilize
 `useStoreSate(myStore)` which acts like useStoreSelector but selects the whole
 state.
+
+#### TypeScript goodness
+
+Thanks to [Sindre Sorhus's](https://www.npmjs.com/~sindresorhus) awesome
+[type-fest](https://npmjs.com/package/type-fest) package, you will get
+autocomplete, type inference, and type checking on methods that have a
+`path` argument.
+
+Example:
+
+```ts
+type GlobalSchemaType = {
+  hello?: {
+    world: number;
+  };
+  foo?: string;
+};
+const initialState: GlobalSchemaType = { hello: { world: 42 } };
+const store = new Store(initialState);
+store.extendState({ foo: 'bar' });
+store.getStateAt('hello.world'); // TypeScript knows return value is number
+store.setStateAt('hello.world', 'me'); // TypeScript knows "me" is invalid
+store.setStateAt('hello.world', () => 'me'); // TypeScript knows "me" is invalid
+```
+
+However, note that when your path contains an asterisk, TypeScript will not
+understand that the preceding element is an array.
 
 ### Immutability
 
@@ -924,6 +951,7 @@ events that support it.
 | Event           | event.data property                                        |
 | --------------- | ---------------------------------------------------------- |
 | BeforeFirstUse  | The initial state (used by plugins to load persisted data) |
+| AfterFirstUse   | The state after any changes by BeforeFirstUse handlers     |
 | AfterMount      | The number of components currently mounted                 |
 | AfterUnmount    | The number of components currently mounted                 |
 | AfterUpdate     | { prev: previous state, next: new state }                  |

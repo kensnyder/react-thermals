@@ -5,7 +5,7 @@ import { EventType } from '../../types';
 // Basic usage:
 // store.plugin(undo({ maxSize: 50 }));
 //
-export default function undo({ maxSize = 100 } = {}) {
+export default function undo<StateType>({ maxSize = 100 } = {}) {
   return function plugin(store: Store) {
     let currIndex = 0;
     let isUpdating = false;
@@ -22,7 +22,7 @@ export default function undo({ maxSize = 100 } = {}) {
       history.length = 0;
       currIndex = 0;
     });
-    store.on('AfterUpdate', (evt: EventType) => {
+    store.on('AfterUpdate', (evt: EventType<StateType, 'AfterUpdate'>) => {
       if (isUpdating) {
         isUpdating = false;
         return;

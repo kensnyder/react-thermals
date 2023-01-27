@@ -13,21 +13,20 @@ import {
   MiddlewareType,
   PlainObjectType,
   PluginFunctionType,
-  SelectedByStringType,
 } from '../../types';
 import { Get } from 'type-fest';
 
 // an internal counter for stores
 let storeIdx = 1;
 
-export default class Store<StateType = any> extends SimpleEmitter {
+export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   readonly #_autoReset: boolean;
   #_hasInitialized = false;
   #_idx: number;
   readonly #_initialState: StateType;
   #_middlewares: MiddlewareType<StateType>[] = [];
   #_plugins: PluginFunctionType[] = [];
-  #_setters: SetterType[] = [];
+  #_setters: SetterType<StateType, any>[] = [];
   #_state: StateType;
   #_updateQueue: SettableStateType<StateType>[] = [];
   #_usedCount = 0;
@@ -72,7 +71,9 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Return the initial state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getInitialStateAt = (path: string): SelectedByStringType<StateType> => {
+  getInitialStateAt = <Path extends string>(
+    path: Path
+  ): Get<StateType, Path, { strict: false }> => {
     return selectPath(path)(this.#_initialState);
   };
 
@@ -88,7 +89,9 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Return the current state of the store at the given path
    * @param path  Path string such as "cart" or "cart.total"
    */
-  getStateAt = (path: string): SelectedByStringType<StateType> => {
+  getStateAt = <Path extends string>(
+    path: Path
+  ): Get<StateType, Path, { strict: false }> => {
     return selectPath(path)(this.#_state);
   };
 
@@ -106,7 +109,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setState = (newState: SettableStateType<StateType>): Store => {
+  setState = (newState: SettableStateType<StateType>) => {
     this.#_updateQueue.push(newState);
     if (this.#_updateQueue.length === 1) {
       this.#_scheduleUpdates();
@@ -120,7 +123,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  mergeState = (newState: MergeableStateType<StateType>): Store => {
+  mergeState = (newState: MergeableStateType<StateType>) => {
     let updater;
     if (typeof newState === 'function') {
       updater = (old: StateType) => {
@@ -148,7 +151,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Good for sub-stores and plugins that subscribe to BeforeFirstUse.
    * @param moreState  The values to merge into the state (components will not be notified)
    */
-  extendState = (moreState: Partial<StateType>): Store => {
+  extendState = (moreState: Partial<StateType>) => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
       throw new Error(
         'react-thermals Store.extendState(moreState): current state and given state must both be objects'
@@ -166,7 +169,10 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  extendStateAt = (path: string, moreState: Partial<StateType>): Store => {
+  extendStateAt = <Path extends string>(
+    path: Path,
+    moreState: Partial<Get<StateType, Path, { strict: false }>>
+  ) => {
     if (typeof moreState !== 'object') {
       throw new Error(
         'react-thermals Store.extendStateAt(path, moreState): given state must an object'
@@ -188,7 +194,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setSync = (newStateOrUpdater: SettableStateType<StateType>): Store => {
+  setSync = (newStateOrUpdater: SettableStateType<StateType>) => {
     this.setState(newStateOrUpdater);
     this.flushSync();
     return this;
@@ -200,7 +206,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  mergeSync = (newStateOrUpdater: MergeableStateType<StateType>): Store => {
+  mergeSync = (newStateOrUpdater: MergeableStateType<StateType>) => {
     this.mergeState(newStateOrUpdater);
     this.flushSync();
     return this;
@@ -213,10 +219,14 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setStateAt = (
-    path: string,
-    newStateOrUpdater: SettableStateType<StateType>
-  ): Store => {
+  setStateAt = <Path extends string>(
+    path: Path,
+    newStateOrUpdater:
+      | Get<StateType, Path, { strict: false }>
+      | ((
+          old: Get<StateType, Path, { strict: false }>
+        ) => Get<StateType, Path, { strict: false }>)
+  ) => {
     const updater = updatePath(path);
     this.setState((old: StateType) => updater(old, newStateOrUpdater));
     return this;
@@ -229,12 +239,16 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  setSyncAt = (
-    path: string,
-    newStateOrUpdater: SettableStateType<StateType>
-  ): Store => {
+  setSyncAt = <Path extends string>(
+    path: Path,
+    newStateOrUpdater:
+      | Get<StateType, Path, { strict: false }>
+      | ((
+          old: Get<StateType, Path, { strict: false }>
+        ) => Get<StateType, Path, { strict: false }>)
+  ) => {
     const updater = updatePath(path);
-    this.setSync((old: Get<StateType, any>) => updater(old, newStateOrUpdater));
+    this.setSync(old => updater(old, newStateOrUpdater));
     return this;
   };
 
@@ -266,7 +280,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @param withConfigOverrides  Any Store configuration you want to override
    * @return The cloned store
    */
-  clone = (withConfigOverrides: StoreConfigType = {}): Store => {
+  clone = (withConfigOverrides: StoreConfigType = {}) => {
     const cloned = new Store({
       state: shallowCopy(this.#_state),
       autoReset: this.#_autoReset,
@@ -285,7 +299,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  reset = (): Store => {
+  reset = () => {
     this.setState(this.#_initialState);
     // TODO: should we block middleware from running?
     this.#_hasInitialized = false;
@@ -298,7 +312,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
     return this;
   };
   resetStateAt = (path: string) => {
-    this.setStateAt(path, this.#_initialState);
+    this.setStateAt(path, this.getInitialStateAt(path));
     return this;
   };
   resetSync = () => {
@@ -306,7 +320,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
     return this;
   };
   resetSyncAt = (path: string) => {
-    this.setStateAt(path, this.#_initialState);
+    this.setStateAt(path, this.getInitialStateAt(path));
     return this;
   };
 
@@ -365,7 +379,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @return  This store
    * @chainable
    */
-  use = (...middlewares: MiddlewareType<StateType>[]): Store => {
+  use = (...middlewares: MiddlewareType<StateType>[]) => {
     this.#_middlewares.push(...middlewares);
     return this;
   };
@@ -419,7 +433,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @param setState  A setState function from React.useState()
    * @note private but used by useStoreSelector()
    */
-  _subscribe = (setState: SetterType): void => {
+  _subscribe = (setState: SetterType<StateType, any>): void => {
     if (this.#_usedCount++ === 0) {
       this.emit('BeforeFirstUse', this.#_state);
     }
@@ -440,7 +454,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @param setState  The setState function used to _subscribe
    * @note private but used by useStoreSelector()
    */
-  _unsubscribe = (setState: SetterType): void => {
+  _unsubscribe = (setState: SetterType<StateType, any>): void => {
     const idx = this.#_setters.indexOf(setState);
     if (idx > -1) {
       this.#_setters.splice(idx, 1);
@@ -459,8 +473,8 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * @param prev  The previous state value
    * @param next  The next state value
    */
-  #_getComponentUpdater = (prev: any, next: any): Function => {
-    return function _maybeSetState(setter: SetterType) {
+  #_getComponentUpdater = (prev: StateType, next: StateType) => {
+    return function _maybeSetState(setter: SetterType<StateType, any>) {
       if (
         typeof setter.mapState === 'function' &&
         typeof setter.equalityFn === 'function'
@@ -471,7 +485,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
         const nextSelected = setter.mapState(next);
         if (!setter.equalityFn(prevSelected, nextSelected)) {
           // the slice of state is not equal so rerender component
-          setter.handler(nextSelected);
+          setter.handler(next);
         }
       } else {
         // registered from useStoreState
@@ -483,7 +497,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
   /**
    * Process the update queue and return a Promise that resolves to the new state
    */
-  #_getNextState = async (): Promise<any> => {
+  #_getNextState = async (): Promise<StateType> => {
     let nextState = this.#_state;
     // process all updates or update functions
     // use while and shift in case setters trigger more setting
@@ -560,7 +574,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
     // save final state result
     this.#_state = next;
     // update components with no selector or with matching selector
-    this.#_setters.forEach((setter: SetterType) => {
+    this.#_setters.forEach((setter: SetterType<StateType, any>) => {
       this.#_getComponentUpdater(prev, this.#_state)(setter);
     });
     // announce the final state
@@ -572,7 +586,7 @@ export default class Store<StateType = any> extends SimpleEmitter {
    * Note that any updater functions that return promises will be queued for later update.
    * @return The new state OR the previous state if updating was blocked
    */
-  #_getNextStateSync = (): any => {
+  #_getNextStateSync = (): StateType => {
     let prev = this.#_state;
     let next = this.#_state;
     // process all updates or update functions

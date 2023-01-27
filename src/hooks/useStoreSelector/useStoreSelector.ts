@@ -1,11 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import defaultEqualityFn from '../../lib/defaultEqualityFn/defaultEqualityFn';
 import getMapperFunction from '../../lib/getMapperFunction/getMapperFunction';
-import {
-  SelectedStateType,
-  SetterType,
-  StateMapperOrMappersType,
-} from '../../types';
+import { SetterType, StateMapperOrMappersType } from '../../types';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -15,11 +11,13 @@ import Store from '../../classes/Store/Store';
  * @param [equalityFn] - Custom equality function that checks if state has change
  * @return The selected state
  */
-export default function useStoreSelector<StateType>(
+export default function useStoreSelector<StateType, SelectedState>(
   store: Store<StateType>,
-  mapState: StateMapperOrMappersType = null,
-  equalityFn: Function | null = null
-): SelectedStateType<StateType> {
+  mapState: StateMapperOrMappersType<StateType, SelectedState> = undefined,
+  equalityFn:
+    | ((prev: SelectedState, next: SelectedState) => boolean)
+    | undefined = undefined
+): any {
   // derive and cache the mapState and equalityFn
   const [map, isEqual] = useMemo(() => {
     return [getMapperFunction(mapState), equalityFn || defaultEqualityFn];
@@ -27,7 +25,7 @@ export default function useStoreSelector<StateType>(
   }, []);
 
   // use useState to get a method for triggering re-renders in consumer components
-  const [partialState, setPartialState] = useState(() => {
+  const [mappedState, setState] = useState(() => {
     let fullInitialState = store.getState();
     if (!store.hasInitialized()) {
       store.emit('BeforeFirstUse', fullInitialState);
@@ -39,15 +37,15 @@ export default function useStoreSelector<StateType>(
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
-    const updater: SetterType = {
+    const updater = {
       mapState: map,
       equalityFn: isEqual,
-      handler: setPartialState,
-    };
+      handler: setState,
+    } as SetterType<StateType, SelectedState>;
     store._subscribe(updater);
     return () => store._unsubscribe(updater);
-  }, [store, setPartialState]);
+  }, [store, setState]);
 
   // return that slice or whole bit of state
-  return partialState;
+  return mappedState;
 }

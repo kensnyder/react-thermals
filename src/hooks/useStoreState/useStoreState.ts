@@ -25,7 +25,7 @@ export default function useStoreState<StateType>(
 
   // on first mount, save that setState method as a trigger
   useEffect(() => {
-    const setter: SetterType = {
+    const setter: SetterType<StateType, any> = {
       handler: setState,
     };
     store._subscribe(setter);

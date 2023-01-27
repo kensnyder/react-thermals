@@ -1,16 +1,11 @@
 import React, { FunctionComponent, MouseEventHandler, useState } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
-import { Mock, vitest } from 'vitest';
+import { vitest } from 'vitest';
 import '@testing-library/jest-dom';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import { setter } from '../../actions/setter/setter';
 import Store from './Store';
-import {
-  EventHandlerType,
-  MiddlewareContextInterface,
-  PluginFunctionType,
-} from '../../types';
-import { Get } from "type-fest";
+import { PluginFunctionType } from '../../types';
 
 describe('new Store()', () => {
   it('should have required properties', () => {
@@ -118,20 +113,15 @@ describe('new Store()', () => {
     }
   });
   it('should setSyncAt(path, value)', async () => {
-    const store = new Store({ hello: { world: 42 });
+    const store = new Store({ hello: { world: 42 } });
     store.setSyncAt('hello.world', 44);
     expect(store.getStateAt('hello.world')).toBe(44);
     expect(store.getState().hello.world).toBe(44);
   });
   it('should setSyncAt(path, transformer)', async () => {
-    type HelloStateType = {
-      hello: {
-       world: number;
-      }
-    };
-    const state : HelloStateType = { hello: { world: 42 } }
+    const state = { hello: { world: 42 } };
     const store = new Store(state);
-    store.setSyncAt('hello.world', (num: number) => num + 1);
+    store.setSyncAt('hello.world', num => num + 1);
     expect(store.getState().hello.world).toBe(43);
     expect(store.getStateAt('hello.world')).toBe(43);
   });
@@ -143,39 +133,41 @@ describe('new Store()', () => {
   });
   it('should setStateAt(path, transformer)', async () => {
     const store = new Store({ hello: { world: 42 } });
-    store.setStateAt('hello.world', (s: number) => s + 1);
+    store.setStateAt('hello.world', s => s + 1);
     store.flushSync();
     expect(store.getState().hello.world).toBe(43);
   });
   it('should getStateAt(path)', async () => {
-    const store = new Store({
-      state: { hello: { world: 42 } },
-    });
+    const store = new Store({ hello: { world: 42 } });
     expect(store.getStateAt('hello.world')).toBe(42);
   });
   it('should getStateAt(path) with asterisk', async () => {
     const store = new Store({
-      state: {
-        books: [
-          {
-            title: 'JavaScript ABCs',
-            authors: [
-              { name: 'John A', rating: 2 },
-              { name: 'Kyle B', rating: 4 },
-            ],
-          },
-          {
-            title: 'Web Tech Rocks',
-            authors: [{ name: 'Owen C', rating: 5 }],
-          },
-        ],
-      },
+      books: [
+        {
+          title: 'JavaScript ABCs',
+          authors: [
+            { name: 'John A', rating: 2 },
+            { name: 'Kyle B', rating: 4 },
+          ],
+        },
+        {
+          title: 'Web Tech Rocks',
+          authors: [{ name: 'Owen C', rating: 5 }],
+        },
+      ],
     });
     expect(store.getStateAt('books.*.authors.*.rating')).toEqual([2, 4, 5]);
   });
   it('should extendState(moreState)', () => {
-    const initialState = { hello: { world: 42 } };
-    const store = new Store({ state: initialState });
+    type GlobalSchemaType = {
+      hello?: {
+        world: number;
+      };
+      foo?: string;
+    };
+    const initialState: GlobalSchemaType = { hello: { world: 42 } };
+    const store = new Store(initialState);
     const ret = store.extendState({ foo: 'bar' });
     expect(store.getState()).toBe(initialState);
     // @ts-ignore
@@ -226,41 +218,35 @@ describe('new Store() with autoReset', () => {
   let store: Store;
   let ListComponent: FunctionComponent;
   let PageComponent: FunctionComponent;
-  type TestState = {
-    page: number;
-    sort: string;
-  };
+  let setPage;
+  let setSort;
+  let thrower;
+  let syncThrower;
   beforeEach(() => {
-    const state: TestState = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: setter('page'),
-      setSort: setter('sort'),
-      thrower() {
-        store.setState((old: TestState) => {
-          throw new Error('my error');
-        });
-      },
-      syncThrower() {
-        store.setState((old: TestState) => {
-          throw new Error('my sync error');
-        });
-        store.flushSync();
-      },
+    const state = { page: 1, sort: '-date' };
+
+    setPage = store.connect(setter('page'));
+    setSort = store.connect(setter('sort'));
+    thrower = () => {
+      store.setState(() => {
+        throw new Error('my error');
+      });
     };
-    store = new Store({
-      state,
-      actions,
+    syncThrower = () => {
+      store.setState(() => {
+        throw new Error('my sync error');
+      });
+      store.flushSync();
+    };
+    store = new Store(state, {
       autoReset: true,
     });
     ListComponent = () => {
       const state = useStoreState(store);
-      const { setPage, thrower, syncThrower } = store.actions;
       return (
         <div className="List">
           <span>page={state.page}</span>
-          <button onClick={() => setPage((old: number) => old + 1)}>
-            Next
-          </button>
+          <button onClick={() => setPage(old => old + 1)}>Next</button>
           <button onClick={thrower as MouseEventHandler}>Throw</button>
           <button onClick={syncThrower as MouseEventHandler}>syncThrow</button>
         </div>
@@ -314,112 +300,77 @@ describe('new Store() with autoReset', () => {
   });
   it('should fire SetterException on rejected promise', async () => {
     let rejection;
-    store.on(
-      'SetterException',
-      evt => (rejection = evt.data)
-    );
-    store.addActions({
-      promiseThatRejects: () => {
-        store.setState(() => {
-          return Promise.reject('my rejection');
-        });
-      },
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setState(() => {
+      return Promise.reject('my rejection');
     });
-    store.actions.promiseThatRejects();
     await new Promise(r => setTimeout(r, 15));
     expect(rejection).toBe('my rejection');
   });
 });
 
-describe('new Store() defined with event handlers', () => {
-  it('should handle single function', () => {
-    const spy: Mock = vitest.fn();
-    const store = new Store({
-      on: {
-        BeforeUpdate: spy as EventHandlerType,
-      },
-    });
-    store.emit('BeforeUpdate', 42);
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy.mock.lastCall[0].data).toBe(42);
-  });
-  it('should handle an array of functions', () => {
-    const spy1: Mock = vitest.fn();
-    const spy2: Mock = vitest.fn();
-    const store = new Store({
-      on: {
-        BeforeUpdate: [spy1 as EventHandlerType, spy2 as EventHandlerType],
-      },
-    });
-    store.emit('BeforeUpdate', 43);
-    expect(spy1).toHaveBeenCalledTimes(1);
-    expect(spy1.mock.lastCall[0].data).toBe(43);
-    expect(spy2).toHaveBeenCalledTimes(1);
-    expect(spy2.mock.lastCall[0].data).toBe(43);
-  });
-});
 describe('new Store() flushSync', () => {
   // define store before each test
-  let store: Store;
+  let store;
+  let setPage;
+  let pwn;
+  let promise;
+  let promiseError;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: setter('page'),
-      pwn: () => store.setState({ pwned: 42 }),
-      promise: () => {
-        store.setState(() => {
-          return new Promise(resolve => {
-            setTimeout(() => resolve({ page: 17, sort: 'date' }), 15);
-          });
+    setPage = store.connect(setter('page'));
+    pwn = () => store.setState({ pwned: 42 });
+    promise = () => {
+      store.setState(() => {
+        return new Promise(resolve => {
+          setTimeout(() => resolve({ page: 17, sort: 'date' }), 15);
         });
-      },
-      promiseError: () => {
-        store.setState(() => {
-          return new Promise(resolve => {
-            throw new Error('Scooby Doo');
-          });
-        });
-      },
+      });
     };
-    store = new Store({
-      state,
-      actions,
-    });
+    promiseError = () => {
+      store.setState(() => {
+        return new Promise(() => {
+          throw new Error('Scooby Doo');
+        });
+      });
+    };
+
+    store = new Store(state);
   });
   it('should flushSync with values', () => {
-    store.actions.setPage(2);
+    setPage(2);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(2);
   });
   it('should flushSync with state replacement', () => {
-    store.actions.pwn();
+    pwn();
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState()).toEqual({ pwned: 42 });
   });
   it('should flushSync with values and functions', () => {
-    store.actions.setPage(2);
-    store.actions.setPage((old: number) => old + 2);
+    setPage(2);
+    setPage((old: number) => old + 2);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(4);
   });
   it('should flushSync with 1 function', () => {
-    store.actions.setPage((old: number) => old + 1);
+    setPage((old: number) => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(2);
   });
   it('should flushSync with 2 functions', () => {
-    store.actions.setPage((old: number) => old + 1);
-    store.actions.setPage((old: number) => old + 1);
+    setPage((old: number) => old + 1);
+    setPage((old: number) => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(3);
   });
   it('should handle promise in flushSync', async () => {
-    store.actions.promise();
+    promise();
     expect(store.getState().page).toBe(1);
     const newState = store.flushSync();
     expect(newState.page).toBe(1);
@@ -429,11 +380,8 @@ describe('new Store() flushSync', () => {
   });
   it('should handle promise error in flushSync', async () => {
     let sawError;
-    store.on(
-      'SetterException',
-      evt => (sawError = evt.data)
-    );
-    store.actions.promiseError();
+    store.on('SetterException', evt => (sawError = evt.data));
+    promiseError();
     store.flushSync();
     expect(store.getState().page).toBe(1);
     await new Promise(r => setTimeout(r, 30));
@@ -443,25 +391,22 @@ describe('new Store() flushSync', () => {
 });
 describe('new Store() cloning', () => {
   // define store before each test
-  let store: Store;
+  let store;
+  let setPage;
+  let setSort;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: setter('page'),
-      setSort: setter('sort'),
-    };
-    store = new Store({
-      state,
-      actions,
+    store = new Store(state, {
       autoReset: true,
       id: 'foo',
     });
+    setPage = store.connect(setter('page'));
+    setSort = store.connect(setter('sort'));
     store.plugin(function plugin1() {});
     store.plugin(function plugin2() {});
   });
   it('should clone with overrides', () => {
     const cloned = store.clone({ id: 'foo2' });
-    expect(Object.keys(cloned.actions)).toEqual(['setPage', 'setSort']);
     expect(cloned.id).toBe('foo2');
     expect(cloned.getPlugins().map(p => p.name)).toEqual([
       'plugin1',
@@ -484,23 +429,21 @@ describe('new Store() cloning', () => {
 });
 describe('new Store() middleware', () => {
   // define store before each test
-  let store: Store;
+  let store;
+  let setPage;
+  let setSort;
   beforeEach(() => {
-    store = new Store({
-      state: { page: 1, sort: '-date' },
-      actions: {
-        setPage: setter('page'),
-        setSort: setter('sort'),
-      },
-    });
+    store = new Store({ page: 1, sort: '-date' });
+    setPage = setter('page');
+    setSort = setter('sort');
   });
   it('should allow spying middleware', async () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContextInterface, next: Function) => {
+    store.use((ctx, next) => {
       spy(ctx);
       next();
     });
-    store.actions.setPage(2);
+    setPage(2);
     await store.nextState();
     expect(store.getState().page).toBe(2);
     expect(spy).toHaveBeenCalledWith({
@@ -512,10 +455,10 @@ describe('new Store() middleware', () => {
   });
   it('should allow non-nexting middleware', async () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContextInterface, next: Function) => {
+    store.use((ctx, next) => {
       spy(ctx);
     });
-    store.actions.setPage(2);
+    setPage(2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState().page).toBe(1);
     expect(spy).toHaveBeenCalledWith({
@@ -527,11 +470,11 @@ describe('new Store() middleware', () => {
   });
   it('should allow spying sync middleware', () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContextInterface, next: Function) => {
+    store.use((ctx, next) => {
       spy(ctx);
       next();
     });
-    store.actions.setPage(2);
+    setPage(2);
     store.flushSync();
     expect(store.getState().page).toBe(2);
     expect(spy).toHaveBeenCalledWith({
@@ -543,10 +486,10 @@ describe('new Store() middleware', () => {
   });
   it('should allow non-nexting sync middleware', () => {
     const spy = vitest.fn();
-    store.use((ctx: MiddlewareContextInterface, next: Function) => {
+    store.use((ctx, next) => {
       spy(ctx);
     });
-    store.actions.setPage(2);
+    setPage(2);
     store.flushSync();
     expect(store.getState().page).toBe(1);
     expect(spy).toHaveBeenCalledWith({

@@ -1,4 +1,5 @@
 import Store from './classes/Store/Store';
+import React from 'react';
 import { Get } from 'type-fest';
 
 export type EventNameType =
@@ -12,13 +13,27 @@ export type EventNameType =
   | 'SetterException'
   | '*';
 
-export type EventType = {
-  target: Store;
-  type: EventNameType;
-  data?: any;
+export type EventDataType<StateType, EventName> = EventName extends
+  | 'BeforeFirstUse'
+  | 'AfterFirstUse'
+  ? StateType
+  : EventName extends 'AfterMount' | 'AfterUnmount'
+  ? number
+  : EventName extends 'AfterUpdate'
+  ? { prev: StateType; next: StateType }
+  : EventName extends 'SetterException'
+  ? Error
+  : undefined;
+
+export type EventType<StateType, EventName> = {
+  target: Store<StateType>;
+  type: EventName;
+  data: EventDataType<StateType, EventName>;
 };
 
-export type EventHandlerType = (evt: EventType) => void;
+export type EventHandlerType<StateType, EventName> = (
+  evt: EventType<StateType, EventName>
+) => void;
 
 export type StoreConfigType = {
   autoReset?: boolean;
@@ -29,7 +44,7 @@ export interface MiddlewareContextInterface<StateType> {
   prev: StateType;
   next: StateType;
   isAsync: boolean;
-  store: Store;
+  store: Store<StateType>;
 }
 
 export type MiddlewareType<StateType> = (
@@ -39,10 +54,10 @@ export type MiddlewareType<StateType> = (
 
 export type PluginFunctionType = (store: Store) => any;
 
-export type SetterType = {
-  handler: Function;
-  mapState?: Function;
-  equalityFn?: Function;
+export type SetterType<StateType, SelectedState> = {
+  handler: React.Dispatch<StateType>;
+  mapState?: (fullState: StateType) => SelectedState;
+  equalityFn?: (prev: SelectedState, next: SelectedState) => boolean;
 };
 
 export type PlainObjectType = Record<string, any>;
@@ -53,37 +68,24 @@ export type SettableStateType<StateType> =
   | ((newState: StateType) => StateType)
   | ((newState: StateType) => Promise<StateType>);
 
-// export type SettableAtType =
-
-// const get = <StateType, Path extends string>(object: StateType, path: Path): Get<StateType, Path> =>
-// 	lodash.get(object, path);
-
 export type MergeableStateType<StateType> =
   | Partial<StateType>
   | Promise<Partial<StateType>>
   | ((newState: StateType) => Partial<StateType>)
   | ((newState: StateType) => Promise<Partial<StateType>>);
 
-// export type MergeableAtType =
+export type StateMapperType<StateType, Mapped> =
+  | ((fullState: StateType) => Mapped)
+  | string;
 
-export type StateMapperType = undefined | null | Function | string;
-
-export type StateMapperOrMappersType = StateMapperType | StateMapperType[];
+export type StateMapperOrMappersType<StateType, Mapped> =
+  | undefined
+  | null
+  | StateMapperType<StateType, Mapped>
+  | StateMapperType<StateType, Mapped>[];
 
 export type SelectedByStringType<StateType> = Get<
   StateType,
   string,
   { strict: true }
 >;
-
-export type SelectByFunctionType<StateType> =
-  | StateType
-  | Partial<StateType>
-  | any;
-
-export type SelectedStateType<StateType> =
-  | SelectedByStringType<StateType>
-  | SelectedByStringType<StateType>[]
-  | SelectByFunctionType<StateType>;
-
-// TODO: types for intellisense on Action functions

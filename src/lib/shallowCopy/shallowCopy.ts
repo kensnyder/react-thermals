@@ -9,9 +9,8 @@ export default function shallowCopy(value: any): any {
     return value;
   } else if (value instanceof Map) {
     return new Map(value);
-  } else if (value instanceof Set) {
-    return new Set(value);
   } else if (typeof value[Symbol.iterator] === 'function') {
+    // e.g. Set, Array, DOMNodeList, etc
     return [...value];
   } else if (typeof value === 'object') {
     return { ...value };

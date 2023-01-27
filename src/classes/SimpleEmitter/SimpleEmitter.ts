@@ -1,7 +1,12 @@
-import { EventHandlerType, EventNameType, EventType } from '../../types';
+import {
+  EventHandlerType,
+  EventNameType,
+  EventType,
+  EventDataType,
+} from '../../types';
 
-export default class SimpleEmitter {
-  #_handlers: Record<string, EventHandlerType[]> = {
+export default class SimpleEmitter<StateType> {
+  #_handlers: Record<string, EventHandlerType<StateType, EventNameType>[]> = {
     '*': [],
   };
 
@@ -11,7 +16,10 @@ export default class SimpleEmitter {
    * @param  handler  The function to be called when the event fires
    * @return  The emitter instance
    */
-  on(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
+  on<EventName extends EventNameType>(
+    type: EventName,
+    handler: EventHandlerType<StateType, EventName>
+  ) {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -25,7 +33,10 @@ export default class SimpleEmitter {
    * @param handler  The function registered with "on()" or "once()"
    * @return  The emitter instance
    */
-  off(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
+  off<EventName extends EventNameType>(
+    type: EventName,
+    handler: EventHandlerType<StateType, EventName>
+  ) {
     if (!this.#_handlers[type]) {
       this.#_handlers[type] = [];
     }
@@ -39,8 +50,11 @@ export default class SimpleEmitter {
    * @param handler  The function to be called when the event fires
    * @return  The emitter instance
    */
-  once(type: EventNameType, handler: EventHandlerType): SimpleEmitter {
-    const onceHandler = (event: EventType) => {
+  once<EventName extends EventNameType>(
+    type: EventName,
+    handler: EventHandlerType<StateType, EventName>
+  ) {
+    const onceHandler = (event: EventType<StateType, EventName>) => {
       this.off(type, onceHandler);
       handler.call(this, event);
     };
@@ -53,11 +67,15 @@ export default class SimpleEmitter {
    * @param type  The event name
    * @param data  The data to pass to evt.data
    */
-  emit(type: EventNameType, data: any = null) {
+  emit<EventName extends EventNameType>(
+    type: EventName,
+    data: EventDataType<StateType, EventName> = undefined
+  ) {
     if (
       (!this.#_handlers[type] || this.#_handlers[type].length === 0) &&
       this.#_handlers['*'].length === 0
     ) {
+      // don't bother to construct event object unless we have a handler for this event
       return;
     }
     const event = { target: this, type, data };
