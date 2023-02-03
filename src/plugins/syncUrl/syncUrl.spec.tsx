@@ -12,21 +12,17 @@ describe('syncUrl()', () => {
   // define store before each test
   let store: Store;
   let Component: FunctionComponent;
+  let setPage;
+  let setSort;
   beforeEach(() => {
     document.title = 'My Page';
     location.search = '';
     const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: (page: number) => store.mergeState({ page }),
-      setSort: (sort: string) => store.mergeState({ sort }),
-    };
-    store = new Store({
-      state,
-      actions,
-    });
+    setPage = (page: number) => store.mergeState({ page });
+    setSort = (sort: string) => store.mergeState({ sort });
+    store = new Store(state);
     Component = () => {
       const state = useStoreState(store);
-      const { setPage } = store.actions;
       return (
         <div className="Pagination">
           <span>page={state.page}</span>

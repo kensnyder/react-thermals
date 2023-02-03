@@ -3,6 +3,8 @@ import React from 'react';
 import { Get } from 'type-fest';
 
 export type EventNameType =
+  | 'BeforeInitialize'
+  | 'AfterInitialize'
   | 'BeforeFirstUse'
   | 'AfterFirstUse'
   | 'AfterFirstMount'
@@ -14,6 +16,8 @@ export type EventNameType =
   | '*';
 
 export type EventDataType<StateType, EventName> = EventName extends
+  | 'BeforeInitialize'
+  | 'AfterInitialize'
   | 'BeforeFirstUse'
   | 'AfterFirstUse'
   ? StateType
@@ -62,17 +66,45 @@ export type SetterType<StateType, SelectedState> = {
 
 export type PlainObjectType = Record<string, any>;
 
+export type StateAtType<Path extends string, StateType> = Get<
+  StateType,
+  Path,
+  { strict: false }
+>;
+
 export type SettableStateType<StateType> =
   | StateType
   | Promise<StateType>
-  | ((newState: StateType) => StateType)
-  | ((newState: StateType) => Promise<StateType>);
+  | ((oldState: StateType) => StateType)
+  | ((oldState: StateType) => Promise<StateType>);
+
+export type SettableStateAtPathType<Path extends string, StateType> =
+  | StateAtType<Path, StateType>
+  | Promise<StateAtType<Path, StateType>>
+  | ((oldState: StateAtType<Path, StateType>) => StateAtType<Path, StateType>)
+  | ((
+      oldState: StateAtType<Path, StateType>
+    ) => Promise<StateAtType<Path, StateType>>);
 
 export type MergeableStateType<StateType> =
   | Partial<StateType>
   | Promise<Partial<StateType>>
-  | ((newState: StateType) => Partial<StateType>)
-  | ((newState: StateType) => Promise<Partial<StateType>>);
+  | ((oldState: StateType) => Partial<StateType>)
+  | ((oldState: StateType) => Promise<Partial<StateType>>);
+
+export type MergeableStateAtPathType<Path extends string, StateType> =
+  | Partial<StateAtType<Path, StateType>>
+  | Promise<Partial<StateAtType<Path, StateType>>>
+  | ((
+      oldState: StateAtType<Path, StateType>
+    ) => Partial<StateAtType<Path, StateType>>)
+  | ((
+      oldState: StateAtType<Path, StateType>
+    ) => Promise<Partial<StateAtType<Path, StateType>>>);
+
+export type ExtendStateAtPathType<Path extends string, StateType> = Partial<
+  Get<StateType, Path, { strict: false }>
+>;
 
 export type StateMapperType<StateType, Mapped> =
   | ((fullState: StateType) => Mapped)
@@ -83,9 +115,3 @@ export type StateMapperOrMappersType<StateType, Mapped> =
   | null
   | StateMapperType<StateType, Mapped>
   | StateMapperType<StateType, Mapped>[];
-
-export type SelectedByStringType<StateType> = Get<
-  StateType,
-  string,
-  { strict: true }
->;

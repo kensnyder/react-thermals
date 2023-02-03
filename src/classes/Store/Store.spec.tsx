@@ -14,23 +14,68 @@ describe('new Store()', () => {
     expect(typeof store.getState).toBe('function');
   });
   it('should make setters from actions', async () => {
-    const store = new Store({ age: 14, name: { fname: 'me' } });
+    const store = new Store({ age: 14, user: { name: 'me' } });
     const setAge = store.connect(setter('age'));
-    const setName = store.connect(setter('name'));
+    const setName = store.connect(setter('user.name'));
     expect(typeof setAge).toBe('function');
     expect(typeof setName).toBe('function');
     setAge(15);
     const awaited = await store.nextState();
-    expect(awaited).toEqual({ age: 15 });
-    expect(store.getState()).toEqual({ age: 15 });
+    expect(awaited).toEqual({ age: 15, user: { name: 'me' } });
+    expect(store.getState()).toEqual({ age: 15, user: { name: 'me' } });
     setName('John Doe');
     await store.nextState();
-    expect(store.getState()).toEqual({
-      age: 15,
-      name: 'John Doe',
-    });
+    expect(store.getState()).toEqual({ age: 15, user: { name: 'John Doe' } });
+  });
+  it('should unwrap promises', async () => {
+    const store = new Store({ age: 10 });
+    store.setState(Promise.resolve({ age: 11 }));
+    await store.nextState();
+    expect(store.getState()).toEqual({ age: 11 });
+  });
+  it('should get initial state', async () => {
+    const store = new Store({ age: 10 });
+    store.setState({ age: 42 });
+    expect(store.getInitialState()).toEqual({ age: 10 });
+  });
+  it('should get initial state at', async () => {
+    const store = new Store({ age: 10 });
+    store.setState({ age: 42 });
+    expect(store.getInitialStateAt('age')).toEqual(10);
   });
   it('should reset state', async () => {
+    const store = new Store({ age: 10 });
+    const setAge = store.connect(setter('age'));
+    setAge(11);
+    await store.nextState();
+    store.resetState();
+    await store.nextState();
+    expect(store.getState()).toEqual({ age: 10 });
+  });
+  it('should reset state synchronously', () => {
+    const store = new Store({ age: 10 });
+    const setAge = store.connect(setter('age'));
+    setAge(11);
+    store.resetSync();
+    expect(store.getState()).toEqual({ age: 10 });
+  });
+  it('should reset state at', async () => {
+    const store = new Store({ bio: { age: 10 } });
+    const setAge = store.connect(setter('bio.age'));
+    setAge(11);
+    await store.nextState();
+    store.resetStateAt('bio.age');
+    await store.nextState();
+    expect(store.getState()).toEqual({ bio: { age: 10 } });
+  });
+  it('should reset state synchronously at', () => {
+    const store = new Store({ bio: { age: 10 } });
+    const setAge = store.connect(setter('bio.age'));
+    setAge(11);
+    store.resetSyncAt('bio.age');
+    expect(store.getState()).toEqual({ bio: { age: 10 } });
+  });
+  it('should reset store', async () => {
     const store = new Store({ age: 10 });
     const setAge = store.connect(setter('age'));
     setAge(11);
@@ -42,7 +87,14 @@ describe('new Store()', () => {
   it('should setState with Promise', async () => {
     const store = new Store(42);
     expect(store.getState()).toBe(42);
-    store.setState((old: number) => Promise.resolve(old + 1));
+    store.setState(Promise.resolve(43));
+    const newState = await store.nextState();
+    expect(newState).toBe(43);
+  });
+  it('should setState with function that returns Promise', async () => {
+    const store = new Store(42);
+    expect(store.getState()).toBe(42);
+    store.setState(old => Promise.resolve(old + 1));
     const newState = await store.nextState();
     expect(newState).toBe(43);
   });
@@ -60,6 +112,75 @@ describe('new Store()', () => {
     await store.nextState();
     expect(store.getState()).toEqual({ count: 43, view: 'list' });
   });
+  it('should mergeStateAt with value', async () => {
+    const state = {
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'XL', length: 'R' },
+    };
+    const store = new Store(state);
+    store.mergeStateAt('variant', { size: '2XL', length: 'T' });
+    await store.nextState();
+    expect(store.getState()).not.toBe(state);
+    expect(store.getState().price).toBe(state.price);
+    expect(store.getState()).toEqual({
+      price: { usd: 100 },
+      variant: { color: 'blue', size: '2XL', length: 'T' },
+    });
+  });
+  it('should mergeStateAt with promise', async () => {
+    const state = {
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'XL' },
+    };
+    const store = new Store(state);
+    store.mergeStateAt('variant', Promise.resolve({ size: 'S', back: 'logo' }));
+    await store.nextState();
+    expect(store.getState()).not.toBe(state);
+    expect(store.getState().price).toBe(state.price);
+    expect(store.getState()).toEqual({
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'S', back: 'logo' },
+    });
+  });
+  it('should mergeStateAt with function', async () => {
+    const state = {
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'XL' },
+    };
+    const store = new Store(state);
+    store.mergeStateAt('variant', () => ({ size: 'M', material: 'Cotton' }));
+    await store.nextState();
+    expect(store.getState()).not.toBe(state);
+    expect(store.getState().price).toBe(state.price);
+    expect(store.getState()).toEqual({
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'M', material: 'Cotton' },
+    });
+  });
+  it('should mergeSyncAt with value', () => {
+    const state = {
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'XL', material: null },
+    };
+    const store = new Store(state);
+    store.mergeSyncAt('variant', { size: 'M', material: 'Cotton' });
+    expect(store.getState()).toEqual({
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'M', material: 'Cotton' },
+    });
+  });
+  it('should mergeSyncAt with function', () => {
+    const state = {
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'XL' },
+    };
+    const store = new Store(state);
+    store.mergeSyncAt('variant', () => ({ size: 'M', material: 'Cotton' }));
+    expect(store.getState()).toEqual({
+      price: { usd: 100 },
+      variant: { color: 'blue', size: 'M', material: 'Cotton' },
+    });
+  });
   it('should setSync', () => {
     const state = { count: 5 };
     const store = new Store(state);
@@ -67,11 +188,20 @@ describe('new Store()', () => {
     store.setSync({ count: 6 });
     expect(store.getState()).toEqual({ count: 6 });
   });
+  it('should setSync with promise', async () => {
+    const state = { count: 5 };
+    const store = new Store(state);
+    store.setSync(Promise.resolve({ count: 6 }));
+    expect(store.getState()).toEqual({ count: 5 });
+    await store.nextState();
+    await store.nextState();
+    expect(store.getState()).toEqual({ count: 6 });
+  });
   it('should setSync with function', () => {
     const state = 42;
     const store = new Store(state);
     expect(store.getState()).toBe(state);
-    store.setSync((old: number) => old + 1);
+    store.setSync(old => old + 1);
     expect(store.getState()).toBe(43);
   });
   it('should mergeSync', () => {
@@ -89,7 +219,7 @@ describe('new Store()', () => {
     const state = { count: 5, mode: 'up' };
     const store = new Store(state);
     expect(store.getState()).toBe(state);
-    store.mergeSync((old: TestState) => ({ count: old.count + 1 }));
+    store.mergeSync(old => ({ count: old.count + 1 }));
     expect(store.getState()).toEqual({ count: 6, mode: 'up' });
   });
   it('should allow plugins', () => {
@@ -97,6 +227,7 @@ describe('new Store()', () => {
     const store = new Store();
     store.plugin(spy as PluginFunctionType);
     expect(spy).toHaveBeenCalledWith(store);
+    expect(store.getPlugins()).toEqual([spy]);
   });
   it('should throw on missing plugins', () => {
     const store = new Store();
@@ -112,36 +243,36 @@ describe('new Store()', () => {
       expect(thrower).toThrow();
     }
   });
-  it('should setSyncAt(path, value)', async () => {
+  it('should setSyncAt(path, value)', () => {
     const store = new Store({ hello: { world: 42 } });
     store.setSyncAt('hello.world', 44);
     expect(store.getStateAt('hello.world')).toBe(44);
     expect(store.getState().hello.world).toBe(44);
   });
-  it('should setSyncAt(path, transformer)', async () => {
+  it('should setSyncAt(path, transformer)', () => {
     const state = { hello: { world: 42 } };
     const store = new Store(state);
     store.setSyncAt('hello.world', num => num + 1);
     expect(store.getState().hello.world).toBe(43);
     expect(store.getStateAt('hello.world')).toBe(43);
   });
-  it('should setStateAt(path, value)', async () => {
+  it('should setStateAt(path, value)', () => {
     const store = new Store({ hello: { world: 42 } });
     store.setStateAt('hello.world', 44);
     store.flushSync();
     expect(store.getState().hello.world).toBe(44);
   });
-  it('should setStateAt(path, transformer)', async () => {
+  it('should setStateAt(path, transformer)', () => {
     const store = new Store({ hello: { world: 42 } });
     store.setStateAt('hello.world', s => s + 1);
     store.flushSync();
     expect(store.getState().hello.world).toBe(43);
   });
-  it('should getStateAt(path)', async () => {
+  it('should getStateAt(path)', () => {
     const store = new Store({ hello: { world: 42 } });
     expect(store.getStateAt('hello.world')).toBe(42);
   });
-  it('should getStateAt(path) with asterisk', async () => {
+  it('should getStateAt(path) with asterisk', () => {
     const store = new Store({
       books: [
         {
@@ -158,6 +289,57 @@ describe('new Store()', () => {
       ],
     });
     expect(store.getStateAt('books.*.authors.*.rating')).toEqual([2, 4, 5]);
+  });
+  it('should setStateAt(path, transformer) with asterisk', () => {
+    const state = {
+      books: [
+        { title: 'One', ratings: [2.4, 3.1, 4.5] },
+        { title: 'Two', ratings: [5.3, 7.8, 9.1] },
+      ],
+    };
+    const store = new Store(state);
+    store.setStateAt('books.*.ratings.*', Math.round);
+    store.flushSync();
+    expect(store.getState()).toEqual({
+      books: [
+        { title: 'One', ratings: [2, 3, 5] },
+        { title: 'Two', ratings: [5, 8, 9] },
+      ],
+    });
+  });
+  it('should setStateAt(path, value) with asterisk', () => {
+    const state = {
+      books: [
+        { title: 'One', ratings: [2.4, 3.1, 4.5] },
+        { title: 'Two', ratings: [5.3, 7.8, 9.1] },
+      ],
+    };
+    const store = new Store(state);
+    store.setStateAt('books.*.ratings.*', 5);
+    store.flushSync();
+    expect(store.getState()).toEqual({
+      books: [
+        { title: 'One', ratings: [5, 5, 5] },
+        { title: 'Two', ratings: [5, 5, 5] },
+      ],
+    });
+  });
+  it('should setStateAt(path, promise) with asterisk', async () => {
+    const state = {
+      books: [
+        { title: 'One', ratings: [2.4, 3.1, 4.5] },
+        { title: 'Two', ratings: [5.3, 7.8, 9.1] },
+      ],
+    };
+    const store = new Store(state);
+    store.setStateAt('books.*.ratings.*', Promise.resolve(5));
+    const next = await store.nextState();
+    expect(next).toEqual({
+      books: [
+        { title: 'One', ratings: [5, 5, 5] },
+        { title: 'Two', ratings: [5, 5, 5] },
+      ],
+    });
   });
   it('should extendState(moreState)', () => {
     type GlobalSchemaType = {
@@ -184,11 +366,20 @@ describe('new Store()', () => {
     expect(thrower).toThrow();
   });
   it('should extendStateAt(path, moreState)', () => {
+    type StateType = {
+      user: {
+        permissions: {
+          createPosts: boolean;
+          adminSettings?: boolean;
+        };
+      };
+    };
     const initialState = { user: { permissions: { createPosts: true } } };
-    const store = new Store({ state: initialState });
+    const store = new Store<StateType>(initialState);
     const ret = store.extendStateAt('user.permissions', {
       adminSettings: false,
     });
+    // it should extend but not change the store state
     expect(store.getState()).toBe(initialState);
     // @ts-ignore
     expect(store.getState().user.permissions.adminSettings).toBe(false);
@@ -196,7 +387,7 @@ describe('new Store()', () => {
   });
   it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
     const initialState = { hello: { world: 42 } };
-    const store = new Store({ state: initialState });
+    const store = new Store(initialState);
     const thrower = () => {
       // @ts-ignore
       store.extendStateAt('hello.world', 44);
@@ -205,7 +396,7 @@ describe('new Store()', () => {
   });
   it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
     const initialState = { hello: { world: 42 } };
-    const store = new Store({ state: initialState });
+    const store = new Store(initialState);
     const thrower = () => {
       // @ts-ignore
       store.extendStateAt('hello.friend', { cool: true });
@@ -224,7 +415,9 @@ describe('new Store() with autoReset', () => {
   let syncThrower;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-
+    store = new Store(state, {
+      autoReset: true,
+    });
     setPage = store.connect(setter('page'));
     setSort = store.connect(setter('sort'));
     thrower = () => {
@@ -238,9 +431,6 @@ describe('new Store() with autoReset', () => {
       });
       store.flushSync();
     };
-    store = new Store(state, {
-      autoReset: true,
-    });
     ListComponent = () => {
       const state = useStoreState(store);
       return (
@@ -279,7 +469,7 @@ describe('new Store() with autoReset', () => {
     expect(store.getState().page).toBe(1);
   });
   it('should fire SetterException', async () => {
-    let error: any;
+    let error;
     store.on('SetterException', evt => (error = evt.data));
     const { getByText } = render(<ListComponent />);
     await act(() => {
@@ -301,9 +491,23 @@ describe('new Store() with autoReset', () => {
   it('should fire SetterException on rejected promise', async () => {
     let rejection;
     store.on('SetterException', evt => (rejection = evt.data));
+    store.setState(Promise.reject('my rejection'));
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBe('my rejection');
+  });
+  it('should fire SetterException on function returning rejected promise', async () => {
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
     store.setState(() => {
       return Promise.reject('my rejection');
     });
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBe('my rejection');
+  });
+  it('should fire SetterException on rejected promise on setSync', async () => {
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setSync(Promise.reject('my rejection'));
     await new Promise(r => setTimeout(r, 15));
     expect(rejection).toBe('my rejection');
   });
@@ -318,6 +522,7 @@ describe('new Store() flushSync', () => {
   let promiseError;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
+    store = new Store(state);
     setPage = store.connect(setter('page'));
     pwn = () => store.setState({ pwned: 42 });
     promise = () => {
@@ -334,8 +539,6 @@ describe('new Store() flushSync', () => {
         });
       });
     };
-
-    store = new Store(state);
   });
   it('should flushSync with values', () => {
     setPage(2);
@@ -351,20 +554,20 @@ describe('new Store() flushSync', () => {
   });
   it('should flushSync with values and functions', () => {
     setPage(2);
-    setPage((old: number) => old + 2);
+    setPage(old => old + 2);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(4);
   });
   it('should flushSync with 1 function', () => {
-    setPage((old: number) => old + 1);
+    setPage(old => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(2);
   });
   it('should flushSync with 2 functions', () => {
-    setPage((old: number) => old + 1);
-    setPage((old: number) => old + 1);
+    setPage(old => old + 1);
+    setPage(old => old + 1);
     expect(store.getState().page).toBe(1);
     store.flushSync();
     expect(store.getState().page).toBe(3);
@@ -389,44 +592,6 @@ describe('new Store() flushSync', () => {
     expect(store.getState().page).toBe(1);
   });
 });
-describe('new Store() cloning', () => {
-  // define store before each test
-  let store;
-  let setPage;
-  let setSort;
-  beforeEach(() => {
-    const state = { page: 1, sort: '-date' };
-    store = new Store(state, {
-      autoReset: true,
-      id: 'foo',
-    });
-    setPage = store.connect(setter('page'));
-    setSort = store.connect(setter('sort'));
-    store.plugin(function plugin1() {});
-    store.plugin(function plugin2() {});
-  });
-  it('should clone with overrides', () => {
-    const cloned = store.clone({ id: 'foo2' });
-    expect(cloned.id).toBe('foo2');
-    expect(cloned.getPlugins().map(p => p.name)).toEqual([
-      'plugin1',
-      'plugin2',
-    ]);
-    expect(cloned.getState()).not.toBe(store.getState());
-    expect(cloned.getState()).toEqual(store.getState());
-  });
-  it('should clone with no overrides', () => {
-    const cloned = store.clone();
-    expect(Object.keys(cloned.actions)).toEqual(['setPage', 'setSort']);
-    expect(cloned.id).toBe('foo');
-    expect(cloned.getPlugins().map(p => p.name)).toEqual([
-      'plugin1',
-      'plugin2',
-    ]);
-    expect(cloned.getState()).not.toBe(store.getState());
-    expect(cloned.getState()).toEqual(store.getState());
-  });
-});
 describe('new Store() middleware', () => {
   // define store before each test
   let store;
@@ -434,8 +599,17 @@ describe('new Store() middleware', () => {
   let setSort;
   beforeEach(() => {
     store = new Store({ page: 1, sort: '-date' });
-    setPage = setter('page');
-    setSort = setter('sort');
+    setPage = store.connect(setter('page'));
+    setSort = store.connect(setter('sort'));
+  });
+  it('should allow altering state', async () => {
+    store.use((ctx, next) => {
+      ctx.next.limit = 10;
+      next();
+    });
+    setPage(2);
+    await store.nextState();
+    expect(store.getState()).toEqual({ page: 2, sort: '-date', limit: 10 });
   });
   it('should allow spying middleware', async () => {
     const spy = vitest.fn();

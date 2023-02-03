@@ -1,11 +1,16 @@
 import SimpleCache from '../../classes/SimpleCache/SimpleCache';
 
+const identity = state => state;
+
 /**
  * Build a function that will return state at a certain path
  * @param path  Path string such as "cart" or "cart.total"
  * @return  A function that can be used to get the path on any object
  */
 export function doSelect(path: string): Function {
+  if (path === '@') {
+    return identity;
+  }
   const allSegments = path.split(/[\[\].]/).filter(Boolean);
   if (allSegments.length === 1) {
     // simplified function for the trivial case when path is just a prop name

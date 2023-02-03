@@ -34,8 +34,10 @@ npm install react-thermals
    1. [TypeScript definitions](#typescript-definitions)
 6. [Full documentation](#all-store-options)
    1. [All store options](#all-store-options)
-   2. [Common store methods](#common-store-methods)
-   3. [Other store methods](#other-store-methods)
+   2. [State Setters](#state-setters)
+   3. [State Getters](#state-getters)
+   4. [Common store methods](#common-store-methods)
+   5. [Other store methods](#other-store-methods)
 7. [Best Practices](#best-practices)
    1. [Code splitting](#code-splitting)
    2. [Suggested file structure](#suggested-file-structure)
@@ -818,38 +820,61 @@ The `Store()` constructor takes an object with the following properties:
 - {String} id - An identifier that could be used by plugins or event listeners
 - {Object} on - Immediately add event handlers without calling `store.on(event, handler)`
 
+### State Setters
+
+|                          | Set                         | Merge                      | Reset              |
+| ------------------------ | --------------------------- | -------------------------- | ------------------ |
+| Async                    | setState(value)             | mergeState(value)          | resetState()       |
+| Async w/ path            | setStateAt(path, value)     | mergeStateAt(path, value)  | resetStateAt(path) |
+| Sync                     | setSync(value)              | mergeSync(value)           | resetSync()        |
+| Sync w/ path             | setSyncAt(path, value)      | mergeSyncAt(path, value)   | resetSyncAt(path)  |
+| Sync no rerender         | replaceState(value)         | extendState(value)         | N/A                |
+| Sync w/ path no rerender | replaceStateAt(path, value) | extendStateAt(path, value) | N/A                |
+
+All store setters support values, promises, functions that return values, and
+functions that return promises.
+
+Examples:
+
+```js
+setState(42);
+setState(old => old + 42);
+setState(Promise.resolve(42));
+setState(old => Promise.resolve(old + 42));
+```
+
+If you provide a promise to a `Sync` method, it will behave like its
+asynchronous counterpart.
+
+### State Getters
+
+|             | Current State    | Initial State           |
+| ----------- | ---------------- | ----------------------- |
+| Get         | getState()       | getInitialState()       |
+| Get w/ path | getStateAt(path) | getInitialStateAt(path) |
+
 ### Common Store Methods
 
-| Method                 | Description                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------ |
-| setState(valueOrFn)    | In an action function: set the store's state                                         |
-| mergeState(valueOrFn)  | In an action function: extend the store's state                                      |
-| extendState(moreState) | Extend state to a store after it has been instantiated. Useful for global stores.    |
-| nextState()            | Return a promise that resolves when queued updates finish running                    |
-| getState()             | Get state. Generally your action functions should use store.setState(old => { ... }) |
-| flushSync()            | Run queued updates immediately                                                       |
-| reset()                | Reset store to its original condition and original state                             |
-| use(...middlewares)    | Register one or more middlewares                                                     |
+| Method              | Description                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| nextState()         | Return a promise that resolves when queued updates finish running                    |
+| getState()          | Get state. Generally your action functions should use store.setState(old => { ... }) |
+| flushSync()         | Run queued updates immediately                                                       |
+| reset()             | Reset store to its original condition and original state                             |
+| use(...middlewares) | Register one or more middlewares                                                     |
 
 ### Other Store Methods
 
-| Method                        | Description                                                                                          |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
-| setSync(valueOrFn)            | In an action function: set the store's state (synchronously)                                         |
-| mergeSync(valueOrFn)          | In an action function: extend the store's state (synchronously)                                      |
-| setSyncAt(path, valueOrFn)    | In an action function: set the store's state at the given path (synchronously)                       |
-| getStateAt(path)              | Get state at path. Generally your action functions should use store.setStateAt(path, old => { ... }) |
-| setStateAt(path, valueOrFn)   | In an action function: set the store's state at the given path                                       |
-| clone(withOverrides)          | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
-| resetState(valueOrFn)         | Reset store state to original value                                                                  |
-| resetStateAt(path, valueOrFn) | Reset part of a store's state to its original value                                                  |
-| hasInitialized()              | True if any component has ever used this store (but may not have mounted yet)                        |
-| getMountCount()               | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
-| on(type, handler)             | Register a handler to be called for the given event type                                             |
-| off(type, handler)            | De-register a handler for the given event type                                                       |
-| once(type, handler)           | Register a handler to be called ONCE for the given event type                                        |
-| plugin(initializer)           | Register a plugin                                                                                    |
-| getPlugins()                  | Get the list of initializer functions registered as plugins                                          |
+| Method               | Description                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| clone(withOverrides) | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
+| hasInitialized()     | True if any component has ever used this store (but may not have mounted yet)                        |
+| getMountCount()      | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
+| on(type, handler)    | Register a handler to be called for the given event type                                             |
+| off(type, handler)   | De-register a handler for the given event type                                                       |
+| once(type, handler)  | Register a handler to be called ONCE for the given event type                                        |
+| plugin(initializer)  | Register a plugin                                                                                    |
+| getPlugins()         | Get the list of initializer functions registered as plugins                                          |
 
 ## Best Practices
 
@@ -989,7 +1014,7 @@ Middleware examples:
 // observe the state but do not alter
 myStore.use((context, done) => {
   context.prev; // the old state value
-  context.next; // the new state value
+  context.next; // the new state value - alter to modify state
   context.isAsync; // true if middleware is expected to call next right away
   logToServer(context.next);
   done();

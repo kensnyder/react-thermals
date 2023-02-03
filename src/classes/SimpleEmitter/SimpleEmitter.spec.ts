@@ -11,12 +11,11 @@ describe('SimpleEmitter', () => {
     expect(context).toBe(emitter);
   });
   it('should return basic object from emit()', () => {
-    const foo = {};
+    const context = { prev: {}, next: {} };
     const emitter = new SimpleEmitter();
-    emitter.emit('AfterUpdate', evt => {
-      expect(evt.data).toBe(foo);
-      expect(evt.type).toBe('AfterUpdate');
-    });
+    const evt = emitter.emit('AfterUpdate', context);
+    expect(evt.data).toBe(context);
+    expect(evt.type).toBe('AfterUpdate');
   });
   it('should remove handlers for off()', () => {
     const emitter = new SimpleEmitter();

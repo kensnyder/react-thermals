@@ -9,16 +9,17 @@ type LoggerDataType<StateType> = {
 
 type LoggerConfigType<StateType> = {
   eventTypes?: EventNameType[];
-  logHandler?: (message: LoggerDataType<StateType>) => {};
+  logHandler?: (message: LoggerDataType<StateType>) => void;
 };
 
 /**
  * Plugin a logger that will emit all store events to the console
  * @param eventTypes
+ * @param logHandler  The function that will actually log
  */
 export default function consoleLogger<StateType>({
   eventTypes = ['*'],
-  logHandler = console.log.bind(console),
+  logHandler = console.log as (message: LoggerDataType<StateType>) => void,
 }: LoggerConfigType<StateType> = {}) {
   return function plugin(store: Store<StateType>) {
     if (!Array.isArray(eventTypes) || eventTypes.length === 0) {

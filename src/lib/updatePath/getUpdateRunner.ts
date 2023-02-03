@@ -10,7 +10,7 @@
  * @throws  If transform is not a valid type
  */
 export default function getUpdateRunner(
-  transform: Function | Function[] | undefined
+  transform: Function | Function[] | undefined = undefined
 ): Function {
   if (typeof transform === 'function') {
     // run transform directly

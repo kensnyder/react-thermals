@@ -7,18 +7,18 @@ import Store from '../../classes/Store/Store';
  * @param path  The name of or path to the property to remove
  * @return  A function suitable for a store action
  */
-export function remover(path: string) {
+export function remover<Item extends any>(path: string) {
   const remove = updatePath(
     path,
-    function remover(old: any, itemsToRemove: any[]) {
+    function doRemove(old: Item, itemsToRemove: Item[]) {
       if (!old || !Array.isArray(old)) {
         return old;
       }
       return old.filter(value => !itemsToRemove.includes(value));
     }
   );
-  return function updater(this: Store, ...itemsToRemove: any[]) {
-    return this.setState((old: any) => remove(old, itemsToRemove));
+  return function updater(this: Store, ...itemsToRemove: Item[]) {
+    return this.setState((fullState: any) => remove(fullState, itemsToRemove));
   };
 }
 

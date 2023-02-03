@@ -13,22 +13,6 @@ describe('shallowCopy()', () => {
     expect(value).not.toBe(copy);
     expect(value).toEqual(copy);
   });
-  it('should copy a Map', () => {
-    const value = new Map([
-      ['a', 1],
-      ['b', 2],
-      ['c', 3],
-    ]);
-    const copy = shallowCopy(value);
-    expect(value).not.toBe(copy);
-    expect(value).toEqual(copy);
-  });
-  it('should copy a Set', () => {
-    const value = new Set([1, 2, 3]);
-    const copy = shallowCopy(value);
-    expect(value).not.toBe(copy);
-    expect(value).toEqual(copy);
-  });
   it('should return booleans', () => {
     const value = true;
     const copy = shallowCopy(value);

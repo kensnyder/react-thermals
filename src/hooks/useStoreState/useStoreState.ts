@@ -16,9 +16,10 @@ export default function useStoreState<StateType>(
     // read the initial state and emit BeforeFirstUse if not yet initialized
     let fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      store.emit('BeforeFirstUse', fullInitialState);
+      store.emit('BeforeInitialize', fullInitialState);
       // re-assign state in case a handler changed it
       fullInitialState = store.getState();
+      store.emit('AfterInitialize', fullInitialState);
     }
     return fullInitialState;
   });

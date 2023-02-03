@@ -5,6 +5,7 @@ import '@testing-library/jest-dom';
 import Store from '../../classes/Store/Store';
 import persistState from './persistState';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
+import { ParseType, StringifyType } from './parseAndStringify';
 
 interface StorageMock extends Storage {
   value: any;
@@ -19,15 +20,10 @@ describe('persistState()', () => {
   let Component: FunctionComponent;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: (page: number) => store.mergeState({ page }),
-      setSort: (sort: string) => store.mergeState({ sort }),
-    };
-    store = new Store({
-      state,
-      actions,
+    store = new Store(state, {
       id: 'myStore',
     });
+    const setPage = page => store.mergeState({ page });
     storage = {
       value: undefined,
       getItem: vitest.fn(() => storage.value),
@@ -37,10 +33,9 @@ describe('persistState()', () => {
       key: vitest.fn(),
       length: 0,
     };
-    store.plugin(persistState({ storage }));
+    store.plugin(persistState({ key: 'foo', path: '@', storage }));
     Component = () => {
       const state = useStoreState(store);
-      const { setPage } = store.actions;
       return (
         <div className="Pagination">
           <span>page={state.page}</span>
@@ -54,14 +49,14 @@ describe('persistState()', () => {
     const { getByText } = render(<Component />);
     expect(getByText('page=1')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
-    expect(storage.getItem).toHaveBeenCalledWith('myStore');
+    expect(storage.getItem).toHaveBeenCalledWith('foo');
   });
   it('should override initial state', () => {
     storage.value = JSON.stringify({ page: 2, sort: '-date' });
     const { getByText } = render(<Component />);
     expect(getByText('page=2')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
-    expect(storage.getItem).toHaveBeenCalledWith('myStore');
+    expect(storage.getItem).toHaveBeenCalledWith('foo');
   });
   it('should save state', async () => {
     const { getByText } = render(<Component />);
@@ -74,21 +69,15 @@ describe('persistState()', () => {
     expect(getByText('sort=-date')).toBeInTheDocument();
   });
 });
-describe('persistState() with fields', () => {
+describe('persistState() at path', () => {
   // define store before each test
   let store: Store;
   let storage: StorageMock;
   let Component: FunctionComponent;
   beforeEach(() => {
-    const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: (page: number) => store.mergeState({ page }),
-      setSort: (sort: string) => store.mergeState({ sort }),
-    };
-    store = new Store({
-      state,
-      actions,
-    });
+    const state = { search: { page: 1, sort: '-date' } };
+    store = new Store(state);
+    const setPage = page => store.mergeStateAt('search', { page });
     storage = {
       value: undefined,
       getItem: vitest.fn(() => storage.value),
@@ -98,15 +87,20 @@ describe('persistState() with fields', () => {
       key: vitest.fn(),
       length: 0,
     };
-    store.plugin(persistState({ storage, key: 'myKey', fields: ['page'] }));
+    store.plugin(
+      persistState({
+        storage,
+        key: 'myKey',
+        path: 'search.page',
+      })
+    );
     Component = () => {
       const state = useStoreState(store);
-      const { setPage } = store.actions;
       return (
         <div className="Pagination">
-          <span>page={state.page}</span>
-          <span>sort={state.sort}</span>
-          <span onClick={() => setPage(state.page + 1)}>Next</span>
+          <span>page={state.search.page}</span>
+          <span>sort={state.search.sort}</span>
+          <span onClick={() => setPage(state.search.page + 1)}>Next</span>
         </div>
       );
     };
@@ -118,10 +112,9 @@ describe('persistState() with fields', () => {
     expect(storage.getItem).toHaveBeenCalledWith('myKey');
   });
   it('should override initial state', () => {
-    storage.value = JSON.stringify({ page: 2 });
+    storage.value = JSON.stringify(5);
     const { getByText } = render(<Component />);
-    expect(getByText('page=2')).toBeInTheDocument();
-    expect(getByText('sort=-date')).toBeInTheDocument();
+    expect(getByText('page=5')).toBeInTheDocument();
     expect(storage.getItem).toHaveBeenCalledWith('myKey');
   });
   it('should save state', async () => {
@@ -130,47 +123,11 @@ describe('persistState() with fields', () => {
       fireEvent.click(getByText('Next'));
       store.flushSync();
     });
-    expect(storage.value).toEqual(JSON.stringify({ page: 2 }));
+    expect(storage.value).toEqual(JSON.stringify(2));
     expect(getByText('page=2')).toBeInTheDocument();
-    expect(getByText('sort=-date')).toBeInTheDocument();
   });
 });
 describe('persistState() plugin error', () => {
-  // define store before each test
-  let store: Store;
-  let storage: StorageMock;
-  let Component: FunctionComponent;
-  beforeEach(() => {
-    const state = { page: 1, sort: '-date' };
-    const actions = {
-      setPage: (page: number) => store.mergeState({ page }),
-      setSort: (sort: string) => store.mergeState({ sort }),
-    };
-    store = new Store({
-      state,
-      actions,
-    });
-    storage = {
-      value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
-      length: 0,
-    };
-    Component = () => {
-      const state = useStoreState(store);
-      const { setPage } = store.actions;
-      return (
-        <div className="Pagination">
-          <span>page={state.page}</span>
-          <span>sort={state.sort}</span>
-          <span onClick={() => setPage(state.page + 1)}>Next</span>
-        </div>
-      );
-    };
-  });
   it('should throw on strings', () => {
     const store = new Store({});
     const shouldThrow = () => {
@@ -189,49 +146,25 @@ describe('persistState() plugin error', () => {
   });
   it('should throw on empty objects', () => {
     // @ts-ignore
-    const store = new Store({ storage: {} });
-    const shouldThrow = () => {
-      // @ts-ignore
-      store.plugin(persistState({}));
-    };
-    expect(shouldThrow).toThrowError();
-  });
-  it('should throw on non-array fields', () => {
-    storage = {
-      value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
-      length: 0,
-    };
     const store = new Store({});
     const shouldThrow = () => {
-      store.plugin(
-        persistState({
-          storage,
-          // @ts-ignore
-          fields: 'foo',
-        })
-      );
+      // @ts-ignore
+      store.plugin(persistState({ storage: {} }));
     };
     expect(shouldThrow).toThrowError();
   });
 });
 describe('persistState() JSON errors', () => {
   // define store before each test
-  let spy: SpyInstance;
+  let consoleSpy: SpyInstance;
   let store: Store;
   let storage: StorageMock;
   let Component: FunctionComponent;
   beforeEach(() => {
-    spy = vitest.spyOn(console, 'error');
-    spy.mockImplementation(() => {});
+    consoleSpy = vitest.spyOn(console, 'error');
+    consoleSpy.mockImplementation(() => {});
     const state = { page: 1, sort: '-date' };
-    store = new Store({
-      state,
-    });
+    store = new Store(state);
     storage = {
       value: undefined,
       getItem: vitest.fn(() => storage.value),
@@ -252,34 +185,31 @@ describe('persistState() JSON errors', () => {
     };
   });
   afterEach(() => {
-    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
-  it('should error on invalid JSON', () => {
+  it('should fall back to state on invalid JSON', () => {
     store.plugin(persistState({ storage, key: 'hello' }));
     storage.value = '{"a",1';
     render(<Component />);
-    expect(spy.mock.calls[0][0]).toContain('react-thermals');
-    expect(spy.mock.calls[0][0]).toContain('parse');
     expect(store.getState()).toEqual({ page: 1, sort: '-date' });
+    expect(storage.getItem('hello')).toEqual(
+      JSON.stringify({ page: 1, sort: '-date' })
+    );
     expect(storage.setItem.mock.calls).toEqual([
       ['hello', JSON.stringify({ page: 1, sort: '-date' })],
     ]);
   });
-  it('should error on invalid JSON', () => {
-    store.plugin(persistState({ storage, key: 'hi', fields: ['page'] }));
+  it('should warn on invalid JSON', () => {
+    store.plugin(persistState({ storage, key: 'hi', path: 'foo' }));
     storage.value = '{"page",3';
     render(<Component />);
-    expect(spy.mock.calls[0][0]).toContain('react-thermals');
-    expect(spy.mock.calls[0][0]).toContain('parse');
-    expect(store.getState()).toEqual({ page: 1, sort: '-date' });
-    expect(storage.setItem.mock.calls).toEqual([
-      ['hi', JSON.stringify({ page: 1 })],
-    ]);
+    expect(consoleSpy.mock.calls[0][0]).toContain('react-thermals');
+    expect(consoleSpy.mock.calls[0][0]).toContain('parse');
   });
   it('should not error on non-object JSON', () => {
     storage.value = '5';
     render(<Component />);
-    expect(spy).not.toHaveBeenCalled();
+    expect(consoleSpy).not.toHaveBeenCalled();
   });
   it('should error on JSON.stringify error', () => {
     const cyclic: Record<string, any> = { a: 1 };
@@ -287,8 +217,8 @@ describe('persistState() JSON errors', () => {
     store.setSync(cyclic);
     store.plugin(persistState({ storage, key: 'food' }));
     render(<Component />);
-    expect(spy.mock.calls[0][0]).toContain('react-thermals');
-    expect(spy.mock.calls[0][0]).toContain('stringify');
+    expect(consoleSpy.mock.calls[0][0]).toContain('react-thermals');
+    expect(consoleSpy.mock.calls[0][0]).toContain('stringify');
     expect(store.getState()).toBe(cyclic);
     expect(storage.setItem.mock.calls).toEqual([['food', '']]);
   });
@@ -298,13 +228,11 @@ describe('persistState() with custom parse and stringify', () => {
   let store: Store;
   let storage: StorageMock;
   let Component: FunctionComponent;
-  let parse: Function;
-  let stringify: Function;
+  let parse: ParseType;
+  let stringify: StringifyType;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    store = new Store({
-      state,
-    });
+    store = new Store(state);
     storage = {
       value: undefined,
       getItem: vitest.fn(() => storage.value),
@@ -314,10 +242,10 @@ describe('persistState() with custom parse and stringify', () => {
       key: vitest.fn(),
       length: 0,
     };
-    parse = (query: string) => {
+    parse = (query: string): any => {
       return Object.fromEntries(new URLSearchParams(query).entries());
     };
-    stringify = (value: any) => {
+    stringify = (value: any): string => {
       return new URLSearchParams(value).toString();
     };
     store.plugin(persistState({ storage, parse, stringify, key: 'params' }));

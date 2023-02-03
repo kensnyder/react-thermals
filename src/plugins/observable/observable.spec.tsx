@@ -9,24 +9,21 @@ import { vitest } from 'vitest';
 describe('observable()', () => {
   let store: Store;
   let CountComponent: FunctionComponent;
+  let increment;
+  let thrower;
   beforeEach(() => {
-    store = new Store({
-      state: 0,
-      actions: {
-        increment() {
-          store.setState((old: number) => old + 1);
-        },
-        thrower() {
-          store.setState(() => {
-            throw new Error('my error');
-          });
-        },
-      },
-    });
+    store = new Store(0);
+    increment = () => {
+      store.setState((old: number) => old + 1);
+    };
+    thrower = () => {
+      store.setState(() => {
+        throw new Error('my error');
+      });
+    };
     store.plugin(observable());
     CountComponent = () => {
       const state = useStoreState(store);
-      const { increment, thrower } = store.actions;
       return (
         <div className="Count">
           <span title="count">{state}</span>
@@ -39,7 +36,7 @@ describe('observable()', () => {
   it('should fire on change', async () => {
     const observer = { next: vitest.fn() };
     store.subscribe(observer);
-    store.actions.increment();
+    increment();
     await store.nextState();
     expect(store.getState()).toBe(1);
     expect(observer.next).toHaveBeenCalledWith(1);

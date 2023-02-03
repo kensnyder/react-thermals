@@ -1,13 +1,9 @@
 import Store from '../../classes/Store/Store';
 import { merger, mergerSync } from './merger';
 
-function getTestStore(initialState) {
-  return new Store({ state: initialState });
-}
-
 describe('merger(path)', () => {
   it('should merge state', async () => {
-    const store = getTestStore({ door: 'A', open: false });
+    const store = new Store({ door: 'A', open: false });
     const addPaint = merger('@').bind(store);
     addPaint({ color: 'red', finish: 'matte' });
     await new Promise(r => setTimeout(r, 15));
@@ -19,7 +15,7 @@ describe('merger(path)', () => {
     });
   });
   it('should merge state at path', async () => {
-    const store = getTestStore({ doors: [{ door: 'A', open: false }] });
+    const store = new Store({ doors: [{ door: 'A', open: false }] });
     const addPaint = merger('doors[0]').bind(store);
     addPaint({ color: 'blue', finish: 'gloss', open: true });
     await new Promise(r => setTimeout(r, 15));
@@ -37,7 +33,7 @@ describe('merger(path)', () => {
 });
 describe('mergerSync(path)', () => {
   it('should merge state at path sync', async () => {
-    const store = getTestStore({
+    const store = new Store({
       doors: [{ door: 'A', open: false }, { door: 'A.2' }],
     });
     const addPaint = mergerSync('doors[0]').bind(store);

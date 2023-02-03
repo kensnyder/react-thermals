@@ -38,7 +38,7 @@ export default function syncUrl({
   const fields = givenFields || Object.keys(schema);
 
   return function plugin(store: Store) {
-    store.on('BeforeFirstUse', evt => {
+    store.on('BeforeInitialize', evt => {
       const urlData = parse(location.search.slice(1));
       const known = omitUnknown(fields as string[], urlData);
       if (known && !isEmpty(known)) {

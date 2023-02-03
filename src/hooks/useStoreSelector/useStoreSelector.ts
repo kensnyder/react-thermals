@@ -20,7 +20,10 @@ export default function useStoreSelector<StateType, SelectedState>(
 ): any {
   // derive and cache the mapState and equalityFn
   const [map, isEqual] = useMemo(() => {
-    return [getMapperFunction(mapState), equalityFn || defaultEqualityFn];
+    return [
+      getMapperFunction<StateType>(mapState),
+      equalityFn || defaultEqualityFn,
+    ];
     // assume "mapState" and "equalityFn" args are stable like redux does
   }, []);
 
@@ -28,9 +31,10 @@ export default function useStoreSelector<StateType, SelectedState>(
   const [mappedState, setState] = useState(() => {
     let fullInitialState = store.getState();
     if (!store.hasInitialized()) {
-      store.emit('BeforeFirstUse', fullInitialState);
+      store.emit('BeforeInitialize', fullInitialState);
       // re-assign state in case a handler changed it
       fullInitialState = store.getState();
+      store.emit('AfterInitialize', fullInitialState);
     }
     return map(fullInitialState);
   });

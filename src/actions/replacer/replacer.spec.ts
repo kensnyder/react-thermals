@@ -7,19 +7,18 @@ describe('replacer()', () => {
       { name: 'Michael Jordan', jersey: '23' },
       { name: 'Steve Nash', jersey: '13' },
     ];
-    const store = new Store({
-      state: {
-        players,
-      },
-      actions: {
-        substitutePlayer: replacer('players'),
-      },
-    });
-    store.actions.substitutePlayer(players[0], {
+    const store = new Store({ players });
+    const substitutePlayer = store.connect(replacer('players'));
+    substitutePlayer(players[0], {
       name: 'Kobe Bryant',
       jersey: '24',
     });
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
+    expect(store.getState().players).toEqual([
+      { name: 'Kobe Bryant', jersey: '24' },
+      { name: 'Steve Nash', jersey: '13' },
+    ]);
+    substitutePlayer({}, { name: 'Carmelo Anthony', jersey: '00' });
     expect(store.getState().players).toEqual([
       { name: 'Kobe Bryant', jersey: '24' },
       { name: 'Steve Nash', jersey: '13' },
@@ -34,16 +33,12 @@ describe('replacerSync()', () => {
       { name: 'Steve Nash', jersey: '13' },
     ];
     const store = new Store({
-      state: {
-        team: {
-          players,
-        },
-      },
-      actions: {
-        substitutePlayer: replacerSync('team.players'),
+      team: {
+        players,
       },
     });
-    store.actions.substitutePlayer(players[0], {
+    const substitutePlayer = store.connect(replacerSync('team.players'));
+    substitutePlayer(players[0], {
       name: 'Kobe Bryant',
       jersey: '24',
     });

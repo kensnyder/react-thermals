@@ -1,7 +1,6 @@
 import shallowCopy from '../shallowCopy/shallowCopy';
 import getUpdateRunner from './getUpdateRunner';
 import SimpleCache from '../../classes/SimpleCache/SimpleCache';
-import { SelectedByStringType } from '../../types';
 
 const cache = new SimpleCache(5000);
 

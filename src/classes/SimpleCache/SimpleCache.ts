@@ -18,13 +18,16 @@ export default class SimpleCache {
     this.#_cache[key] = value;
     this.#_stack.push(key);
   }
+  get size() {
+    return this.#_stack.length;
+  }
   #_prune(): void {
-    const oldestKey = this.#_stack.unshift();
+    const oldestKey = this.#_stack.shift();
     this.#_cache[oldestKey] = undefined;
   }
   static memoize(maxSize: number, fn: Function): Function {
     const cache = new SimpleCache(maxSize);
-    return function memoized(key) {
+    return function memoized(key: string) {
       if (cache.has(key)) {
         return cache.get(key);
       }

@@ -6,6 +6,11 @@ describe('selectPath()', () => {
     const slice = selector({ phone: '867-5309' });
     expect(slice).toEqual('867-5309');
   });
+  it('should accept @ for identity', () => {
+    const selector = selectPath('@');
+    const slice = selector({ phone: '867-5309' });
+    expect(slice).toEqual({ phone: '867-5309' });
+  });
   it('should accept strings with dots', () => {
     const selector = selectPath('user.phone');
     const slice = selector({ user: { phone: '867-5309' } });

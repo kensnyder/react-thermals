@@ -18,15 +18,15 @@ describe('undo()', () => {
       minutes: number;
     };
     const state: MyState = { keys: [], minutes: 60 };
+    store = new Store(state);
     pressKey = (character: string) => {
-      store.mergeState((old: MyState) => ({
+      store.mergeState(old => ({
         keys: [...old.keys, character],
       }));
     };
     addMinutes = (num: number) => {
-      store.mergeState((old: MyState) => ({ minutes: old.minutes + num }));
+      store.mergeState(old => ({ minutes: old.minutes + num }));
     };
-    store = new Store({ state });
     KeyboardComponent = () => {
       const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
       const numbers = '0123456789'.split('');

@@ -90,8 +90,7 @@ const postsStore = new Store({
 export default postsStore;
 
 // In components/PostsPagination.tsx
-import postsStore from '../stores/postsStore';
-const { setPage } = postsStore.actions;
+import postsStore, { setPage } from '../stores/postsStore';
 export default function Pagination() {
   return (
     <>
@@ -126,8 +125,7 @@ export default postsStore;
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore from '../stores/postsStore';
-const { setSearchTerm } = postsStore.actions;
+import postsStore, { setSearchTerm } from '../stores/postsStore';
 export default function PostsSearch() {
   const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
   return (
@@ -164,8 +162,7 @@ export default postsStore;
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore from '../stores/postsStore';
-const { setSearchTerm } = postsStore.actions;
+import postsStore, { setSearchTerm } from '../stores/postsStore';
 export default function PostsSearch() {
   const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
   return <input value={searchTerm} onChange={setSearchTerm} />;
@@ -208,8 +205,7 @@ export function usePostsStore(selector) {
 components/PostText.jsx
 
 ```jsx
-import postsStore, { usePostsStore } from '../stores/postsStore';
-const { toggleDetails } = postsStore.actions;
+import postsStore, { usePostsStore, toggleDetails } from '../stores/postsStore';
 
 export default function PostText() {
   const showDetails = usePostsStore(state => state.showDetails);
@@ -270,8 +266,7 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore';
-const { addTodo } = todoStore.actions;
+import todoStore, { addTodo } from '../stores/todoStore';
 
 export default function TodoList() {
   const inputRef = useRef();
@@ -350,8 +345,7 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore from '../stores/todoStore';
-const { addTodo, deleteTodo } = todoStore.actions;
+import todoStore, { addTodo, deleteTodo } from '../stores/todoStore';
 
 export default function TodoList() {
   const inputRef = useRef();
@@ -428,8 +422,12 @@ export default gameStore;
 components/GamePad.jsx
 
 ```jsx
-import gameStore from '../stores/gameStore';
-const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
+import gameStore, {
+  moveUp,
+  moveDown,
+  moveRight,
+  moveLeft,
+} from '../stores/gameStore';
 
 export default function GamePad() {
   return (
@@ -464,8 +462,7 @@ export default gameStore;
 components/GamePad.jsx
 
 ```jsx
-import gameStore from '../stores/gameStore';
-const { moveUp, moveDown, moveRight, moveLeft } = gameStore.actions;
+import gameStore, { vertical, horizontal } from '../stores/gameStore';
 
 export default function GamePad() {
   return (
