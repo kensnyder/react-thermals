@@ -36,7 +36,7 @@ npm install react-thermals
    1. [All store options](#all-store-options)
    2. [State Setters](#state-setters)
    3. [State Getters](#state-getters)
-   4. [Common store methods](#common-store-methods)
+   4. [Most common store methods](#most-common-store-methods)
    5. [Other store methods](#other-store-methods)
 7. [Best Practices](#best-practices)
    1. [Code splitting](#code-splitting)
@@ -188,7 +188,7 @@ type GlobalSchemaType = {
 };
 const initialState: GlobalSchemaType = { hello: { world: 42 } };
 const store = new Store(initialState);
-store.extendState({ foo: 'bar' });
+store.extendSync({ foo: 'bar' });
 store.getStateAt('hello.world'); // TypeScript knows return value is number
 store.setStateAt('hello.world', 'me'); // TypeScript knows "me" is invalid
 store.setStateAt('hello.world', () => 'me'); // TypeScript knows "me" is invalid
@@ -284,7 +284,7 @@ import globalStore, { useGlobalStore } from '../globalStore';
 import { persistState, appender, merger, remover } from 'react-thermals';
 
 // extend the state at any time
-globalStore.extendState({ todos: [] });
+globalStore.extendSync({ todos: [] });
 
 // add actions at any time
 export const addTodo = globalStore.connect(appender('todos'));
@@ -406,7 +406,7 @@ export function useAuth() {
   return useGlobalStore('user');
 }
 
-globalStore.extendState({
+globalStore.extendSync({
   user: {
     isLoggedIn: false,
     isCheckingLogin: false,
@@ -822,46 +822,56 @@ The `Store()` constructor takes an object with the following properties:
 
 ### State Setters
 
-|                          | Set                         | Merge                      | Reset              |
-| ------------------------ | --------------------------- | -------------------------- | ------------------ |
-| Async                    | setState(value)             | mergeState(value)          | resetState()       |
-| Async w/ path            | setStateAt(path, value)     | mergeStateAt(path, value)  | resetStateAt(path) |
-| Sync                     | setSync(value)              | mergeSync(value)           | resetSync()        |
-| Sync w/ path             | setSyncAt(path, value)      | mergeSyncAt(path, value)   | resetSyncAt(path)  |
-| Sync no rerender         | replaceState(value)         | extendState(value)         | N/A                |
-| Sync w/ path no rerender | replaceStateAt(path, value) | extendStateAt(path, value) | N/A                |
+The following state setters will cause a change and re-render all components
+that subscribe to affected state.
 
-All store setters support values, promises, functions that return values, and
-functions that return promises.
+|               | Set                     | Merge                     | Reset              |
+| ------------- | ----------------------- | ------------------------- | ------------------ |
+| Async         | setState(value)         | mergeState(value)         | resetState()       |
+| Async w/ path | setStateAt(path, value) | mergeStateAt(path, value) | resetStateAt(path) |
+| Sync          | setSync(value)          | mergeSync(value)          | resetSync()        |
+| Sync w/ path  | setSyncAt(path, value)  | mergeSyncAt(path, value)  | resetSyncAt(path)  |
+
+The `value` parameter supports values, promises, functions that return values,
+and functions that return promises.
 
 Examples:
 
 ```js
-setState(42);
-setState(old => old + 42);
-setState(Promise.resolve(42));
-setState(old => Promise.resolve(old + 42));
+store.setState(42);
+store.setState(old => old + 42);
+store.setState(Promise.resolve(42));
+store.setState(old => Promise.resolve(old + 42));
 ```
 
 If you provide a promise to a `Sync` method, it will behave like its
 asynchronous counterpart.
 
-### State Getters
+#### No rerendering
 
-|             | Current State    | Initial State           |
-| ----------- | ---------------- | ----------------------- |
-| Get         | getState()       | getInitialState()       |
-| Get w/ path | getStateAt(path) | getInitialStateAt(path) |
+There are also four methods that do not trigger any components to rerender.
+These are good for initializing or extending state when the store is not in use.
 
-### Common Store Methods
+|              | Set                        | Merge                     |
+| ------------ | -------------------------- | ------------------------- |
+| Sync         | replaceSync(value)         | extendSync(value)         |
+| Sync w/ path | replaceSyncAt(path, value) | extendSyncAt(path, value) |
 
-| Method              | Description                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| nextState()         | Return a promise that resolves when queued updates finish running                    |
-| getState()          | Get state. Generally your action functions should use store.setState(old => { ... }) |
-| flushSync()         | Run queued updates immediately                                                       |
-| reset()             | Reset store to its original condition and original state                             |
-| use(...middlewares) | Register one or more middlewares                                                     |
+The `value` parameter only supports values; you cannot pass functions or
+Promises.
+
+```js
+store.replaceSync({ foo: 'bar' });
+```
+
+### Most Common Store Methods
+
+| Method              | Description                                                        |
+| ------------------- | ------------------------------------------------------------------ |
+| nextState()         | Return a promise that resolves when queued updates finish running. |
+| flushSync()         | Run queued updates immediately                                     |
+| reset()             | Reset store to its original condition and original state           |
+| use(...middlewares) | Register one or more middlewares                                   |
 
 ### Other Store Methods
 
@@ -876,6 +886,33 @@ asynchronous counterpart.
 | plugin(initializer)  | Register a plugin                                                                                    |
 | getPlugins()         | Get the list of initializer functions registered as plugins                                          |
 
+### State Getters
+
+|             | Current State    | Initial State           |
+| ----------- | ---------------- | ----------------------- |
+| Get         | getState()       | getInitialState()       |
+| Get w/ path | getStateAt(path) | getInitialStateAt(path) |
+
+Generally you'll want to avoid getting the current state. Methods that update
+store should preferrably pass a callback to a state setter function.
+
+Example:
+
+```js
+store.setState(old => ({ ...old, age: old.age + 1 }));
+```
+
+Components should normally access state only through a hook:
+
+1. useStoreState(store) - Select the whole state, rerendering any time any part
+   of the state changes.
+2. useStoreSelector(selector) - Select part of or a computed part of a state,
+   rerendering any time that portion changes.
+
+And you'll also notice that most of the examples in this README do not actually
+export the store at all; you can export hooks that call useStoreState() or
+useStoreSelector() internally.
+
 ## Best Practices
 
 ### Code splitting
@@ -884,9 +921,9 @@ A store can be global or used by a number of components. Regardless, each
 component must import the store; that way, any components loaded from
 `React.lazy` will allow automatic code splitting.
 
-A global store can be extended at any time using `store.extendState()`
-so a global store can be defined in one file but only extended when
-needed by a component.
+A global store can be extended at any time using `store.extendSync()`
+so a global store can be defined in one file and only extended when
+needed by another store.
 
 ### Suggested File Structure
 
@@ -912,15 +949,15 @@ Stores can be easily unit tested inside or outside a React Component.
 import myStore, { addToCart } from './myStore';
 
 describe('myStore', () => {
-  it('should add to cart with addToCart(item)', () => {
+  it('should add to cart with addToCart(item)', async () => {
     myStore.setSync({ cart: [], total: 0 });
     addToCart({
       id: 101,
       name: 'White Shoe',
       cost: 123,
     });
-    myStore.flushSync();
-    expect(myStore.getState()).toEqual({
+    const next = await myStore.nextState();
+    expect(next).toEqual({
       cart: [
         {
           id: 101,
@@ -941,15 +978,15 @@ describe('myStore', () => {
 Stores fire a series of lifecycle events. For example:
 
 ```js
-store.on('BeforeFirstUse', () => {
-  store.setSync({ my: 'external', initial: 'state' });
+store.on('BeforeInitialize', () => {
+  store.extendSync({ my: 'external', initial: 'state' });
 });
 store.on('AfterLastUnmount', evt => {
   cancelPendingStuff();
 });
 ```
 
-#### Event description & Cancellability
+#### List of events
 
 The following events fire during the life cycle of the store. Some events allow
 you call `event.preventDefault()` to block the next step. For example,
@@ -959,7 +996,9 @@ this particular event.
 
 | Event            | Description                                                         |
 | ---------------- | ------------------------------------------------------------------- |
-| BeforeFirstUse   | Allows changing initial state before first component sees the state |
+| BeforeInitialize | Allows changing initial state before first component sees the state |
+| AfterInitialize  | Fires after the initialization                                      |
+| BeforeFirstUse   | Fires after initialization but before being used for the first time |
 | AfterFirstUse    | Fires after store has been used by the first time                   |
 | AfterFirstMount  | Fires after first component mounts                                  |
 | AfterMount       | Fires after each component mounts                                   |
@@ -973,14 +1012,16 @@ this particular event.
 Note that some events with a `data` property. Below is the available data for
 events that support it.
 
-| Event           | event.data property                                        |
-| --------------- | ---------------------------------------------------------- |
-| BeforeFirstUse  | The initial state (used by plugins to load persisted data) |
-| AfterFirstUse   | The state after any changes by BeforeFirstUse handlers     |
-| AfterMount      | The number of components currently mounted                 |
-| AfterUnmount    | The number of components currently mounted                 |
-| AfterUpdate     | { prev: previous state, next: new state }                  |
-| SetterException | The Error object                                           |
+| Event            | event.data property                                        |
+| ---------------- | ---------------------------------------------------------- |
+| BeforeInitialize | The initial state (used by plugins to load persisted data) |
+| AfterInitialize  | The state value after initialization                       |
+| BeforeFirstUse   | The state value                                            |
+| AfterFirstUse    | The state value                                            |
+| AfterMount       | The number of components currently mounted                 |
+| AfterUnmount     | The number of components currently mounted                 |
+| AfterUpdate      | { prev: previous state, next: new state }                  |
+| SetterException  | The Error object                                           |
 
 ### Plugins
 

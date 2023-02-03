@@ -341,7 +341,7 @@ describe('new Store()', () => {
       ],
     });
   });
-  it('should extendState(moreState)', () => {
+  it('should extendSync(moreState)', () => {
     type GlobalSchemaType = {
       hello?: {
         world: number;
@@ -350,22 +350,22 @@ describe('new Store()', () => {
     };
     const initialState: GlobalSchemaType = { hello: { world: 42 } };
     const store = new Store(initialState);
-    const ret = store.extendState({ foo: 'bar' });
+    const ret = store.extendSync({ foo: 'bar' });
     expect(store.getState()).toBe(initialState);
     // @ts-ignore
     expect(store.getState().foo).toBe('bar');
     expect(ret).toBe(store);
   });
-  it('should throw if extendState(moreState) moreState not an object', () => {
+  it('should throw if extendSync(moreState) moreState not an object', () => {
     const initialState = { hello: { world: 42 } };
     const store = new Store({ state: initialState });
     const thrower = () => {
       // @ts-ignore
-      store.extendState(42);
+      store.extendSync(42);
     };
     expect(thrower).toThrow();
   });
-  it('should extendStateAt(path, moreState)', () => {
+  it('should extendSyncAt(path, moreState)', () => {
     type StateType = {
       user: {
         permissions: {
@@ -376,7 +376,7 @@ describe('new Store()', () => {
     };
     const initialState = { user: { permissions: { createPosts: true } } };
     const store = new Store<StateType>(initialState);
-    const ret = store.extendStateAt('user.permissions', {
+    const ret = store.extendSyncAt('user.permissions', {
       adminSettings: false,
     });
     // it should extend but not change the store state
@@ -385,21 +385,21 @@ describe('new Store()', () => {
     expect(store.getState().user.permissions.adminSettings).toBe(false);
     expect(ret).toBe(store);
   });
-  it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
+  it('should throw if extendSyncAt(path, moreState) moreState not an object', async () => {
     const initialState = { hello: { world: 42 } };
     const store = new Store(initialState);
     const thrower = () => {
       // @ts-ignore
-      store.extendStateAt('hello.world', 44);
+      store.extendSyncAt('hello.world', 44);
     };
     expect(thrower).toThrow();
   });
-  it('should throw if extendStateAt(path, moreState) moreState not an object', async () => {
+  it('should throw if extendSyncAt(path, moreState) moreState not an object', async () => {
     const initialState = { hello: { world: 42 } };
     const store = new Store(initialState);
     const thrower = () => {
       // @ts-ignore
-      store.extendStateAt('hello.friend', { cool: true });
+      store.extendSyncAt('hello.friend', { cool: true });
     };
     expect(thrower).toThrow();
   });

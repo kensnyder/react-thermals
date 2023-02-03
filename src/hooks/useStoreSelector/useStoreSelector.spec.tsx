@@ -154,7 +154,7 @@ describe('useStoreSelector(mapState)', () => {
   });
   it('should allow overwrite part of initial state', () => {
     store.on('BeforeInitialize', () => {
-      store.extendState({ planet: 'Neptune' });
+      store.extendSync({ planet: 'Neptune' });
     });
     const { getByTitle } = render(<PlanetComponent />);
     expect(getByTitle('planet')).toHaveTextContent(/^Neptune$/);
@@ -232,7 +232,7 @@ describe('store.on(type, handler)', () => {
   });
   it('should allow modifying initial state', () => {
     store.on('BeforeInitialize', () => {
-      store.extendState({ target: 'Venus' });
+      store.extendSync({ target: 'Venus' });
     });
     const { getByText } = render(<TelescopeComponent />);
     expect(getByText('current target=Venus')).toBeInTheDocument();

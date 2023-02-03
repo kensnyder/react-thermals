@@ -211,7 +211,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  This store
    * @chainable
    */
-  replaceState = (newState: StateType) => {
+  replaceSync = (newState: StateType) => {
     this.#_state = newState;
     return this;
   };
@@ -224,12 +224,12 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  This store
    * @chainable
    */
-  replaceStateAt = <Path extends string>(
+  replaceSyncAt = <Path extends string>(
     path: Path,
     newState: StateAtType<Path, StateType>
   ) => {
     if (path === '@') {
-      return this.replaceState(newState);
+      return this.replaceSync(newState);
     }
     this.#_state = updatePath(path)(this.#_state, newState);
     return this;
@@ -240,10 +240,10 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * Good for sub-stores and plugins that subscribe to BeforeInitialize.
    * @param moreState  The values to merge into the state (components will not be notified)
    */
-  extendState = (moreState: Partial<StateType>) => {
+  extendSync = (moreState: Partial<StateType>) => {
     if (typeof moreState !== 'object' || typeof this.#_state !== 'object') {
       throw new Error(
-        'react-thermals Store.extendState(moreState): current state and given state must both be objects'
+        'react-thermals Store.extendSync(moreState): current state and given state must both be objects'
       );
     }
     // yes this mutates the normally immutable state
@@ -259,19 +259,19 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  This store
    * @chainable
    */
-  extendStateAt = <Path extends string>(
+  extendSyncAt = <Path extends string>(
     path: Path,
     moreState: ExtendStateAtPathType<Path, StateType>
   ) => {
     if (typeof moreState !== 'object') {
       throw new Error(
-        'react-thermals Store.extendStateAt(path, moreState): given state must an object'
+        'react-thermals Store.extendSyncAt(path, moreState): given state must an object'
       );
     }
     const target = selectPath(path)(this.#_state);
     if (typeof target !== 'object') {
       throw new Error(
-        'react-thermals Store.extendStateAt(path, moreState): state at path must be an object'
+        'react-thermals Store.extendSyncAt(path, moreState): state at path must be an object'
       );
     }
     // yes this mutates the normally immutable state

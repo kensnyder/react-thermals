@@ -5,7 +5,7 @@ import {
 } from './libs/searchParams';
 import isEmpty from './libs/isEmpty';
 import { omitUnknown, omitKnown } from './libs/omit';
-import { pushState, replaceState } from './libs/windowHistory';
+import { pushState, replaceSync } from './libs/windowHistory';
 import Store from '../../classes/Store/Store';
 
 export type SyncUrlConfig = {
@@ -42,7 +42,7 @@ export default function syncUrl({
       const urlData = parse(location.search.slice(1));
       const known = omitUnknown(fields as string[], urlData);
       if (known && !isEmpty(known)) {
-        store.extendState(castFromStrings(schema, known));
+        store.extendSync(castFromStrings(schema, known));
       }
       writeUrl(castToStrings(schema, { ...urlData, ...evt.data }));
     });
@@ -55,13 +55,13 @@ export default function syncUrl({
   function writeUrl(fullState: any) {
     const search = '?' + stringify(fullState);
     // always replace on initial state
-    replaceState(search);
+    replaceSync(search);
   }
 
   function navigate(fullState: any) {
     const search = getNewSearch(fullState);
     if (replace) {
-      replaceState(search);
+      replaceSync(search);
     } else {
       pushState(search);
     }
@@ -72,7 +72,7 @@ export default function syncUrl({
     const next = omitKnown(fields as string[], current);
     const search = '?' + stringify(next);
     if (replace) {
-      replaceState(search);
+      replaceSync(search);
     } else {
       pushState(search);
     }

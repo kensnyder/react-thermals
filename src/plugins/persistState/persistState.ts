@@ -70,7 +70,7 @@ export default function persistState({
         initial = selectPath(path)(evt.data);
       }
       if (initial !== undefined) {
-        store.replaceStateAt(path, initial);
+        store.replaceSyncAt(path, initial);
       }
       write(initial);
     });
