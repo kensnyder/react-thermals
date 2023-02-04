@@ -1,6 +1,7 @@
 import Store from './classes/Store/Store';
 import React from 'react';
 import { Get } from 'type-fest';
+import SimpleEmitter from './classes/SimpleEmitter/SimpleEmitter';
 
 export type EventNameType =
   | 'BeforeInitialize'
@@ -30,7 +31,7 @@ export type EventDataType<StateType, EventName> = EventName extends
   : undefined;
 
 export type EventType<StateType, EventName> = {
-  target: Store<StateType>;
+  target: SimpleEmitter<StateType> | Store<StateType>;
   type: EventName;
   data: EventDataType<StateType, EventName>;
 };

@@ -70,7 +70,7 @@ export default class SimpleEmitter<StateType> {
   emit = <EventName extends EventNameType>(
     type: EventName,
     data: EventDataType<StateType, EventName> = undefined
-  ) => {
+  ): EventType<StateType, EventName> => {
     const event = { target: this, type, data };
     if (this.#_handlers['*'].length > 0) {
       // run callbacks registered to both "*" and "type"
