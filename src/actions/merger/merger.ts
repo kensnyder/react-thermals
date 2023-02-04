@@ -1,6 +1,5 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -9,9 +8,8 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function merger(path: string) {
-  const merger = updatePath(path, shallowOverride);
-  return function updater(this: Store, ...moreArgs: any[]) {
-    this.setState((old: any) => merger(old, ...moreArgs));
+  return function updater(this: Store, withValues: any) {
+    this.setStateAt(path, (old: any) => shallowOverride(old, withValues));
   };
 }
 

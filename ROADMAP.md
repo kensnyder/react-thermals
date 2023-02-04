@@ -1,28 +1,10 @@
-- TypeScript generics for StateType
-- Remove events:
-  - BeforePlugin ✅
-  - AfterPlugin ✅
-  - BeforeSet
-  - BeforeReset
-  - AfterReset
-  - BeforeUpdate
-  - AfterUpdate - Needed by nextState
-- Add locals
-- Examine behavior of BeforeFirstUse event.data
-- check SetterException args
-- Remove preventDefault function
-- memoize selectPath and updatePath
-- Remove setOptions, extendOptions
-- remove actions from config object
-- check memory footprint for updatePath
-- Allow escaping brackets and asterisks in path expressions
-- resetSync, resetAt, resetSyncAt
-- Consider memoization for selectPath
+- Remove mapper in favor of paths with \*
 - Example Sandboxes
-- Example of how to use multiple instances of one store (i.e. a store factory function)
 - Example of using hooks or actions from another store
-- Examples folder
+- Example of how to use multiple instances of one store (i.e. a store factory function)
 - Fix release-it configuration
 - Be consistent about imports sequence
-- Generate jsdoc
-- Test and document cycler and mapper
+- check memory footprint for updatePath
+- ?Slice.ts
+- ?Allow escaping brackets and asterisks in path expressions
+- ?Generate jsdoc

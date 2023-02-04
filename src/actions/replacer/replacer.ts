@@ -1,8 +1,7 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
-function _replaceHandler<T>(list: T[], itemToReplace: T, newItem: T) {
+function _replaceItem<T>(list: T[], itemToReplace: T, newItem: T) {
   return list?.map(item => {
     if (item === itemToReplace) {
       return newItem;
@@ -18,13 +17,14 @@ function _replaceHandler<T>(list: T[], itemToReplace: T, newItem: T) {
  * @return  A function suitable for a store action
  */
 export function replacer(path: any) {
-  const replaceItem = updatePath(path, _replaceHandler);
   return function updater<Item>(
     this: Store,
     itemToReplace: Item,
     newItem: Item
   ) {
-    this.setState((old: any) => replaceItem(old, itemToReplace, newItem));
+    this.setStateAt(path, (old: any) =>
+      _replaceItem(old, itemToReplace, newItem)
+    );
   };
 }
 

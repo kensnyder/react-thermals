@@ -1,5 +1,4 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -8,17 +7,13 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function remover<Item extends any>(path: string) {
-  const remove = updatePath(
-    path,
-    function doRemove(old: Item, itemsToRemove: Item[]) {
+  return function updater(this: Store, ...itemsToRemove: Item[]) {
+    return this.setStateAt(path, (old: any) => {
       if (!old || !Array.isArray(old)) {
         return old;
       }
       return old.filter(value => !itemsToRemove.includes(value));
-    }
-  );
-  return function updater(this: Store, ...itemsToRemove: Item[]) {
-    return this.setState((fullState: any) => remove(fullState, itemsToRemove));
+    });
   };
 }
 

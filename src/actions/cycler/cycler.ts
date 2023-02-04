@@ -1,12 +1,8 @@
-// TODO: test and document function
-import { updatePath } from '../../lib/updatePath/updatePath';
+import Store from '../../classes/Store/Store';
 
-export default function cycle(path: string, values: any[]) {
+export default function cycler(path: string, values: any[]) {
   let idx = 0;
-  const nextValue = updatePath(path, function doCycle() {
-    return values[idx++ % values.length];
-  });
-  return function updater() {
-    this.setState(nextValue);
+  return function updater(this: Store) {
+    this.setStateAt(path, values[idx++ % values.length]);
   };
 }

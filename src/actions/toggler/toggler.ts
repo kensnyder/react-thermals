@@ -1,5 +1,4 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -8,11 +7,8 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function toggler(path: string) {
-  const toggle = updatePath(path, function toggleHandler(old: boolean) {
-    return !old;
-  });
   return function updater(this: Store) {
-    return this.setState(toggle);
+    return this.setStateAt(path, (old: boolean) => !old);
   };
 }
 

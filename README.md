@@ -22,9 +22,9 @@ npm install react-thermals
    3. [Immutability](#immutability)
    4. [Persistence](#persistence)
 3. [Example usage](#example-usage)
-   1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
-   2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
-   3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
+   1. [Example 1: A store used by multiple components](#example-1-a-store-used-by-multiple-components)
+   2. [Example 2: A store used by one component](#example-2-a-store-used-by-one-component)
+   3. [Example 3: A store with global state](#example-3-a-store-with-global-state)
 4. [Action functions](#action-functions)
    1. [Writing actions](#writing-actions)
    2. [Action creators](#action-creators)
@@ -77,14 +77,14 @@ and
 
 ### Properties and Paths
 
-React Thermals supports property names and path expressions in 4 situations:
+React Thermals supports property names and path expressions in 4 use cases:
 
 1. Selecting state inside a component
 2. Reading state from the store
 3. Creating store actions
 4. Updating values in the store
 
-Example of these 4 situations:
+Example of these 4 use cases:
 
 ```js
 // 1. Selecting state from the store (inside a component)
@@ -205,10 +205,10 @@ state are replaced instead of changed. Replacing is more efficient than cloning
 the entire state and ensures that components re-render only when replaced parts
 of the state change.
 
-Under the hood, React Thermals has an `updatePath()` function that does this
-state replacement. The unit test below illustrates a change to a multi-layer
-state value, where the resulting state has some changes but keeps unaffected
-parts unchanged.
+Under the hood, React Thermals has an `updatePath(path, replacer)` function
+that performs this state replacement. The unit test below illustrates a change
+to a multi-layer state value, where the resulting state has some changes but
+keeps unaffected parts unchanged.
 
 ```js
 describe('updatePath', () => {
@@ -257,11 +257,269 @@ const myPersistingStore = new Store({
 
 React Thermals is designed for multiple use cases:
 
-1. [Example 1: A store with global state](#example-1-a-store-with-global-state)
-2. [Example 2: A store used by multiple components](#example-2-a-store-used-by-multiple-components)
-3. [Example 3: A store used by one component](#example-3-a-store-used-by-one-component)
+1. [Example 1: A store used by multiple components](#example-1-a-store-used-by-multiple-components)
+2. [Example 2: A store used by one component](#example-2-a-store-used-by-one-component)
+3. [Example 3: A store with global state](#example-3-a-store-with-global-state)
 
-### Example 1: A store with global state
+### Example 1: A store used by multiple components
+
+In src/stores/cartStore.js we define a single store that is only used by the
+parts of the application that deal with a shopping cart.
+
+```js
+import {
+  Store,
+  useStoreSelector,
+  appender,
+  remover,
+  setter,
+  composeActions,
+} from 'react-thermals';
+
+const store = new Store({
+  state: {
+    items: [],
+    discount: 0,
+  },
+});
+
+export default store;
+
+export const addToCart = store.connect(
+  composeActions([
+    appender('items'),
+    newItem => {
+      axios.post('/api/v1/carts/item', newItem);
+    },
+  ])
+);
+
+export const removeFromCart = store.connect(
+  composeActions([
+    remover('items'),
+    oldItem => {
+      axios.delete(`/api/v1/carts/items/${oldItem.id}`);
+    },
+  ])
+);
+
+export const setDiscount = store.connect(setter('discount'));
+
+export function useCartItems() {
+  return useStoreSelector(store, 'items');
+}
+
+export function useCartItemCount() {
+  return useStoreSelector(store, state => state.items.length);
+}
+
+export function useCartTotal() {
+  return useStoreSelector(store, state => {
+    let total = 0;
+    state.items.forEach(item => {
+      total += item.quantity * item.price * (1 - state.discount);
+    });
+    return total;
+  });
+}
+```
+
+In components/Header.jsx we may want to show how many items are in the cart
+
+```js
+import React from 'react';
+import { useCartItemCount } from '../stores/cartStore';
+
+export default function Header() {
+  // only re-render when cart item count changes
+  const itemCount = useCartItemCount();
+  return (
+    <header>
+      <h1>My App</h1>
+      <a href="/cart">
+        Shopping Cart: {itemCount} {itemCount === 1 ? 'item' : 'items'}
+      </a>
+    </header>
+  );
+}
+```
+
+In components/CartDetails.jsx we need the items, the total, and a way to remove
+an item from the cart.
+
+```js
+import React from 'react';
+import {
+  useCartItems,
+  useCartTotal,
+  removeFromCart,
+} from '../stores/cartStore';
+
+export default function CartDetails() {
+  // only re-render when list or total changes
+  const items = useCartItems();
+  const total = useCartTotal();
+  return (
+    <ul>
+      {items.map(item => (
+        <li key={item.id}>
+          {item.name}: ${item.price.toFixed(2)}{' '}
+          <button onClick={() => removeFromCart(item)}>Delete</button>
+        </li>
+      ))}
+      <li>Total: ${total.toFixed(2)}</li>
+    </ul>
+  );
+}
+```
+
+In components/Product.jsx we don't need info about the cart, but we may need to
+add an item to the cart.
+
+```js
+import React from 'react';
+import { addToCart } from '../stores/cartStore';
+
+export default function Product({ product }) {
+  return (
+    <div>
+      <h3>{product.name}</h3>
+      <p>{product.description}</p>
+      <p>${product.price.toFixed(2)}</p>
+      <button onClick={() => addToCart(product)}>Add to cart</button>
+    </div>
+  );
+}
+```
+
+In stores/cartStore.spec.js we can test that actions change state in the correct
+way and test any side effects like an http request.
+
+```js
+import axios from 'axios';
+import { default as cartStore } from './cartStore';
+
+jest.mock('axios');
+
+describe('cartStore', () => {
+  let store;
+  beforeEach(() => {
+    store = cartStore.clone();
+  });
+  it('should add item', async () => {
+    const item = { id: 123, name: 'Pencil', price: 2.99 };
+    store.actions.add(item);
+    await store.nextState();
+    expect(store.getState().items[0]).toBe(item);
+    expect(axios.post).toHaveBeenCalledWith('/api/v1/carts/item', item);
+  });
+  it('should remove item', async () => {
+    const item = { id: 123, name: 'Pencil', price: 2.99 };
+    store.setStateAt('items', [item]);
+    store.actions.remove(item);
+    await store.nextState();
+    expect(store.getState().items).toEqual([]);
+    expect(axios.delete).toHaveBeenCalledWith(`/api/v1/carts/items/${item.id}`);
+  });
+});
+```
+
+### Example 2: A store used by one component
+
+Even if a store is only used by one component, it can be a nice way to separate
+concerns. And the store file doesn't necessarily need to be exported. You might
+want your application to interact with the store only through its exported hooks
+and functions.
+
+In components/Game/gameStore.ts
+
+```ts
+import { Store, useStoreState } from 'react-thermals';
+import random from 'random-int';
+
+const store = new Store({
+  state: {
+    board: {
+      user: { x: 0, y: 0 },
+      flag: { x: random(1, 10), y: random(1, 10) },
+    },
+    hasWon: false,
+  },
+  autoReset: true,
+});
+
+export function restart() {
+  store.reset();
+  store.setStateAt('board.flag', {
+    x: random(1, 10),
+    y: random(1, 10),
+  });
+}
+
+export function moveBy(x: number, y: number): void {
+  store.setSyncAt('board.user', (old: Record<string, number>) => ({
+    x: old.x + x,
+    y: old.y + y,
+  }));
+  const { user, flag } = store.getStateAt('board');
+  if (flag.x === user.x && flag.y === user.y) {
+    store.mergeSync({ hasWon: true });
+  }
+}
+
+export function useGameState() {
+  return useStoreState(store);
+}
+```
+
+In components/Game/Game.tsx
+
+```tsx
+import React from 'react';
+import range from '../range';
+import './Game.css';
+import { useGameState, restart, moveBy } from './gameStore';
+
+export default function Game(): React.Element {
+  const state = useGameState();
+
+  return (
+    <div className="Game">
+      <h1>Hop to the flag</h1>
+      <div className="board">
+        {range(11).map((x: number) => (
+          <div key={`x-${x}`} className="row">
+            {range(11).map((y: number) => (
+              <div key={`y-${y}`} className="cell">
+                {state.board.user.x === x && state.board.user.y === y
+                  ? '🐸'
+                  : state.board.flag.x === x &&
+                    state.board.flag.y === y &&
+                    '⛳️'}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {state.hasWon ? (
+        <div className="you-win">
+          You win!
+          <button onClick={restart}>New game</button>
+        </div>
+      ) : (
+        <div className="controls">
+          <button onClick={() => moveBy(0, -1)}>←</button>
+          <button onClick={() => moveBy(-1, 0)}>↑</button>
+          <button onClick={() => moveBy(1, 0)}>↓</button>
+          <button onClick={() => moveBy(0, 1)}>→</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Example 3: A store with global state
 
 We create a store in stores/globalStore/globalStore.js
 
@@ -477,264 +735,6 @@ export default function SubHeader() {
         <a href="/login">Login</a>
       )}
     </header>
-  );
-}
-```
-
-### Example 2: A store used by multiple components
-
-In src/stores/cartStore.js we define a single store that is only used by the
-parts of the application that deal with a shopping cart.
-
-```js
-import {
-  Store,
-  useStoreSelector,
-  appender,
-  remover,
-  setter,
-  composeActions,
-} from 'react-thermals';
-
-const store = new Store({
-  state: {
-    items: [],
-    discount: 0,
-  },
-});
-
-export default store;
-
-export const addToCart = store.connect(
-  composeActions([
-    appender('items'),
-    newItem => {
-      axios.post('/api/v1/carts/item', newItem);
-    },
-  ])
-);
-
-export const removeFromCart = store.connect(
-  composeActions([
-    remover('items'),
-    oldItem => {
-      axios.delete(`/api/v1/carts/items/${oldItem.id}`);
-    },
-  ])
-);
-
-export const setDiscount = store.connect(setter('discount'));
-
-export function useCartItems() {
-  return useStoreSelector(store, 'items');
-}
-
-export function useCartItemCount() {
-  return useStoreSelector(store, state => state.items.length);
-}
-
-export function useCartTotal() {
-  return useStoreSelector(store, state => {
-    let total = 0;
-    state.items.forEach(item => {
-      total += item.quantity * item.price * (1 - state.discount);
-    });
-    return total;
-  });
-}
-```
-
-In components/Header.jsx we may want to show how many items are in the cart
-
-```js
-import React from 'react';
-import { useCartItemCount } from '../stores/cartStore';
-
-export default function Header() {
-  // only re-render when cart item count changes
-  const itemCount = useCartItemCount();
-  return (
-    <header>
-      <h1>My App</h1>
-      <a href="/cart">
-        Shopping Cart: {itemCount} {itemCount === 1 ? 'item' : 'items'}
-      </a>
-    </header>
-  );
-}
-```
-
-In components/CartDetails.jsx we need the items, the total, and a way to remove
-an item from the cart.
-
-```js
-import React from 'react';
-import {
-  useCartItems,
-  useCartTotal,
-  removeFromCart,
-} from '../stores/cartStore';
-
-export default function CartDetails() {
-  // only re-render when list or total changes
-  const items = useCartItems();
-  const total = useCartTotal();
-  return (
-    <ul>
-      {items.map(item => (
-        <li key={item.id}>
-          {item.name}: ${item.price.toFixed(2)}{' '}
-          <button onClick={() => removeFromCart(item)}>Delete</button>
-        </li>
-      ))}
-      <li>Total: ${total.toFixed(2)}</li>
-    </ul>
-  );
-}
-```
-
-In components/Product.jsx we don't need info about the cart, but we may need to
-add an item to the cart.
-
-```js
-import React from 'react';
-import { addToCart } from '../stores/cartStore';
-
-export default function Product({ product }) {
-  return (
-    <div>
-      <h3>{product.name}</h3>
-      <p>{product.description}</p>
-      <p>${product.price.toFixed(2)}</p>
-      <button onClick={() => addToCart(product)}>Add to cart</button>
-    </div>
-  );
-}
-```
-
-In stores/cartStore.spec.js we can test that actions change state in the correct
-way and test any side effects like an http request.
-
-```js
-import axios from 'axios';
-import { default as cartStore } from './cartStore';
-
-jest.mock('axios');
-
-describe('cartStore', () => {
-  let store;
-  beforeEach(() => {
-    store = cartStore.clone();
-  });
-  it('should add item', async () => {
-    const item = { id: 123, name: 'Pencil', price: 2.99 };
-    store.actions.add(item);
-    await store.nextState();
-    expect(store.getState().items[0]).toBe(item);
-    expect(axios.post).toHaveBeenCalledWith('/api/v1/carts/item', item);
-  });
-  it('should remove item', async () => {
-    const item = { id: 123, name: 'Pencil', price: 2.99 };
-    store.setStateAt('items', [item]);
-    store.actions.remove(item);
-    await store.nextState();
-    expect(store.getState().items).toEqual([]);
-    expect(axios.delete).toHaveBeenCalledWith(`/api/v1/carts/items/${item.id}`);
-  });
-});
-```
-
-### Example 3: A store used by one component
-
-Even if a store is only used by one component, it can be a nice way to separate
-concerns. And the store file doesn't necessarily need to be exported. You might
-want your application to interact with the store only through its exported hooks
-and functions.
-
-In components/Game/gameStore.ts
-
-```ts
-import { Store, useStoreState } from 'react-thermals';
-import random from 'random-int';
-
-const store = new Store({
-  state: {
-    board: {
-      user: { x: 0, y: 0 },
-      flag: { x: random(1, 10), y: random(1, 10) },
-    },
-    hasWon: false,
-  },
-  autoReset: true,
-});
-
-export function restart() {
-  store.reset();
-  store.setStateAt('board.flag', {
-    x: random(1, 10),
-    y: random(1, 10),
-  });
-}
-
-export function moveBy(x: number, y: number): void {
-  store.setSyncAt('board.user', (old: Record<string, number>) => ({
-    x: old.x + x,
-    y: old.y + y,
-  }));
-  const { user, flag } = store.getStateAt('board');
-  if (flag.x === user.x && flag.y === user.y) {
-    store.mergeSync({ hasWon: true });
-  }
-}
-
-export function useGameState() {
-  return useStoreState(store);
-}
-```
-
-In components/Game/Game.tsx
-
-```tsx
-import React from 'react';
-import range from '../range';
-import './Game.css';
-import { useGameState, restart, moveBy } from './gameStore';
-
-export default function Game(): React.Element {
-  const state = useGameState();
-
-  return (
-    <div className="Game">
-      <h1>Hop to the flag</h1>
-      <div className="board">
-        {range(11).map((x: number) => (
-          <div key={`x-${x}`} className="row">
-            {range(11).map((y: number) => (
-              <div key={`y-${y}`} className="cell">
-                {state.board.user.x === x && state.board.user.y === y
-                  ? '🐸'
-                  : state.board.flag.x === x &&
-                    state.board.flag.y === y &&
-                    '⛳️'}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      {state.hasWon ? (
-        <div className="you-win">
-          You win!
-          <button onClick={restart}>New game</button>
-        </div>
-      ) : (
-        <div className="controls">
-          <button onClick={() => moveBy(0, -1)}>←</button>
-          <button onClick={() => moveBy(-1, 0)}>↑</button>
-          <button onClick={() => moveBy(1, 0)}>↓</button>
-          <button onClick={() => moveBy(0, 1)}>→</button>
-        </div>
-      )}
-    </div>
   );
 }
 ```
@@ -1056,7 +1056,7 @@ Middleware examples:
 myStore.use((context, done) => {
   context.prev; // the old state value
   context.next; // the new state value - alter to modify state
-  context.isAsync; // true if middleware is expected to call next right away
+  context.isAsync; // false if middleware is expected to call next right away
   logToServer(context.next);
   done();
 });
@@ -1073,9 +1073,9 @@ myStore.use((context, done) => {
 });
 ```
 
-Note that if middleware is asynchronous, it will block any updates initiated by
-flushSync(), setSync(), setSyncAt(), mergeSync(), mergeSyncAt(), resetSync(),
-resetSyncAt()
+Note that if middleware makes asynchronous changes, calls to state sync
+functions `flushSync(), setSync(), setSyncAt(), mergeSync(), mergeSyncAt(), 
+resetSync(), resetSyncAt()` will get blocked until
 
 ## Community
 

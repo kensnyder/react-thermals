@@ -1,5 +1,4 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -8,17 +7,8 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function mapper(path: string) {
-  // we have to use { fn: mapFn } because updatePath getUpdateRunner would
-  // fall into typeof transform === 'function' which interprets a passed
-  // function as a setState mutator function
-  const map = updatePath(
-    path,
-    function mapHandler(old: any, { fn: mapFn }: { fn: Function }) {
-      return old?.map(mapFn);
-    }
-  );
-  return function updater(this: Store, mapFn: Function) {
-    return this.setState((old: any) => map(old, { fn: mapFn }));
+  return function updater(this: Store, mapFn: (item: any) => any) {
+    return this.setStateAt(path, (old: any[]) => old?.map(mapFn));
   };
 }
 

@@ -66,7 +66,7 @@ describe('deepUpdater', () => {
   });
   it('should handle only asterisk', () => {
     const state = [2, 3, 5, 7];
-    const primesTimes9 = updatePath('*', greeting => greeting * 9);
+    const primesTimes9 = updatePath('*', prime => prime * 9);
     const updated = primesTimes9(state);
     expect(updated).toEqual([18, 27, 45, 63]);
   });
@@ -196,5 +196,10 @@ describe('deepUpdater', () => {
     expect(updated.email.recipients).not.toBe(state.email.recipients);
     expect(updated.email.recipients[0]).toBe(state.email.recipients[0]);
     expect(updated.email.recipients[1]).toBe(state.email.recipients[1]);
+  });
+  it('should cache updaters', () => {
+    const updater1 = updatePath('foo');
+    const updater2 = updatePath('foo');
+    expect(updater1).toBe(updater2);
   });
 });

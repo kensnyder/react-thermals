@@ -1,5 +1,4 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -8,16 +7,8 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function setter(path: string) {
-  const setField = updatePath(
-    path,
-    function setHandler(oldValue: any, newValue: any) {
-      return newValue;
-    }
-  );
   return function updater(this: Store, newValue: any) {
-    this.setState((old: any) => {
-      return setField(old, newValue);
-    });
+    this.setStateAt(path, newValue);
   };
 }
 
@@ -39,8 +30,7 @@ type InputEvent = {
  * @return  A function suitable for an input's onChange handler
  */
 export function setterInput(path: string) {
-  const updater = setterSync(path);
-  return function inputUpdater(this: Store, evt: InputEvent) {
-    updater.call(this, evt.target.value);
+  return function updater(this: Store, evt: InputEvent) {
+    this.setSyncAt(path, evt.target.value);
   };
 }

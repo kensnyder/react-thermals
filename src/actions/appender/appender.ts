@@ -1,5 +1,4 @@
 import withFlushSync from '../withFlushSync/withFlushSync';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -8,14 +7,8 @@ import Store from '../../classes/Store/Store';
  * @return  A function suitable for a store action
  */
 export function appender(path: string) {
-  const append = updatePath(
-    path,
-    function appendHandler(old: any, newItems: any[]) {
-      return [...old, ...newItems];
-    }
-  );
   return function updater(this: Store, ...newItems: any[]) {
-    return this.setState((old: any) => append(old, newItems));
+    return this.setStateAt(path, (old: any[]) => [...old, ...newItems]);
   };
 }
 

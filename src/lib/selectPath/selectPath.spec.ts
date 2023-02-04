@@ -16,6 +16,11 @@ describe('selectPath()', () => {
     const slice = selector({ user: { phone: '867-5309' } });
     expect(slice).toEqual('867-5309');
   });
+  it('should cache selectors', () => {
+    const selector1 = selectPath('foo');
+    const selector2 = selectPath('foo');
+    expect(selector1).toBe(selector2);
+  });
   it('should return undefined for non-existent paths', () => {
     const selector = selectPath('user.phone');
     const slice = selector({});

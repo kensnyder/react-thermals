@@ -5,13 +5,13 @@ Actions that update state values can be generated automatically.
 1. [Introduction](#introduction)
 2. [Properties and Paths](#properties-and-paths)
 3. [Documentation and Examples](#documentation-and-examples)
-   1. [setter](#setter) - Set a single value
-   2. [toggler](#toggler) - Toggle a boolean value
-   3. [appender](#appender) - Append an item to a list
-   4. [remover](#remover) - Remove an item from a list
-   5. [replacer](#replacer) - Replace an item in a list
-   6. [adder](#adder) - Add to or subtract from a number
-   7. [merger](#merger) - Merge one object into another
+   1. [setter](#setter--) - Set a single value
+   2. [toggler](#toggler--) - Toggle a boolean value
+   3. [appender](#appender--) - Append an item to a list
+   4. [remover](#remover--) - Remove an item from a list
+   5. [replacer](#replacer--) - Replace an item in a list
+   6. [adder](#adder--) - Add to or subtract from a number
+   7. [merger](#merger--) - Merge one object into another
 
 ## Introduction
 
@@ -61,12 +61,14 @@ Set a single value.
 #### Equivalent code
 
 ```jsx
+const setUser = store.connect(setter('user'));
+// is equivalent to
 const [state, setState] = useState({});
-const setField = useCallback(
-  (name, value) => {
+const setUser = useCallback(
+  user => {
     setState(old => ({
       ...old,
-      [name]: value,
+      user,
     }));
   },
   [setState]
@@ -79,18 +81,11 @@ const setField = useCallback(
 // In /stores/postsStore.ts
 import { Store, setter } from 'react-thermals';
 
-const postsStore = new Store({
-  state: {
-    page: 1,
-  },
-  actions: {
-    setPage: setter('page'),
-  },
-});
-export default postsStore;
+const store = new Store({ page: 1 });
+export const setPage = store.connect(setter('page'));
 
 // In components/PostsPagination.tsx
-import postsStore, { setPage } from '../stores/postsStore';
+import store, { setPage } from '../stores/postsStore';
 export default function Pagination() {
   return (
     <>
@@ -102,42 +97,40 @@ export default function Pagination() {
 }
 ```
 
-### setterSync
+### setterSync()
 
 Set a single value synchronously.
 
+#### Examples
+
 stores/postsStore.js
 
-```jsx
+```js
 import { createStore, useStoreSelector, setterSync } from 'react-thermals';
 
-const postsStore = new Store({
-  state: {
-    searchTerm: '',
-  },
-  actions: {
-    setSearchTerm: setterSync('searchTerm'),
-  },
-});
-export default postsStore;
+const store = new Store({ searchTerm: '' });
+export const setSearchTermSync = store.connect(setterSync('searchTerm'));
+export function useSearchTerm() {
+  return useStoreSelector(store, state => state.searchTerm);
+}
 ```
 
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore, { setSearchTerm } from '../stores/postsStore';
+import { setSearchTermSync, useSearchTerm } from '../stores/postsStore';
 export default function PostsSearch() {
-  const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
+  const searchTerm = useSearchTerm();
   return (
     <input
       value={searchTerm}
-      onChange={evt => setSearchTerm(evt.target.value)}
+      onChange={evt => setSearchTermSync(evt.target.value)}
     />
   );
 }
 ```
 
-### setterInput
+### setterInput()
 
 Set a single value synchronously from an input's onChange event.
 
@@ -145,58 +138,55 @@ Set a single value synchronously from an input's onChange event.
 
 stores/postsStore.js
 
-```jsx
+```js
 import { createStore, useStoreSelector, setterSync } from 'react-thermals';
 
-const postsStore = new Store({
-  state: {
-    searchTerm: '',
-  },
-  actions: {
-    setSearchTerm: setterInput('searchTerm'),
-  },
-});
-export default postsStore;
+const store = new Store({ searchTerm: '' });
+export const setSearchInput = store.connect(setterInput('searchTerm'));
+export function useSearchTerm() {
+  return useStoreSelector(store, state => state.searchTerm);
+}
 ```
 
 components/PostsSearch.jsx
 
 ```jsx
-import postsStore, { setSearchTerm } from '../stores/postsStore';
+import { setSearchInput, useSearchTerm } from '../stores/postsStore';
 export default function PostsSearch() {
-  const searchTerm = useStoreSelector(postsStore, state => state.searchTerm);
-  return <input value={searchTerm} onChange={setSearchTerm} />;
+  const searchTerm = useSearchTerm();
+  return <input value={searchTerm} onChange={setSearchInput} />;
 }
 ```
 
-### toggler
+### toggler()
 
 Toggle a boolean value.
 
 #### Equivalent code
 
-```jsx
+```js
+const toggleIsActive = store.connect(toggler('isActive'));
+// is equivalent to
 const [state, setState] = useState({});
-const setField = useCallback(
-  name => {
-    setState(old => (old[name] = !old[name]));
-  },
+const toggleIsActive = useCallback(
+  () =>
+    setState(old => ({
+      ...old,
+      isActive: !old.isActive,
+    })),
   [setState]
 );
 ```
 
+#### Example
+
+stores/postStore.js
+
 ```jsx harmony
-import { Store, useStoreSelector, toggler } from 'react-thermals';
+import { useStoreSelector, toggler } from 'react-thermals';
 
-const postsStore = new Store({
-  state: { showDetails: false },
-  actions: {
-    toggleDetails: toggler('showDetails'),
-  },
-});
-
-export default postsStore;
-
+const store = new Store({ showDetails: false });
+export const toggleDetails = store.connect(toggler('showDetails'));
 export function usePostsStore(selector) {
   return useStoreSelector(postsStore, selector);
 }
@@ -205,7 +195,7 @@ export function usePostsStore(selector) {
 components/PostText.jsx
 
 ```jsx
-import postsStore, { usePostsStore, toggleDetails } from '../stores/postsStore';
+import { usePostsStore, toggleDetails } from '../stores/postsStore';
 
 export default function PostText() {
   const showDetails = usePostsStore(state => state.showDetails);
@@ -221,21 +211,23 @@ export default function PostText() {
 }
 ```
 
-### togglerSync
+### togglerSync()
 
 Equivalent to toggler but synchronous.
 
-### appender
+### appender()
 
 Add an item to an array.
 
 #### Equivalent code
 
-```jsx
-const [state, setState] = useState({});
-const setField = useCallback(
-  (name, newItem) => {
-    setState(old => (old[name] = [...old[name], newItem]));
+```js
+const addTodo = state.connect(appender('todos'));
+// is equivalent to
+const [state, setState] = useState({ todos: [] });
+const addTodo = useCallback(
+  newTodo => {
+    setState(old => ({ ...old, todos: [...old.todos, newTodo] }));
   },
   [setState]
 );
@@ -248,15 +240,8 @@ stores/todoStore.js
 ```js
 import { Store, useStoreSelector, appender } from 'react-thermals';
 
-const todoStore = new Store({
-  state: { todos: [] },
-  actions: {
-    addTodo: appender('todos'),
-  },
-});
-
-export default todoStore;
-
+const store = new Store({ todos: [] });
+export const addTodo = store.connect(appender('todos'));
 export function useTodos() {
   return useStoreSelector(todoStore, 'todos');
 }
@@ -266,12 +251,12 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore, { addTodo } from '../stores/todoStore';
+import { useTodos, addTodo } from '../stores/todoStore';
 
 export default function TodoList() {
   const inputRef = useRef();
   const todos = useTodos();
-  const addItem = useCallback(() => {
+  const createFromInput = useCallback(() => {
     addTodo({
       text: inputRef.current.value,
       done: false,
@@ -282,7 +267,7 @@ export default function TodoList() {
   return (
     <>
       <input ref={inputRef} placeholder="Enter task..." />
-      <button onClick={addTodo}>Add</button>
+      <button onClick={createFromInput}>Add</button>
       <ul>
         {todos.map(todo => (
           <li>
@@ -295,25 +280,28 @@ export default function TodoList() {
 }
 ```
 
-### appenderSync
+### appenderSync()
 
 Equivalent to appender but synchronous.
 
-### remover
+### remover()
 
 Remove an item from an array.
 
 #### Equivalent code
 
-```jsx
-const [state, setState] = useState({});
+```js
+const removeTodo = store.connect(remover('todos'));
+// is equiavlent to
+const [state, setState] = useState({ todos: [] });
 const setField = useCallback(
-  (name, itemToRemove) => {
-    setState(old => {
-      return old[name].filter(item => {
+  itemToRemove => {
+    setState(old => ({
+      ...old,
+      todos: old.todos.filter(item => {
         return item !== itemToRemove;
-      });
-    });
+      }),
+    }));
   },
   [setState]
 );
@@ -324,18 +312,11 @@ const setField = useCallback(
 stores/todoStore.js
 
 ```js
-import { Store, useStoreSelector, appender } from 'react-thermals';
+import { Store, useStoreSelector, appender, remover } from 'react-thermals';
 
-const todoStore = new Store({
-  state: { todos: [] },
-  actions: {
-    addTodo: appender('todos'),
-    deleteTodo: remover('todos'),
-  },
-});
-
-export default todoStore;
-
+const store = new Store({ todos: [] });
+export const addTodo = store.connect(appender('todos'));
+export const removeTodo = store.connect(remover('todos'));
 export function useTodos() {
   return useStoreSelector(todoStore, 'todos');
 }
@@ -345,12 +326,12 @@ components/TodoList.jsx
 
 ```jsx
 import { useRef, useCallback } from 'react';
-import todoStore, { addTodo, deleteTodo } from '../stores/todoStore';
+import { useTodos, addTodo, removeTodo } from '../stores/todoStore';
 
 export default function TodoList() {
   const inputRef = useRef();
   const todos = useTodos();
-  const addItem = useCallback(() => {
+  const createFromInput = useCallback(() => {
     addTodo({
       text: inputRef.current.value,
       done: false,
@@ -361,12 +342,13 @@ export default function TodoList() {
   return (
     <>
       <input ref={inputRef} placeholder="Enter task..." />
-      <button onClick={addTodo}>Add</button>
+      <button onClick={createFromInput}>Add</button>
       <ul>
         {todos.map(todo => (
           <li>
-            {todo.done ? '[x]' : '[ ]'} {todo.text}
-            <span onClick={() => deleteTodo(todo)}>[Delete]</span>
+            {todo.done ? '[x]' : '[ ]'}
+            {todo.text}
+            <span onClick={() => removeTodo(todo)}>Delete</span>
           </li>
         ))}
       </ul>
@@ -375,19 +357,40 @@ export default function TodoList() {
 }
 ```
 
-### removerSync
+### removerSync()
 
 Equivalent to remover but synchronous.
 
-### replacer
+### replacer()
 
-### replacerSync
+Replace one item with another.
+
+#### Equivalent code
+
+```js
+const replaceTag = store.connect(replacer('tags'));
+// is equivalent to
+const [state, setState] = useState({
+  tags: [{ id: 12, name: 'Apple' }],
+});
+const renameTag = useCallback(
+  (tag, newTag) => {
+    setState(old => ({
+      ...old,
+      tags: old.tags.map(oldTag => (oldTag === tag ? newTag : oldTag)),
+    }));
+  },
+  [setState]
+);
+```
+
+### replacerSync()
 
 Equivalent to replacer but synchronous.
 
-### adder
+### adder()
 
-Add or subtract from a given field.
+Add or subtract from a given number.
 
 #### Equivalent code
 
@@ -476,12 +479,12 @@ export default function GamePad() {
 }
 ```
 
-### adderSync
+### adderSync()
 
 Equivalent to adder but synchronous.
 
-### merger
+### merger()
 
-### mergerSync
+### mergerSync()
 
 Equivalent to merger but synchronous.
