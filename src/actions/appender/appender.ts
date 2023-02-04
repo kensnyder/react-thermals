@@ -6,9 +6,9 @@ import Store from '../../classes/Store/Store';
  * @param path  The name of or path to the array property to append to
  * @return  A function suitable for a store action
  */
-export function appender(path: string) {
-  return function updater(this: Store, ...newItems: any[]) {
-    return this.setStateAt(path, (old: any[]) => [...old, ...newItems]);
+export function appender<ItemType>(path: string) {
+  return function updater(this: Store, ...newItems: ItemType[]) {
+    return this.setStateAt(path, (old: ItemType[]) => [...old, ...newItems]);
   };
 }
 
