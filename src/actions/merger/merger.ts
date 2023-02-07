@@ -1,5 +1,3 @@
-import withFlushSync from '../withFlushSync/withFlushSync';
-import shallowOverride from '../../lib/shallowOverride/shallowOverride';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -7,15 +5,8 @@ import Store from '../../classes/Store/Store';
  * @param path  The name of or path to the property to update
  * @return  A function suitable for a store action
  */
-export function merger(path: string) {
+export default function merger(path: string) {
   return function updater(this: Store, withValues: any) {
-    this.setStateAt(path, (old: any) => shallowOverride(old, withValues));
+    this.mergeStateAt(path, withValues);
   };
 }
-
-/**
- * Run merger and then flush pending state changes
- * @param path  The name of or path to the property to update
- * @return  A function suitable for a store action
- */
-export const mergerSync = withFlushSync(merger);

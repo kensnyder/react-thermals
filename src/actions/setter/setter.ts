@@ -1,4 +1,3 @@
-import withFlushSync from '../withFlushSync/withFlushSync';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -12,13 +11,6 @@ export function setter(path: string) {
   };
 }
 
-/**
- * Run setter and then flush pending state changes
- * @param path  The name of or path to the value to set
- * @return  A function suitable for a store action
- */
-export const setterSync = withFlushSync(setter);
-
 type InputEvent = {
   target: HTMLInputElement;
 };
@@ -31,6 +23,6 @@ type InputEvent = {
  */
 export function setterInput(path: string) {
   return function updater(this: Store, evt: InputEvent) {
-    this.setSyncAt(path, evt.target.value);
+    this.setStateAt(path, evt.target.value);
   };
 }

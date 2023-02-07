@@ -40,6 +40,8 @@ export type EventHandlerType<StateType, EventName> = (
   evt: EventType<StateType, EventName>
 ) => void;
 
+export type OverrideableType<T> = Iterable<T> | Record<string, T>;
+
 export type StoreConfigType = {
   autoReset?: boolean;
   id?: string;

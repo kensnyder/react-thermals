@@ -27,7 +27,12 @@ export default class SimpleEmitter<StateType> {
     return this;
   };
 
-  hasSubscriber = <EventName extends EventNameType>(type: EventName) => {
+  /**
+   * Check if the given event name has any handlers
+   * @param type  The event name
+   * @return  True if there are any handlers registered
+   */
+  hasSubscriber = (type: EventNameType) => {
     return this.#_handlers[type]?.length || this.#_handlers['*']?.length;
   };
 

@@ -1,25 +1,18 @@
-import withFlushSync from '../withFlushSync/withFlushSync';
 import Store from '../../classes/Store/Store';
+import isArray from '../../lib/isArray/isArray';
 
 /**
  * Build a setState function that removes the given item(s) from an array
  * @param path  The name of or path to the property to remove
  * @return  A function suitable for a store action
  */
-export function remover<Item extends any>(path: string) {
+export default function remover<Item extends any>(path: string) {
   return function updater(this: Store, ...itemsToRemove: Item[]) {
-    return this.setStateAt(path, (old: any) => {
-      if (!old || !Array.isArray(old)) {
+    return this.setStateAt(path, (old: Item[]) => {
+      if (!old || !isArray(old)) {
         return old;
       }
       return old.filter(value => !itemsToRemove.includes(value));
     });
   };
 }
-
-/**
- * Run remover and then flush pending state changes
- * @param path  The name of or path to the property to remove
- * @return  A function suitable for a store action
- */
-export const removerSync = withFlushSync(remover);

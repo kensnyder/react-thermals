@@ -1,4 +1,3 @@
-import withFlushSync from '../withFlushSync/withFlushSync';
 import Store from '../../classes/Store/Store';
 
 /**
@@ -6,15 +5,8 @@ import Store from '../../classes/Store/Store';
  * @param path  The name of or path to the property to update
  * @return  A function suitable for a store action
  */
-export function mapper(path: string) {
+export default function mapper(path: string) {
   return function updater(this: Store, mapFn: (item: any) => any) {
-    return this.setStateAt(path, (old: any[]) => old?.map(mapFn));
+    return this.setStateAt(`${path}.*`, mapFn);
   };
 }
-
-/**
- * Run mapper and then flush pending state changes
- * @param path  The name of or path to the property to update
- * @return  A function suitable for a store action
- */
-export const mapperSync = withFlushSync(mapper);

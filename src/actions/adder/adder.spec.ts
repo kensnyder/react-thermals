@@ -1,45 +1,41 @@
 import Store from '../../classes/Store/Store';
-import { adder, adderSync } from './adder';
+import adder from './adder';
 
 describe('adder(propName, amount)', () => {
   it('should increment', async () => {
     const store = new Store({ likes: 0, mode: 'view' });
-    const like = adder('likes', 1).bind(store);
-    const dislike = adder('likes', -1).bind(store);
+    const like = store.connect(adder('likes', 1));
+    const dislike = store.connect(adder('likes', -1));
     like();
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
     expect(store.getState()).toEqual({ likes: 1, mode: 'view' });
     dislike();
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
     expect(store.getState()).toEqual({ likes: 0, mode: 'view' });
   });
   it('should increment with multipath', async () => {
     const store = new Store({ post: { likes: 0, mode: 'view' } });
-    const like = adder('post.likes', 1).bind(store);
-    const dislike = adder('post.likes', -1).bind(store);
+    const like = store.connect(adder('post.likes', 1));
+    const dislike = store.connect(adder('post.likes', -1));
     like();
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
     expect(store.getState()).toEqual({ post: { likes: 1, mode: 'view' } });
     dislike();
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
     expect(store.getState()).toEqual({ post: { likes: 0, mode: 'view' } });
   });
   it('should allow passing addend', async () => {
     const store = new Store({ cart: { total: 42 } });
-    const addToTotal = adder('cart.total').bind(store);
+    const addToTotal = store.connect(adder('cart.total'));
     addToTotal(2);
-    await new Promise(r => setTimeout(r, 15));
+    await store.nextState();
     expect(store.getState()).toEqual({ cart: { total: 44 } });
   });
-});
-describe('fieldAdderSync(propName, amount)', () => {
-  it('should increment', () => {
-    const store = new Store({ likes: 0, mode: 'view' });
-    const like = adderSync('likes', 1).bind(store);
-    const dislike = adderSync('likes', -1).bind(store);
-    like();
-    expect(store.getState()).toEqual({ likes: 1, mode: 'view' });
-    dislike();
-    expect(store.getState()).toEqual({ likes: 0, mode: 'view' });
+  it('should allow paths with asterisk', async () => {
+    const store = new Store({ items: [{ price: 42 }, { price: 47 }] });
+    const addDeliveryFee = store.connect(adder('items.*.price'));
+    addDeliveryFee(2);
+    await store.nextState();
+    expect(store.getState()).toEqual({ items: [{ price: 44 }, { price: 49 }] });
   });
 });
