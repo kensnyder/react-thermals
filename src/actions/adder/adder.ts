@@ -8,7 +8,10 @@ import Store from '../../classes/Store/Store';
  *   e.g. use amount = 1 to create an incrementer function and amount = -1 for a decremeter function
  * @return  A function suitable for a store action
  */
-export function adder(path: string, baseAmount = 0): Function {
+export function adder<Path extends string>(
+  path: Path,
+  baseAmount = 0
+): Function {
   return function updater(this: Store, amount: number = 0) {
     return this.setStateAt(path, (old: number) => old + baseAmount + amount);
   };

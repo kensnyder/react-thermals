@@ -27,6 +27,10 @@ export default class SimpleEmitter<StateType> {
     return this;
   };
 
+  hasSubscriber = <EventName extends EventNameType>(type: EventName) => {
+    return this.#_handlers[type]?.length || this.#_handlers['*']?.length;
+  };
+
   /**
    * Remove an event listener
    * @param type  The event name

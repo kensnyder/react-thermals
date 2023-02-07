@@ -48,7 +48,7 @@ export type StoreConfigType = {
 export interface MiddlewareContextInterface<StateType> {
   prev: StateType;
   next: StateType;
-  isAsync: boolean;
+  isAsync?: boolean;
   store: Store<StateType>;
 }
 
@@ -73,16 +73,23 @@ export type StateAtType<Path extends string, StateType> = Get<
   { strict: false }
 >;
 
+export type FunctionStateType<StateType> =
+  | ((oldState: StateType) => StateType)
+  | ((oldState: StateType) => Promise<StateType>);
+
 export type SettableStateType<StateType> =
   | StateType
   | Promise<StateType>
-  | ((oldState: StateType) => StateType)
-  | ((oldState: StateType) => Promise<StateType>);
+  | FunctionStateType<StateType>;
+
+export type FunctionStateAtType<Path extends string, StateType> = (
+  oldState: StateAtType<Path, StateType>
+) => StateAtType<Path, StateType>;
 
 export type SettableStateAtPathType<Path extends string, StateType> =
   | StateAtType<Path, StateType>
   | Promise<StateAtType<Path, StateType>>
-  | ((oldState: StateAtType<Path, StateType>) => StateAtType<Path, StateType>)
+  | FunctionStateAtType<Path, StateType>
   | ((
       oldState: StateAtType<Path, StateType>
     ) => Promise<StateAtType<Path, StateType>>);
