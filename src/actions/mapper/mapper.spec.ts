@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { mapper, mapperSync } from './mapper';
+import mapper from './mapper';
 
 describe('mapper(propName)', () => {
   it('should map values', async () => {
@@ -14,38 +14,12 @@ describe('mapper(propName)', () => {
       { ints: [5, 10, 15] },
       { strs: ['five', 'ten', 'fifteen'] },
     ]);
-    const mapInts = mapper('@[0]ints').bind(store);
+    const mapInts = mapper('0.ints').bind(store);
     mapInts(n => n * 2);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual([
       { ints: [10, 20, 30] },
       { strs: ['five', 'ten', 'fifteen'] },
     ]);
-  });
-});
-describe('fieldMapperSync(propName)', () => {
-  it('should map values', () => {
-    const store = new Store({ ints: [5, 10, 15] });
-    const mapInts = mapperSync('ints').bind(store);
-    mapInts(n => n * 2);
-    expect(store.getState()).toEqual({ ints: [10, 20, 30] });
-  });
-  it('should map objects', () => {
-    const store = new Store({
-      users: [
-        { name: 'Joe Shmoe', isActive: true },
-        { name: 'Jane Pain', isActive: false },
-        { name: 'Peter Pan', isActive: true },
-      ],
-    });
-    const mapUsers = mapperSync('users').bind(store);
-    mapUsers(user => ({ ...user, isActive: false }));
-    expect(store.getState()).toEqual({
-      users: [
-        { name: 'Joe Shmoe', isActive: false },
-        { name: 'Jane Pain', isActive: false },
-        { name: 'Peter Pan', isActive: false },
-      ],
-    });
   });
 });

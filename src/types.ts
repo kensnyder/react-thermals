@@ -40,11 +40,17 @@ export type EventHandlerType<StateType, EventName> = (
   evt: EventType<StateType, EventName>
 ) => void;
 
-export type OverrideableType<T> = Iterable<T> | Record<string, T>;
+export type MergeableType<T> = Iterable<T> | Record<string, T>;
 
 export type StoreConfigType = {
   autoReset?: boolean;
   id?: string;
+};
+
+export type SetStateOptionsType = {
+  bypassRender?: boolean;
+  bypassMiddleware?: boolean;
+  bypassEvent?: boolean;
 };
 
 export interface MiddlewareContextInterface<StateType> {
@@ -57,7 +63,7 @@ export interface MiddlewareContextInterface<StateType> {
 export type MiddlewareType<StateType> = (
   context: MiddlewareContextInterface<StateType>,
   next: Function
-) => StateType;
+) => void;
 
 export type PluginFunctionType = (store: Store) => any;
 
@@ -84,6 +90,15 @@ export type SettableStateType<StateType> =
   | Promise<StateType>
   | FunctionStateType<StateType>;
 
+// export type FunctionMergeableStateType<StateType> =
+//   | ((oldState: StateType) => StateType)
+//   | ((oldState: StateType) => Promise<StateType>);
+//
+// export type MergeableStateType<StateType> =
+//   | MergeableType<StateType>
+//   | Promise<MergeableType<StateType>>
+//   | FunctionMergeableStateType<StateType>;
+
 export type FunctionStateAtType<Path extends string, StateType> = (
   oldState: StateAtType<Path, StateType>
 ) => StateAtType<Path, StateType>;
@@ -96,11 +111,11 @@ export type SettableStateAtPathType<Path extends string, StateType> =
       oldState: StateAtType<Path, StateType>
     ) => Promise<StateAtType<Path, StateType>>);
 
-export type MergeableStateType<StateType> =
-  | Partial<StateType>
-  | Promise<Partial<StateType>>
-  | ((oldState: StateType) => Partial<StateType>)
-  | ((oldState: StateType) => Promise<Partial<StateType>>);
+// export type MergeableStateType<StateType> =
+//   | Partial<StateType>
+//   | Promise<Partial<StateType>>
+//   | ((oldState: StateType) => Partial<StateType>)
+//   | ((oldState: StateType) => Promise<Partial<StateType>>);
 
 export type MergeableStateAtPathType<Path extends string, StateType> =
   | Partial<StateAtType<Path, StateType>>

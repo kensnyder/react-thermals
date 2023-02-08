@@ -136,7 +136,7 @@ describe('Store middleware', () => {
     let error;
     store.use((ctx, done) => {
       try {
-        ctx.prev.foo = 'bar';
+        ctx.prev.a = 100;
       } catch (e) {
         error = e;
       }
@@ -145,6 +145,15 @@ describe('Store middleware', () => {
     store.setState({ a: 2 });
     expect(error).toBeInstanceOf(Error);
     expect(store.getState()).toEqual({ a: 2 });
+  });
+  it('should allow bypassing middleware', () => {
+    const state = { a: 1 };
+    const store = new Store(state);
+    const spy = vitest.fn();
+    store.use(spy);
+    store.setState({ a: 42 }, { bypassMiddleware: true });
+    expect(store.getState()).toEqual({ a: 42 });
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 describe('Store setState async', () => {
@@ -174,6 +183,16 @@ describe('Store setState async', () => {
     const next = await store.nextState();
     expect(next).toEqual({ a: 20 });
     expect(store.getState()).toEqual({ a: 20 });
+  });
+  it('should bypassEvent', async () => {
+    const eventSpy = vitest.fn();
+    const state = { a: 1 };
+    const store = new Store(state);
+    store.on('AfterUpdate', eventSpy);
+    store.setState(Promise.resolve({ a: 2 }), { bypassEvent: true });
+    await new Promise(r => setTimeout(r, 15));
+    expect(eventSpy).not.toHaveBeenCalled();
+    expect(store.getState()).toEqual({ a: 2 });
   });
 });
 describe('Store setStateAt', () => {
@@ -522,87 +541,5 @@ describe.skip('new Store() flushSync', () => {
     await new Promise(r => setTimeout(r, 30));
     expect(sawError).toBeInstanceOf(Error);
     expect(store.getState().page).toBe(1);
-  });
-});
-describe.skip('new Store() middleware', () => {
-  // define store before each test
-  let store;
-  let setPage;
-  let setSort;
-  beforeEach(() => {
-    store = new Store({ page: 1, sort: '-date' });
-    setPage = store.connect(setter('page'));
-    setSort = store.connect(setter('sort'));
-  });
-  it('should allow altering state', async () => {
-    store.use((ctx, next) => {
-      ctx.next.limit = 10;
-      next();
-    });
-    setPage(2);
-    await store.nextState();
-    expect(store.getState()).toEqual({ page: 2, sort: '-date', limit: 10 });
-  });
-  it('should allow spying middleware', async () => {
-    const spy = vitest.fn();
-    store.use((ctx, next) => {
-      spy(ctx);
-      next();
-    });
-    setPage(2);
-    await store.nextState();
-    expect(store.getState().page).toBe(2);
-    expect(spy).toHaveBeenCalledWith({
-      prev: { page: 1, sort: '-date' },
-      next: { page: 2, sort: '-date' },
-      isAsync: true,
-      store,
-    });
-  });
-  it('should allow non-nexting middleware', async () => {
-    const spy = vitest.fn();
-    store.use((ctx, next) => {
-      spy(ctx);
-    });
-    setPage(2);
-    await new Promise(r => setTimeout(r, 15));
-    expect(store.getState().page).toBe(1);
-    expect(spy).toHaveBeenCalledWith({
-      prev: { page: 1, sort: '-date' },
-      next: { page: 2, sort: '-date' },
-      isAsync: true,
-      store,
-    });
-  });
-  it('should allow spying sync middleware', () => {
-    const spy = vitest.fn();
-    store.use((ctx, next) => {
-      spy(ctx);
-      next();
-    });
-    setPage(2);
-    store.flushSync();
-    expect(store.getState().page).toBe(2);
-    expect(spy).toHaveBeenCalledWith({
-      prev: { page: 1, sort: '-date' },
-      next: { page: 2, sort: '-date' },
-      isAsync: false,
-      store,
-    });
-  });
-  it('should allow non-nexting sync middleware', () => {
-    const spy = vitest.fn();
-    store.use((ctx, next) => {
-      spy(ctx);
-    });
-    setPage(2);
-    store.flushSync();
-    expect(store.getState().page).toBe(1);
-    expect(spy).toHaveBeenCalledWith({
-      prev: { page: 1, sort: '-date' },
-      next: { page: 2, sort: '-date' },
-      isAsync: false,
-      store,
-    });
   });
 });

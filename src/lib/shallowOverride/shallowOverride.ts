@@ -1,4 +1,3 @@
-import { OverrideableType } from '../../types';
 import isArray from '../isArray/isArray';
 
 /**
@@ -7,15 +6,12 @@ import isArray from '../isArray/isArray';
  * @param overrides  Override values to extend the copy
  * @return  The composite value
  */
-export default function shallowOverride<Shape>(
-  value: OverrideableType<Shape>,
-  overrides: OverrideableType<Shape>
-): OverrideableType<Shape> {
+export default function shallowOverride(value: any, overrides: any): any {
   if (isArray(value)) {
     if (isArray(overrides)) {
-      return [...(value as Iterable<Shape>), ...(overrides as Iterable<Shape>)];
+      return [...value, overrides];
     } else {
-      return [...(value as Iterable<Shape>)];
+      return [...value];
     }
   } else if (value && typeof value === 'object') {
     const copy = { ...value };

@@ -93,8 +93,8 @@ const recipients = useStoreState(store, 'email.recipients');
 // 2. Reading state from the store
 const recipients = store.getStateAt('email.recipients');
 
-// 3. Creating store actions
-appender('email.recipients');
+// 3. Creating store action functions
+const addRecipient = store.connect(appender('email.recipients'));
 
 // 4. Updating values in the store
 store.setStateAt('email.recipients', recipients);
@@ -200,12 +200,12 @@ understand that the preceding element is an array.
 ### Immutability
 
 Stores should treat state as immutable. When using path expressions for actions
-or calling setStateAt, React Thermals automatically ensures relevant parts of
+or calling `setStateAt`, React Thermals automatically ensures relevant parts of
 state are replaced instead of changed. Replacing is more efficient than cloning
-the entire state and ensures that components re-render only when replaced parts
+the entire state and ensures that components rerender only when replaced parts
 of the state change.
 
-Under the hood, React Thermals has an `updatePath(path, replacer)` function
+Under the hood, React Thermals has a `replacePath(path, value)` function
 that performs this state replacement. The unit test below illustrates a change
 to a multi-layer state value, where the resulting state has some changes but
 keeps unaffected parts unchanged.
@@ -233,10 +233,10 @@ describe('updatePath', () => {
     expect(updated).not.toBe(state);
     expect(updated.email).not.toBe(state.email);
     expect(updated.email.subject).toBe(state.email.subject);
-    expect(updated.email.sender).toBe(state.email.sender);
+    expect(updated.email.sender).toBe(state.email.sender); // same object!
     expect(updated.email.recipients).not.toBe(state.email.recipients);
-    expect(updated.email.recipients[0]).toBe(state.email.recipients[0]);
-    expect(updated.email.recipients[1]).toBe(state.email.recipients[1]);
+    expect(updated.email.recipients[0]).toBe(state.email.recipients[0]); // same object!
+    expect(updated.email.recipients[1]).toBe(state.email.recipients[1]); // same object!
   });
 });
 ```
@@ -244,10 +244,12 @@ describe('updatePath', () => {
 ### Persistence
 
 By default, a store's state value will persist even when all components unmount.
-To reset the state instead, add `autoReset: true` to the store definition.
+To reset the state instead, add `autoReset: true` to the store definition and
+the state will automatically revert back to its initial value after all
+components unmount.
 
 ```js
-const myPersistingStore = new Store({
+const autoResettingStore = new Store(initialState, {
   // ...
   autoReset: true,
 });
@@ -277,13 +279,9 @@ import {
 } from 'react-thermals';
 
 const store = new Store({
-  state: {
-    items: [],
-    discount: 0,
-  },
+  items: [],
+  discount: 0,
 });
-
-export default store;
 
 export const addToCart = store.connect(
   composeActions([
@@ -438,14 +436,11 @@ import { Store, useStoreState } from 'react-thermals';
 import random from 'random-int';
 
 const store = new Store({
-  state: {
-    board: {
-      user: { x: 0, y: 0 },
-      flag: { x: random(1, 10), y: random(1, 10) },
-    },
-    hasWon: false,
+  board: {
+    user: { x: 0, y: 0 },
+    flag: { x: random(1, 10), y: random(1, 10) },
   },
-  autoReset: true,
+  hasWon: false,
 });
 
 export function restart() {
@@ -542,12 +537,13 @@ import globalStore, { useGlobalStore } from '../globalStore';
 import { persistState, appender, merger, remover } from 'react-thermals';
 
 // extend the state at any time
-globalStore.extendSync({ todos: [] });
+globalStore.replaceSync(old => ({ ...old, todos: [] }));
 
 // add actions at any time
 export const addTodo = globalStore.connect(appender('todos'));
 export const toggleTodoComplete = globalStore.connect(
-  merger('todos', todo => ({
+  replacer('todos', todo => ({
+    ...todo,
     isComplete: !todo.isComplete,
   }))
 );
@@ -664,12 +660,13 @@ export function useAuth() {
   return useGlobalStore('user');
 }
 
-globalStore.extendSync({
+globalStore.replaceSync(old => ({
+  ...old,
   user: {
     isLoggedIn: false,
     isCheckingLogin: false,
   },
-});
+}));
 
 // actions can be async
 export async function login(form) {
@@ -749,7 +746,7 @@ section and as documented [here](src/actions/README.md).
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
 with the partial state passed to mergeState--with the assumption that the
-current state and new state are both plain objects.
+current state and new state are both Arrays or both plain Objects.
 
 Calling `state.setState` will trigger a rerender on all components that consume
 the whole state and components that consume selected state that changes.
@@ -762,9 +759,6 @@ consumes. To disable persistence, create the state with `autoReset` set to
 Many cross-component state patterns like Redux do not have built-in ways to code
 split. In React Thermals, code splitting happens naturally because components
 must `import` any stores they want to consume.
-
-React Thermals is useful for a) global state, b) state that goes across
-components and c) state that is local to a single component.
 
 ### Action creators
 
@@ -789,48 +783,38 @@ There are also two functions for combining action functions:
 
 [Full docs](src/actions/README.md) on action creators.
 
-### Action Batching
+### Synchronous Actions
 
-Actions are batched by default. Meaning state changes are put into a queue until
-the next event loop. Since React rendering is also batched, actions work pretty
-intuitively.
-
-If you want to immediately flush the queue, you can call `store.flushSync()`.
-If any parts of the state returned `Promise`s, there will be an additional
-update after each `Promise`s resolves. See the next section for more information
-on `Promise`s.
+TBD
 
 ### Asynchronous Actions
 
 When `setState()` receives a promise or a function that returns a promise,
 React Thermals will automatically await that value. If more than one promise
 is batched for changes, they will be awaited serially, such that a promise
-operates on the post-promise state; and re-renders will not be triggered until
-all batched promises have resolved.
+operates on the resolved state of the previous promise; and re-renders will
+not be triggered until all batched promises have resolved.
 
 ## Full Documentation
 
 ### All Store Options
 
-The `Store()` constructor takes an object with the following properties:
+`new Store(state, options)` takes an options object with the following properties:
 
-- {Object} state - The store's initial state. It can be of any type.
 - {Boolean} autoReset - If true, reset the store when all consumer components
   unmount (default false)
 - {String} id - An identifier that could be used by plugins or event listeners
-- {Object} on - Immediately add event handlers without calling `store.on(event, handler)`
 
 ### State Setters
 
 The following state setters will cause a change and re-render all components
 that subscribe to affected state.
 
-|               | Set                     | Merge                     | Reset              |
-| ------------- | ----------------------- | ------------------------- | ------------------ |
-| Async         | setState(value)         | mergeState(value)         | resetState()       |
-| Async w/ path | setStateAt(path, value) | mergeStateAt(path, value) | resetStateAt(path) |
-| Sync          | setSync(value)          | mergeSync(value)          | resetSync()        |
-| Sync w/ path  | setSyncAt(path, value)  | mergeSyncAt(path, value)  | resetSyncAt(path)  |
+| Action | Update whole state | Update state at path      |
+| ------ | ------------------ | ------------------------- |
+| Set    | setState(value)    | setStateAt(path, value)   |
+| Merge  | mergeState(value)  | mergeStateAt(path, value) |
+| Reset  | resetState(value)  | resetStateAt(path, value) |
 
 The `value` parameter supports values, promises, functions that return values,
 and functions that return promises.
@@ -844,34 +828,40 @@ store.setState(Promise.resolve(42));
 store.setState(old => Promise.resolve(old + 42));
 ```
 
-If you provide a promise to a `Sync` method, it will behave like its
-asynchronous counterpart.
+#### Bypassing middleware, rendering and AfterUpdate event
 
-#### No rerendering
+State setters accept an additional parameter that allows you to replace the
+state value without the usual effects.
 
-There are also four methods that do not trigger any components to rerender.
-These are good for initializing or extending state when the store is not in use.
+That options object has up to 3 properties:
 
-|              | Set                        | Merge                     |
-| ------------ | -------------------------- | ------------------------- |
-| Sync         | replaceSync(value)         | extendSync(value)         |
-| Sync w/ path | replaceSyncAt(path, value) | extendSyncAt(path, value) |
-
-The `value` parameter only supports values; you cannot pass functions or
-Promises.
+1. `bypassRender` - If true, do not notify components of the change.
+2. `bypassMiddleware` - If true, skip any registered middleware.
+3. `bypassEvent` - If true, an AfterUpdate event will not be emitted.
 
 ```js
-store.replaceSync({ foo: 'bar' });
+this.setState(newState, {
+  bypassRender: true,
+  bypassMiddleware: true,
+  bypassEvent: true,
+});
+```
+
+For convenience, instead of setting all three to true, you can use the
+`replaceState` or `replaceStateAt` method:
+
+```js
+store.replaceState(value);
+store.replaceStateAt(path, value);
 ```
 
 ### Most Common Store Methods
 
-| Method              | Description                                                        |
-| ------------------- | ------------------------------------------------------------------ |
-| nextState()         | Return a promise that resolves when queued updates finish running. |
-| flushSync()         | Run queued updates immediately                                     |
-| reset()             | Reset store to its original condition and original state           |
-| use(...middlewares) | Register one or more middlewares                                   |
+| Method              | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| nextState()         | Return a promise that resolves after the next state change |
+| reset()             | Reset store to its original condition and original state   |
+| use(...middlewares) | Register one or more middlewares                           |
 
 ### Other Store Methods
 
@@ -888,10 +878,10 @@ store.replaceSync({ foo: 'bar' });
 
 ### State Getters
 
-|             | Current State    | Initial State           |
-| ----------- | ---------------- | ----------------------- |
-| Get         | getState()       | getInitialState()       |
-| Get w/ path | getStateAt(path) | getInitialStateAt(path) |
+| Get           | Whole state       | State at path           |
+| ------------- | ----------------- | ----------------------- |
+| Current State | getState()        | getStateAt(path)        |
+| Initial State | getInitialState() | getInitialStateAt(path) |
 
 Generally you'll want to avoid getting the current state. Methods that update
 store should preferrably pass a callback to a state setter function.
@@ -899,19 +889,19 @@ store should preferrably pass a callback to a state setter function.
 Example:
 
 ```js
-store.setState(old => ({ ...old, age: old.age + 1 }));
+store.setState(old => old * 2);
 ```
 
 Components should normally access state only through a hook:
 
 1. useStoreState(store) - Select the whole state, rerendering any time any part
    of the state changes.
-2. useStoreSelector(selector) - Select part of or a computed part of a state,
+2. useStoreSelector(selector) - Select part of or a computed part of state,
    rerendering any time that portion changes.
 
 And you'll also notice that most of the examples in this README do not actually
-export the store at all; you can export hooks that call useStoreState() or
-useStoreSelector() internally.
+export the store at all; you can export hooks that call `useStoreState()` or
+`useStoreSelector()` internally.
 
 ## Best Practices
 
@@ -921,7 +911,7 @@ A store can be global or used by a number of components. Regardless, each
 component must import the store; that way, any components loaded from
 `React.lazy` will allow automatic code splitting.
 
-A global store can be extended at any time using `store.extendSync()`
+A global store can be extended at any time using `store.replaceState()`
 so a global store can be defined in one file and only extended when
 needed by another store.
 

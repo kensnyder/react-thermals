@@ -1,13 +1,11 @@
 import SimpleEmitter from '../SimpleEmitter/SimpleEmitter';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
 import shallowAssign from '../../lib/shallowAssign/shallowAssign';
-import { updatePath } from '../../lib/updatePath/updatePath';
 import selectPath from '../../lib/selectPath/selectPath';
 import {
   StoreConfigType,
   SetterType,
   SettableStateType,
-  MergeableStateType,
   MiddlewareContextInterface,
   MiddlewareType,
   PlainObjectType,
@@ -19,7 +17,8 @@ import {
   EventDataType,
   FunctionStateType,
   FunctionStateAtType,
-  OverrideableType,
+  MergeableType,
+  SetStateOptionsType,
 } from '../../types';
 import { replacePath } from '../../lib/replacePath/replacePath';
 import isPromise from '../../lib/isPromise/isPromise';
@@ -267,10 +266,19 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
     done();
   };
 
-  #_updateState = (newState: StateType): void => {
-    if (this.#_middlewares.length === 0 && !this.hasSubscriber('AfterUpdate')) {
+  #_updateState = (
+    newState: StateType,
+    options?: SetStateOptionsType
+  ): void => {
+    if (
+      (this.#_middlewares.length === 0 && !this.hasSubscriber('AfterUpdate')) ||
+      options.bypassMiddleware
+    ) {
       // shortcut for speed
+      const prev = this.#_state;
       this.#_state = newState;
+      this.#_notifyComponents(prev, newState, options);
+      return;
     }
     const context = {
       prev: Object.freeze(this.#_state),
@@ -284,15 +292,9 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
         if (this.#_waitingQueue.length === 0) {
           this.#_isWaiting = false;
         }
-        this.setState(nextInQueue);
+        this.setState(nextInQueue, options);
       } else {
-        // emit update event on next tick
-        Promise.resolve().then(() => {
-          this.emit('AfterUpdate', {
-            prev: context.prev,
-            next: context.next,
-          });
-        });
+        this.#_notifyComponents(context.prev, context.next, options);
       }
     });
   };
@@ -306,7 +308,10 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  This store
    * @chainable
    */
-  setState = (newStateOrUpdater: SettableStateType<StateType>) => {
+  setState = (
+    newStateOrUpdater: SettableStateType<StateType>,
+    options: SetStateOptionsType = {}
+  ) => {
     if (this.#_isWaiting) {
       this.#_waitingQueue.push(newStateOrUpdater);
       return this;
@@ -319,11 +324,11 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
     if (isPromise(newStateOrUpdater)) {
       this.#_isWaiting = true;
       (newStateOrUpdater as Promise<StateType>).then(
-        this.#_updateState,
+        resolved => this.#_updateState(resolved, options),
         error => this.emit('SetterException', error)
       );
     } else {
-      this.#_updateState(newStateOrUpdater as StateType);
+      this.#_updateState(newStateOrUpdater as StateType, options);
     }
     return this;
   };
@@ -337,7 +342,8 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    */
   setStateAt = <Path extends string>(
     path: Path,
-    newStateOrUpdater: SettableStateAtPathType<Path, StateType>
+    newStateOrUpdater: SettableStateAtPathType<Path, StateType>,
+    options: SetStateOptionsType = {}
   ) => {
     let stateAt = this.getStateAt(path);
     if (
@@ -359,13 +365,13 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
       (stateAt as Promise<StateAtType<Path, StateType>>).then(
         resolvedStateAt => {
           const finalState = replacePath(this.#_state, path, resolvedStateAt);
-          this.#_updateState(finalState);
+          this.#_updateState(finalState, options);
         },
         error => this.emit('SetterException', error)
       );
     } else {
       const finalState = replacePath(this.#_state, path, stateAt);
-      this.#_updateState(finalState);
+      this.#_updateState(finalState, options);
     }
     return this;
   };
@@ -390,20 +396,21 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @chainable
    */
   mergeState = (
-    newStateOrUpdater: SettableStateType<OverrideableType<StateType>>
+    newStateOrUpdater: SettableStateType<StateType>,
+    options: SetStateOptionsType = {}
   ) => {
     this.setState(old => {
       if (isFunction(newStateOrUpdater)) {
         newStateOrUpdater = (newStateOrUpdater as Function)(old);
       }
       if (isPromise(newStateOrUpdater)) {
-        return (newStateOrUpdater as Promise<OverrideableType<StateType>>).then(
-          resolved => shallowOverride(old, resolved)
+        return (newStateOrUpdater as Promise<StateType>).then(resolved =>
+          shallowOverride(old, resolved)
         );
       } else {
         return shallowOverride(old, newStateOrUpdater);
       }
-    });
+    }, options);
     return this;
   };
 
@@ -415,17 +422,14 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    */
   mergeStateAt = <Path extends string>(
     path: Path,
-    newStateOrUpdater: MergeableStateAtPathType<
-      Path,
-      OverrideableType<StateType>
-    >
+    newStateOrUpdater: MergeableStateAtPathType<Path, MergeableType<StateType>>
   ) => {
     this.setStateAt(path, old => {
       if (isFunction(newStateOrUpdater)) {
         newStateOrUpdater = (newStateOrUpdater as Function)(old);
       }
       if (isPromise(newStateOrUpdater)) {
-        return (newStateOrUpdater as Promise<OverrideableType<StateType>>).then(
+        return (newStateOrUpdater as Promise<MergeableType<StateType>>).then(
           resolved => shallowOverride(old, resolved)
         );
       } else {
@@ -435,52 +439,78 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
     return this;
   };
 
-  //
-  // /**
-  //  * Tell connected components to re-render if applicable
-  //  * @param prev  The previous state value
-  //  * @param next  The new state value
-  //  */
-  // #_notifyComponents = (prev: StateType, next: StateType): void => {
-  //   // save final state result
-  //   this.#_state = next;
-  //   // update components with no selector or with matching selector
-  //   this.#_setters.forEach((setter: SetterType<StateType, any>) => {
-  //     this.#_getComponentUpdater(prev, this.#_state)(setter);
-  //   });
-  //   // announce the final state
-  //   this.emit('AfterUpdate', { prev, next: this.#_state });
-  // };
-  //
+  replaceState = (newState: StateType) => {
+    this.setState(newState, {
+      bypassRender: true,
+      bypassMiddleware: true,
+      bypassEvent: true,
+    });
+    return this;
+  };
 
-  //
-  // /**
-  //  * Get a function that will tell connected components to re-render
-  //  * @param prev  The previous state value
-  //  * @param next  The next state value
-  //  */
-  // #_getComponentUpdater = (prev: StateType, next: StateType) => {
-  //   return function _maybeSetState(setter: SetterType<StateType, any>) {
-  //     if (
-  //       typeof setter.mapState === 'function' &&
-  //       typeof setter.equalityFn === 'function'
-  //     ) {
-  //       // registered from useStoreSelector so only re-render
-  //       // components when the relevant slice of state changes
-  //       const prevSelected = setter.mapState(prev);
-  //       const nextSelected = setter.mapState(next);
-  //       if (!setter.equalityFn(prevSelected, nextSelected)) {
-  //         // the slice of state is not equal so rerender component
-  //         setter.handler(nextSelected);
-  //       }
-  //     } else {
-  //       // registered from useStoreState
-  //       setter.handler(next);
-  //     }
-  //   };
-  // };
-  //
-  //
+  replaceStateAt = <Path extends string>(
+    path: Path,
+    newState: SettableStateAtPathType<Path, StateType>
+  ) => {
+    this.setStateAt(path, newState, {
+      bypassRender: true,
+      bypassMiddleware: true,
+      bypassEvent: true,
+    });
+    return this;
+  };
+
+  /**
+   * Tell connected components to re-render if applicable
+   * @param prev  The previous state value
+   * @param next  The new state value
+   */
+  #_notifyComponents = (
+    prev: StateType,
+    next: StateType,
+    options: SetStateOptionsType
+  ): void => {
+    // save final state result
+    this.#_state = next;
+    if (!options.bypassRender) {
+      // update components with no selector or with matching selector
+      this.#_setters.forEach((setter: SetterType<StateType, any>) => {
+        this.#_getComponentUpdater(prev, this.#_state)(setter);
+      });
+    }
+    if (!options.bypassEvent) {
+      // announce the final state
+      Promise.resolve().then(() =>
+        this.emit('AfterUpdate', { prev, next: this.#_state })
+      );
+    }
+  };
+
+  /**
+   * Get a function that will tell connected components to re-render
+   * @param prev  The previous state value
+   * @param next  The next state value
+   */
+  #_getComponentUpdater = (prev: StateType, next: StateType) => {
+    return function _maybeSetState(setter: SetterType<StateType, any>) {
+      if (
+        typeof setter.mapState === 'function' &&
+        typeof setter.equalityFn === 'function'
+      ) {
+        // registered from useStoreSelector so only re-render
+        // components when the relevant slice of state changes
+        const prevSelected = setter.mapState(prev);
+        const nextSelected = setter.mapState(next);
+        if (!setter.equalityFn(prevSelected, nextSelected)) {
+          // the slice of state is not equal so rerender component
+          setter.handler(nextSelected);
+        }
+      } else {
+        // registered from useStoreState
+        setter.handler(next);
+      }
+    };
+  };
 
   // observable plugin
   subscribe = pluginWarning('observable', 'subscribe');
