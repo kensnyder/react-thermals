@@ -29,8 +29,8 @@ export default function useStoreState<StateType>(
     const setter: SetterType<StateType, any> = {
       handler: setState,
     };
-    store._subscribe(setter);
-    return () => store._unsubscribe(setter);
+    store.attachComponent(setter);
+    return () => store.detachComponent(setter);
   }, [store]);
 
   // the entire state value will then be here to return

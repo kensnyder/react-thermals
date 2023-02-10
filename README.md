@@ -838,6 +838,7 @@ That options object has up to 3 properties:
 1. `bypassRender` - If true, do not notify components of the change.
 2. `bypassMiddleware` - If true, skip any registered middleware.
 3. `bypassEvent` - If true, an AfterUpdate event will not be emitted.
+4. `bypassAll` - If true, bypass all three of the effects above.
 
 ```js
 this.setState(newState, {
@@ -848,11 +849,12 @@ this.setState(newState, {
 ```
 
 For convenience, instead of setting all three to true, you can use the
-`replaceState` or `replaceStateAt` method:
+`bypassAll`.
 
 ```js
-store.replaceState(value);
-store.replaceStateAt(path, value);
+this.setState(newState, {
+  bypassAll: true,
+});
 ```
 
 ### Most Common Store Methods
@@ -1020,8 +1022,8 @@ included plugins:
 
 1. [consoleLogger](src/plugins/README.md#consolelogger) - Logs state changes to
    the console
-2. [observable](src/plugins/README.md#observable) - Adds a subscribe function to
-   observe the store as an observable subject
+2. [observable](src/plugins/README.md#observable) - Adds a `subscribe()`
+   function to observe the store as an Observable Subject
 3. [persistState](src/plugins/README.md#persiststate) - Persists state to
    localStorage or sessionStorage
 4. [syncUrl](src/plugins/README.md#syncurl) - Persists state to URL using
@@ -1053,19 +1055,15 @@ myStore.use((context, done) => {
 
 // alter the state
 myStore.use((context, done) => {
-  context.next = mockStore.nextState();
+  context.next = doSomeModifications(conext.next);
   done();
 });
 
 // call next asynchronously
 myStore.use((context, done) => {
-  debounceState(context.next, done);
+  doSomeAsyncModifications(context).then(done);
 });
 ```
-
-Note that if middleware makes asynchronous changes, calls to state sync
-functions `flushSync(), setSync(), setSyncAt(), mergeSync(), mergeSyncAt(), 
-resetSync(), resetSyncAt()` will get blocked until
 
 ## Community
 

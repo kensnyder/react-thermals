@@ -3,7 +3,7 @@ import React from 'react';
 import { Get } from 'type-fest';
 import SimpleEmitter from './classes/SimpleEmitter/SimpleEmitter';
 
-export type EventNameType =
+export type KnownEventNames =
   | 'BeforeInitialize'
   | 'AfterInitialize'
   | 'BeforeFirstUse'
@@ -30,17 +30,17 @@ export type EventDataType<StateType, EventName> = EventName extends
   ? Error
   : undefined;
 
-export type EventType<StateType, EventName> = {
-  target: SimpleEmitter<StateType> | Store<StateType>;
+export type EventType<StateType, EventName extends string> = {
+  target: SimpleEmitter<StateType, EventName> | Store<StateType>;
   type: EventName;
   data: EventDataType<StateType, EventName>;
 };
 
-export type EventHandlerType<StateType, EventName> = (
+export type EventHandlerType<StateType, EventName extends string> = (
   evt: EventType<StateType, EventName>
 ) => void;
 
-export type MergeableType<T> = Iterable<T> | Record<string, T>;
+export type Spreadable<T> = Iterable<T> | Partial<T>;
 
 export type StoreConfigType = {
   autoReset?: boolean;
@@ -51,6 +51,7 @@ export type SetStateOptionsType = {
   bypassRender?: boolean;
   bypassMiddleware?: boolean;
   bypassEvent?: boolean;
+  bypassAll?: boolean;
 };
 
 export interface MiddlewareContextInterface<StateType> {
@@ -90,14 +91,14 @@ export type SettableStateType<StateType> =
   | Promise<StateType>
   | FunctionStateType<StateType>;
 
-// export type FunctionMergeableStateType<StateType> =
-//   | ((oldState: StateType) => StateType)
-//   | ((oldState: StateType) => Promise<StateType>);
-//
-// export type MergeableStateType<StateType> =
-//   | MergeableType<StateType>
-//   | Promise<MergeableType<StateType>>
-//   | FunctionMergeableStateType<StateType>;
+export type FunctionMergeableStateType<StateType> =
+  | ((oldState: StateType) => Spreadable<StateType>)
+  | ((oldState: StateType) => Promise<Spreadable<StateType>>);
+
+export type MergeableStateType<StateType> =
+  | Spreadable<StateType>
+  | Promise<Spreadable<StateType>>
+  | FunctionMergeableStateType<StateType>;
 
 export type FunctionStateAtType<Path extends string, StateType> = (
   oldState: StateAtType<Path, StateType>
@@ -111,21 +112,15 @@ export type SettableStateAtPathType<Path extends string, StateType> =
       oldState: StateAtType<Path, StateType>
     ) => Promise<StateAtType<Path, StateType>>);
 
-// export type MergeableStateType<StateType> =
-//   | Partial<StateType>
-//   | Promise<Partial<StateType>>
-//   | ((oldState: StateType) => Partial<StateType>)
-//   | ((oldState: StateType) => Promise<Partial<StateType>>);
-
 export type MergeableStateAtPathType<Path extends string, StateType> =
-  | Partial<StateAtType<Path, StateType>>
-  | Promise<Partial<StateAtType<Path, StateType>>>
+  | Spreadable<StateAtType<Path, StateType>>
+  | Promise<Spreadable<StateAtType<Path, StateType>>>
   | ((
       oldState: StateAtType<Path, StateType>
-    ) => Partial<StateAtType<Path, StateType>>)
+    ) => Spreadable<StateAtType<Path, StateType>>)
   | ((
       oldState: StateAtType<Path, StateType>
-    ) => Promise<Partial<StateAtType<Path, StateType>>>);
+    ) => Promise<Spreadable<StateAtType<Path, StateType>>>);
 
 export type ExtendStateAtPathType<Path extends string, StateType> = Partial<
   Get<StateType, Path, { strict: false }>

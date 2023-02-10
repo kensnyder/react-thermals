@@ -1,8 +1,9 @@
 import Store from '../../classes/Store/Store';
+import isPromise from '../../lib/isPromise/isPromise';
 
 /**
  * Given a list of actions, run them all, i.e. parallel
- * @param actions
+ * @param actions  The array of action functions to run in parallel
  * @return  A function to run the actions
  */
 export function composeActions(actions: Function[]) {
@@ -13,18 +14,16 @@ export function composeActions(actions: Function[]) {
 
 /**
  * Given a list of actions, pipe results of action to the next action, i.e. in series
- * @param actions
+ * @param actions  The array of action functions to pipe together
  * @return  A function to run the actions
  */
 export function pipeActions(actions: Function[]) {
   return async function actionPiper(this: Store, ...args: any[]) {
-    const store = this;
     for (const action of actions) {
       let result = action(...args);
-      if (typeof result?.then === 'function') {
+      if (isPromise(result)) {
         result = await result;
       }
-      store.flushSync();
     }
   };
 }

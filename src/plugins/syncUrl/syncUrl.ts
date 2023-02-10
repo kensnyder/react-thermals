@@ -42,7 +42,9 @@ export default function syncUrl({
       const urlData = parse(location.search.slice(1));
       const known = omitUnknown(fields as string[], urlData);
       if (known && !isEmpty(known)) {
-        store.extendSync(castFromStrings(schema, known));
+        store.mergeState(castFromStrings(schema, known), {
+          bypassAll: true,
+        });
       }
       writeUrl(castToStrings(schema, { ...urlData, ...evt.data }));
     });

@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { merger, mergerSync } from './merger';
+import merger from './merger';
 
 describe('merger(path)', () => {
   it('should merge state', async () => {
@@ -27,26 +27,6 @@ describe('merger(path)', () => {
           color: 'blue',
           finish: 'gloss',
         },
-      ],
-    });
-  });
-});
-describe('mergerSync(path)', () => {
-  it('should merge state at path sync', async () => {
-    const store = new Store({
-      doors: [{ door: 'A', open: false }, { door: 'A.2' }],
-    });
-    const addPaint = mergerSync('doors[0]').bind(store);
-    addPaint({ color: 'green', finish: 'semigloss', door: 'A.1' });
-    expect(store.getState()).toEqual({
-      doors: [
-        {
-          door: 'A.1',
-          open: false,
-          color: 'green',
-          finish: 'semigloss',
-        },
-        { door: 'A.2' },
       ],
     });
   });

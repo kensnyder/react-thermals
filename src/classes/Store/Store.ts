@@ -1,6 +1,5 @@
 import SimpleEmitter from '../SimpleEmitter/SimpleEmitter';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
-import shallowAssign from '../../lib/shallowAssign/shallowAssign';
 import selectPath from '../../lib/selectPath/selectPath';
 import {
   StoreConfigType,
@@ -13,12 +12,14 @@ import {
   ExtendStateAtPathType,
   SettableStateAtPathType,
   StateAtType,
+  MergeableStateType,
   MergeableStateAtPathType,
-  EventDataType,
   FunctionStateType,
   FunctionStateAtType,
-  MergeableType,
+  KnownEventNames,
   SetStateOptionsType,
+  EventHandlerType,
+  EventType,
 } from '../../types';
 import { replacePath } from '../../lib/replacePath/replacePath';
 import isPromise from '../../lib/isPromise/isPromise';
@@ -27,17 +28,21 @@ import isFunction from '../../lib/isFunction/isFunction';
 // an internal counter for stores
 let storeIdx = 1;
 
-export default class Store<StateType = any> extends SimpleEmitter<StateType> {
-  readonly #_autoReset: boolean;
-  #_hasInitialized = false;
-  #_idx: number;
-  readonly #_initialState: StateType;
-  #_middlewares: MiddlewareType<StateType>[] = [];
-  #_plugins: PluginFunctionType[] = [];
-  #_setters: SetterType<StateType, any>[] = [];
-  #_state: StateType;
-  #_updateQueue: SettableStateType<StateType>[] = [];
-  #_usedCount = 0;
+export default class Store<StateType = any> extends SimpleEmitter<
+  StateType,
+  KnownEventNames
+> {
+  readonly #autoReset: boolean;
+  #hasInitialized = false;
+  #idx: number;
+  readonly #initialState: StateType;
+  #middlewares: MiddlewareType<StateType>[] = [];
+  #plugins: PluginFunctionType[] = [];
+  #setters: SetterType<StateType, any>[] = [];
+  #state: StateType;
+  #usedCount = 0;
+  #waitingQueue: SettableStateType<StateType>[] = [];
+  #isWaiting = false;
 
   /**
    * A string to identify the store by
@@ -61,13 +66,13 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   ) {
     super();
     this.on('BeforeInitialize', () => {
-      this.#_hasInitialized = true;
+      this.#hasInitialized = true;
     });
-    this.#_initialState = initialState;
-    this.#_state = initialState;
+    this.#initialState = initialState;
+    this.#state = initialState;
     this.id = String(id || `store-${storeIdx}`);
-    this.#_idx = storeIdx++;
-    this.#_autoReset = autoReset;
+    this.#idx = storeIdx++;
+    this.#autoReset = autoReset;
     this.locals = {};
   }
 
@@ -76,35 +81,35 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @param setState  A setState function from React.useState()
    * @note private but used by useStoreSelector()
    */
-  _subscribe = (setState: SetterType<StateType, any>): void => {
-    if (this.#_usedCount++ === 0) {
-      this.emit('BeforeFirstUse', this.#_state);
+  attachComponent = (setState: SetterType<StateType, any>): void => {
+    if (this.#usedCount++ === 0) {
+      this.emit('BeforeFirstUse', this.#state);
     }
-    if (this.#_setters.length === 0) {
+    if (this.#setters.length === 0) {
       this.emit('AfterFirstMount');
     }
-    if (!this.#_setters.includes(setState)) {
-      this.#_setters.push(setState);
-      this.emit('AfterMount', this.#_setters.length);
+    if (!this.#setters.includes(setState)) {
+      this.#setters.push(setState);
+      this.emit('AfterMount', this.#setters.length);
     }
-    if (this.#_usedCount === 1) {
-      this.emit('AfterFirstUse', this.#_state);
+    if (this.#usedCount === 1) {
+      this.emit('AfterFirstUse', this.#state);
     }
   };
 
   /**
    * Disconnect a component from the store
-   * @param setState  The setState function used to _subscribe
+   * @param setState  The setState function used to subscribe
    * @note private but used by useStoreSelector()
    */
-  _unsubscribe = (setState: SetterType<StateType, any>): void => {
-    const idx = this.#_setters.indexOf(setState);
+  detachComponent = (setState: SetterType<StateType, any>): void => {
+    const idx = this.#setters.indexOf(setState);
     if (idx > -1) {
-      this.#_setters.splice(idx, 1);
+      this.#setters.splice(idx, 1);
     }
-    this.emit('AfterUnmount', this.#_setters.length);
-    if (this.#_setters.length === 0) {
-      if (this.#_autoReset) {
+    this.emit('AfterUnmount', this.#setters.length);
+    if (this.#setters.length === 0) {
+      if (this.#autoReset) {
         this.reset();
       }
       this.emit('AfterLastUnmount');
@@ -115,7 +120,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * Return the initial state of the store
    */
   getInitialState = (): StateType => {
-    return this.#_initialState;
+    return this.#initialState;
   };
 
   /**
@@ -125,7 +130,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   getInitialStateAt = <Path extends string>(
     path: Path
   ): StateAtType<Path, StateType> => {
-    return selectPath(path)(this.#_initialState);
+    return selectPath(path)(this.#initialState);
   };
 
   /**
@@ -133,7 +138,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  The current state
    */
   getState = (): StateType => {
-    return this.#_state;
+    return this.#state;
   };
 
   /**
@@ -143,7 +148,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   getStateAt = <Path extends string>(
     path: Path
   ): StateAtType<Path, StateType> => {
-    return selectPath(path)(this.#_state);
+    return selectPath(path)(this.#state);
   };
 
   /**
@@ -154,8 +159,8 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    */
   reset = () => {
     this.resetState();
-    this.#_hasInitialized = false;
-    this.#_usedCount = 0;
+    this.#hasInitialized = false;
+    this.#usedCount = 0;
     return this;
   };
 
@@ -164,7 +169,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    *   and notifies all consumer components
    */
   resetState = () => {
-    this.setState(this.#_initialState);
+    this.setState(this.#initialState);
     return this;
   };
 
@@ -191,7 +196,9 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    */
   nextState = (): Promise<StateType> => {
     return new Promise(resolve => {
-      this.once('AfterUpdate', evt => resolve(evt.data.next));
+      this.once('AfterUpdate', (evt: EventType<StateType, 'AfterUpdate'>) =>
+        resolve(evt.data.next)
+      );
     });
   };
 
@@ -199,21 +206,21 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * Return the number of components that "use" this store data
    */
   getUsedCount = () => {
-    return this.#_usedCount;
+    return this.#usedCount;
   };
 
   /**
    * Return true if any component has ever used this store
    */
   hasInitialized = () => {
-    return this.#_hasInitialized;
+    return this.#hasInitialized;
   };
 
   /**
    * Return the number of *mounted* components that "use" this store
    */
   getMountCount = () => {
-    return this.#_setters.length;
+    return this.#setters.length;
   };
 
   /**
@@ -223,7 +230,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    */
   plugin = (initializer: PluginFunctionType): any => {
     const result = initializer(this);
-    this.#_plugins.push(initializer);
+    this.#plugins.push(initializer);
     return result;
   };
 
@@ -231,7 +238,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * Get the array of plugin initializer functions
    */
   getPlugins = () => {
-    return this.#_plugins;
+    return this.#plugins;
   };
 
   /**
@@ -240,7 +247,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @return  This store
    */
   use = (...middlewares: MiddlewareType<StateType>[]) => {
-    this.#_middlewares.push(...middlewares);
+    this.#middlewares.push(...middlewares);
     return this;
   };
 
@@ -250,61 +257,57 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @param context  Object with prev, next, isAsync, store
    * @param callback  The function to call when all middlewares have called "next()"
    */
-  #_runMiddlewares = (
+  #runMiddlewares = (
     context: MiddlewareContextInterface<StateType>,
     callback: Function
   ): void => {
     let i = 0;
     const done = () => {
-      if (i === this.#_middlewares.length) {
+      if (i === this.#middlewares.length) {
         callback();
       } else {
-        this.#_middlewares[i++](context, done);
+        this.#middlewares[i++](context, done);
         // TODO: set context.isAsync = true if done doesn't get called immediately
       }
     };
     done();
   };
 
-  #_updateState = (
-    newState: StateType,
-    options?: SetStateOptionsType
-  ): void => {
+  #updateState = (newState: StateType, options?: SetStateOptionsType): void => {
     if (
-      (this.#_middlewares.length === 0 && !this.hasSubscriber('AfterUpdate')) ||
-      options.bypassMiddleware
+      (this.#middlewares.length === 0 && !this.hasSubscriber('AfterUpdate')) ||
+      options.bypassMiddleware ||
+      options.bypassAll
     ) {
       // shortcut for speed
-      const prev = this.#_state;
-      this.#_state = newState;
-      this.#_notifyComponents(prev, newState, options);
+      const prev = this.#state;
+      this.#state = newState;
+      this.#notifyComponents(prev, newState, options);
       return;
     }
     const context = {
-      prev: Object.freeze(this.#_state),
+      prev: Object.freeze(this.#state),
       next: newState,
       store: this,
     };
-    this.#_runMiddlewares(context, () => {
-      this.#_state = context.next;
-      if (this.#_waitingQueue.length > 0) {
-        const nextInQueue = this.#_waitingQueue.shift();
-        if (this.#_waitingQueue.length === 0) {
-          this.#_isWaiting = false;
+    this.#runMiddlewares(context, () => {
+      this.#state = context.next;
+      if (this.#waitingQueue.length > 0) {
+        const nextInQueue = this.#waitingQueue.shift();
+        if (this.#waitingQueue.length === 0) {
+          this.#isWaiting = false;
         }
         this.setState(nextInQueue, options);
       } else {
-        this.#_notifyComponents(context.prev, context.next, options);
+        this.#notifyComponents(context.prev, context.next, options);
       }
     });
   };
 
-  #_waitingQueue = [];
-  #_isWaiting = false;
-
   /**
    * Schedule state to be updated in the next batch of updates
    * @param newStateOrUpdater  The new value or function that will return the new value
+   * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
    * @chainable
    */
@@ -312,23 +315,28 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
     newStateOrUpdater: SettableStateType<StateType>,
     options: SetStateOptionsType = {}
   ) => {
-    if (this.#_isWaiting) {
-      this.#_waitingQueue.push(newStateOrUpdater);
+    if (this.#isWaiting) {
+      this.#waitingQueue.push(newStateOrUpdater);
       return this;
     }
     if (isFunction(newStateOrUpdater)) {
-      newStateOrUpdater = (newStateOrUpdater as FunctionStateType<StateType>)(
-        this.#_state
-      );
+      try {
+        newStateOrUpdater = (newStateOrUpdater as FunctionStateType<StateType>)(
+          this.#state
+        );
+      } catch (e) {
+        this.emit('SetterException', e);
+        return this;
+      }
     }
     if (isPromise(newStateOrUpdater)) {
-      this.#_isWaiting = true;
+      this.#isWaiting = true;
       (newStateOrUpdater as Promise<StateType>).then(
-        resolved => this.#_updateState(resolved, options),
+        resolved => this.#updateState(resolved, options),
         error => this.emit('SetterException', error)
       );
     } else {
-      this.#_updateState(newStateOrUpdater as StateType, options);
+      this.#updateState(newStateOrUpdater as StateType, options);
     }
     return this;
   };
@@ -337,6 +345,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * Schedule a value to be updated in the next batch of updates at the given path inside the state
    * @param path  The path to the value
    * @param newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
    * @chainable
    */
@@ -353,30 +362,35 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
     ) {
       // type-fest's Get<> doesn't understand asterisks, so we have to suppress warning
       // @ts-ignore
-      stateAt = this.#_getMapUpdater(stateAt, newStateOrUpdater);
+      stateAt = this.#getMapUpdater(stateAt, newStateOrUpdater);
     } else if (isFunction(newStateOrUpdater)) {
-      stateAt = (newStateOrUpdater as FunctionStateAtType<Path, StateType>)(
-        stateAt
-      );
+      try {
+        stateAt = (newStateOrUpdater as FunctionStateAtType<Path, StateType>)(
+          stateAt
+        );
+      } catch (e) {
+        this.emit('SetterException', e);
+        return this;
+      }
     } else {
       stateAt = newStateOrUpdater as StateAtType<Path, StateType>;
     }
     if (isPromise(stateAt)) {
       (stateAt as Promise<StateAtType<Path, StateType>>).then(
         resolvedStateAt => {
-          const finalState = replacePath(this.#_state, path, resolvedStateAt);
-          this.#_updateState(finalState, options);
+          const finalState = replacePath(this.#state, path, resolvedStateAt);
+          this.#updateState(finalState, options);
         },
         error => this.emit('SetterException', error)
       );
     } else {
-      const finalState = replacePath(this.#_state, path, stateAt);
-      this.#_updateState(finalState, options);
+      const finalState = replacePath(this.#state, path, stateAt);
+      this.#updateState(finalState, options);
     }
     return this;
   };
 
-  #_getMapUpdater = <T>(
+  #getMapUpdater = <T>(
     arrayOfState: T[],
     updater: (old: T) => T
   ): Function | Promise<Function> => {
@@ -390,18 +404,24 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   };
 
   /**
-   * Schedule state to be merged in the next batch of updates
+   * Merge state into an Object or Array
    * @param newStateOrUpdater  The new value or function that will return the new value
+   * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
    * @chainable
    */
   mergeState = (
-    newStateOrUpdater: SettableStateType<StateType>,
+    newStateOrUpdater: MergeableStateType<StateType>,
     options: SetStateOptionsType = {}
   ) => {
     this.setState(old => {
       if (isFunction(newStateOrUpdater)) {
-        newStateOrUpdater = (newStateOrUpdater as Function)(old);
+        try {
+          newStateOrUpdater = (newStateOrUpdater as Function)(old);
+        } catch (e) {
+          this.emit('SetterException', e);
+          return this;
+        }
       }
       if (isPromise(newStateOrUpdater)) {
         return (newStateOrUpdater as Promise<StateType>).then(resolved =>
@@ -415,48 +435,40 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
   };
 
   /**
-   * Schedule state to be merged in the next batch of updates
+   * Merge state at the given path into an Object or Array
    * @param newStateOrUpdater  The new value or function that will return the new value
+   * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
    * @chainable
    */
   mergeStateAt = <Path extends string>(
     path: Path,
-    newStateOrUpdater: MergeableStateAtPathType<Path, MergeableType<StateType>>
+    newStateOrUpdater: MergeableStateAtPathType<Path, StateType>,
+    options: SetStateOptionsType = {}
   ) => {
-    this.setStateAt(path, old => {
-      if (isFunction(newStateOrUpdater)) {
-        newStateOrUpdater = (newStateOrUpdater as Function)(old);
-      }
-      if (isPromise(newStateOrUpdater)) {
-        return (newStateOrUpdater as Promise<MergeableType<StateType>>).then(
-          resolved => shallowOverride(old, resolved)
-        );
-      } else {
-        return shallowOverride(old, newStateOrUpdater);
-      }
-    });
-    return this;
-  };
-
-  replaceState = (newState: StateType) => {
-    this.setState(newState, {
-      bypassRender: true,
-      bypassMiddleware: true,
-      bypassEvent: true,
-    });
-    return this;
-  };
-
-  replaceStateAt = <Path extends string>(
-    path: Path,
-    newState: SettableStateAtPathType<Path, StateType>
-  ) => {
-    this.setStateAt(path, newState, {
-      bypassRender: true,
-      bypassMiddleware: true,
-      bypassEvent: true,
-    });
+    this.setStateAt(
+      path,
+      old => {
+        if (isFunction(newStateOrUpdater)) {
+          try {
+            newStateOrUpdater = (newStateOrUpdater as Function)(old);
+          } catch (e) {
+            this.emit('SetterException', e);
+            return this;
+          }
+        }
+        if (isPromise(newStateOrUpdater)) {
+          return (
+            newStateOrUpdater as Promise<
+              MergeableStateAtPathType<Path, StateType>
+            >
+          ).then(resolved => shallowOverride(old, resolved));
+        } else {
+          return shallowOverride(old, newStateOrUpdater);
+        }
+      },
+      options
+    );
     return this;
   };
 
@@ -465,23 +477,23 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @param prev  The previous state value
    * @param next  The new state value
    */
-  #_notifyComponents = (
+  #notifyComponents = (
     prev: StateType,
     next: StateType,
     options: SetStateOptionsType
   ): void => {
     // save final state result
-    this.#_state = next;
-    if (!options.bypassRender) {
+    this.#state = next;
+    if (!options.bypassRender && !options.bypassAll) {
       // update components with no selector or with matching selector
-      this.#_setters.forEach((setter: SetterType<StateType, any>) => {
-        this.#_getComponentUpdater(prev, this.#_state)(setter);
+      this.#setters.forEach((setter: SetterType<StateType, any>) => {
+        this.#getComponentUpdater(prev, this.#state)(setter);
       });
     }
-    if (!options.bypassEvent) {
+    if (!options.bypassEvent && !options.bypassAll) {
       // announce the final state
       Promise.resolve().then(() =>
-        this.emit('AfterUpdate', { prev, next: this.#_state })
+        this.emit('AfterUpdate', { prev, next: this.#state })
       );
     }
   };
@@ -491,7 +503,7 @@ export default class Store<StateType = any> extends SimpleEmitter<StateType> {
    * @param prev  The previous state value
    * @param next  The next state value
    */
-  #_getComponentUpdater = (prev: StateType, next: StateType) => {
+  #getComponentUpdater = (prev: StateType, next: StateType) => {
     return function _maybeSetState(setter: SetterType<StateType, any>) {
       if (
         typeof setter.mapState === 'function' &&

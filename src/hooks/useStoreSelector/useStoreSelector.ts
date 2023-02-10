@@ -46,8 +46,8 @@ export default function useStoreSelector<StateType, SelectedState>(
       equalityFn: isEqual,
       handler: setState,
     } as SetterType<StateType, SelectedState>;
-    store._subscribe(updater);
-    return () => store._unsubscribe(updater);
+    store.attachComponent(updater);
+    return () => store.detachComponent(updater);
   }, [store, setState]);
 
   // return that slice or whole bit of state

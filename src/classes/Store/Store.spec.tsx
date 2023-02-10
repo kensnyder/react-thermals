@@ -194,6 +194,50 @@ describe('Store setState async', () => {
     expect(eventSpy).not.toHaveBeenCalled();
     expect(store.getState()).toEqual({ a: 2 });
   });
+  it('should fire SetterException when setState callback throws', async () => {
+    const state = { a: 1 };
+    const store = new Store(state);
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setState(old => {
+      throw new Error('my rejection');
+    });
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBeInstanceOf(Error);
+    expect(rejection.message).toBe('my rejection');
+  });
+  it('should fire SetterException when setState callback throws', async () => {
+    const state = { a: 1 };
+    const store = new Store(state);
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setStateAt('a', old => {
+      throw new Error('my rejection 2');
+    });
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBeInstanceOf(Error);
+    expect(rejection.message).toBe('my rejection 2');
+  });
+  it('should fire SetterException on rejected promise', async () => {
+    const state = { a: 1 };
+    const store = new Store(state);
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setState(Promise.reject('my rejection 3'));
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBe('my rejection 3');
+  });
+  it('should fire SetterException on function returning rejected promise', async () => {
+    const state = { a: 1 };
+    const store = new Store(state);
+    let rejection;
+    store.on('SetterException', evt => (rejection = evt.data));
+    store.setState(() => {
+      return Promise.reject('my rejection 4');
+    });
+    await new Promise(r => setTimeout(r, 15));
+    expect(rejection).toBe('my rejection 4');
+  });
 });
 describe('Store setStateAt', () => {
   it('should update state one level deep', async () => {
@@ -332,6 +376,7 @@ describe('Store mergeState', () => {
     expect(store.getState()).toEqual({ user: { name: 'Milo', age: 11 } });
   });
 });
+
 describe('Store plugins', () => {
   it('should allow plugins', () => {
     const spy: Function = vitest.fn();
@@ -355,7 +400,54 @@ describe('Store plugins', () => {
     }
   });
 });
-describe.skip('new Store() with autoReset', () => {
+
+describe('Store() with components', () => {
+  // define store before each test
+  let store: Store;
+  let ListComponent: FunctionComponent;
+  let PageComponent: FunctionComponent;
+  let setPage;
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    store = new Store(state);
+    setPage = store.connect(setter('page'));
+    ListComponent = () => {
+      const state = useStoreState(store);
+      return (
+        <div className="List">
+          <span>page={state.page}</span>
+          <button onClick={() => setPage(old => old + 1)}>Next</button>
+        </div>
+      );
+    };
+    PageComponent = () => {
+      const [show, setShow] = useState(true);
+      return (
+        <div className="MaybeSearchComponent">
+          <button onClick={() => setShow(true)}>Show</button>
+          <button onClick={() => setShow(false)}>Hide</button>
+          {show && <ListComponent />}
+        </div>
+      );
+    };
+  });
+  it('should persist state', async () => {
+    const { getByText } = render(<PageComponent />);
+    expect(store.getState().page).toBe(1);
+    await act(() => {
+      fireEvent.click(getByText('Next'));
+    });
+    expect(store.getState().page).toBe(2);
+    await act(() => {
+      fireEvent.click(getByText('Hide'));
+    });
+    await act(() => {
+      fireEvent.click(getByText('Show'));
+    });
+    expect(store.getState().page).toBe(2);
+  });
+});
+describe('Store() with components - auto reset', () => {
   // define store before each test
   let store: Store;
   let ListComponent: FunctionComponent;
@@ -363,7 +455,6 @@ describe.skip('new Store() with autoReset', () => {
   let setPage;
   let setSort;
   let thrower;
-  let syncThrower;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     store = new Store(state, {
@@ -376,12 +467,6 @@ describe.skip('new Store() with autoReset', () => {
         throw new Error('my error');
       });
     };
-    syncThrower = () => {
-      store.setState(() => {
-        throw new Error('my sync error');
-      });
-      store.flushSync();
-    };
     ListComponent = () => {
       const state = useStoreState(store);
       return (
@@ -389,7 +474,6 @@ describe.skip('new Store() with autoReset', () => {
           <span>page={state.page}</span>
           <button onClick={() => setPage(old => old + 1)}>Next</button>
           <button onClick={thrower as MouseEventHandler}>Throw</button>
-          <button onClick={syncThrower as MouseEventHandler}>syncThrow</button>
         </div>
       );
     };
@@ -428,118 +512,5 @@ describe.skip('new Store() with autoReset', () => {
     });
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe('my error');
-  });
-  it('should fire SetterException on flushSync', async () => {
-    let error: any;
-    store.on('SetterException', evt => (error = evt.data));
-    const { getByText } = render(<ListComponent />);
-    await act(() => {
-      fireEvent.click(getByText('syncThrow'));
-    });
-    expect(error).toBeInstanceOf(Error);
-    expect(error.message).toBe('my sync error');
-  });
-  it('should fire SetterException on rejected promise', async () => {
-    let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
-    store.setState(Promise.reject('my rejection'));
-    await new Promise(r => setTimeout(r, 15));
-    expect(rejection).toBe('my rejection');
-  });
-  it('should fire SetterException on function returning rejected promise', async () => {
-    let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
-    store.setState(() => {
-      return Promise.reject('my rejection');
-    });
-    await new Promise(r => setTimeout(r, 15));
-    expect(rejection).toBe('my rejection');
-  });
-  it('should fire SetterException on rejected promise on setSync', async () => {
-    let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
-    store.setSync(Promise.reject('my rejection'));
-    await new Promise(r => setTimeout(r, 15));
-    expect(rejection).toBe('my rejection');
-  });
-});
-
-describe.skip('new Store() flushSync', () => {
-  // define store before each test
-  let store;
-  let setPage;
-  let pwn;
-  let promise;
-  let promiseError;
-  beforeEach(() => {
-    const state = { page: 1, sort: '-date' };
-    store = new Store(state);
-    setPage = store.connect(setter('page'));
-    pwn = () => store.setState({ pwned: 42 });
-    promise = () => {
-      store.setState(() => {
-        return new Promise(resolve => {
-          setTimeout(() => resolve({ page: 17, sort: 'date' }), 15);
-        });
-      });
-    };
-    promiseError = () => {
-      store.setState(() => {
-        return new Promise(() => {
-          throw new Error('Scooby Doo');
-        });
-      });
-    };
-  });
-  it('should flushSync with values', () => {
-    setPage(2);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState().page).toBe(2);
-  });
-  it('should flushSync with state replacement', () => {
-    pwn();
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState()).toEqual({ pwned: 42 });
-  });
-  it('should flushSync with values and functions', () => {
-    setPage(2);
-    setPage(old => old + 2);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState().page).toBe(4);
-  });
-  it('should flushSync with 1 function', () => {
-    setPage(old => old + 1);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState().page).toBe(2);
-  });
-  it('should flushSync with 2 functions', () => {
-    setPage(old => old + 1);
-    setPage(old => old + 1);
-    expect(store.getState().page).toBe(1);
-    store.flushSync();
-    expect(store.getState().page).toBe(3);
-  });
-  it('should handle promise in flushSync', async () => {
-    promise();
-    expect(store.getState().page).toBe(1);
-    const newState = store.flushSync();
-    expect(newState.page).toBe(1);
-    expect(store.getState().page).toBe(1);
-    await new Promise(r => setTimeout(r, 30));
-    expect(store.getState().page).toBe(17);
-  });
-  it('should handle promise error in flushSync', async () => {
-    let sawError;
-    store.on('SetterException', evt => (sawError = evt.data));
-    promiseError();
-    store.flushSync();
-    expect(store.getState().page).toBe(1);
-    await new Promise(r => setTimeout(r, 30));
-    expect(sawError).toBeInstanceOf(Error);
-    expect(store.getState().page).toBe(1);
   });
 });
