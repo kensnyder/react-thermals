@@ -320,14 +320,9 @@ export default class Store<StateType = any> extends SimpleEmitter<
       return this;
     }
     if (isFunction(newStateOrUpdater)) {
-      try {
-        newStateOrUpdater = (newStateOrUpdater as FunctionStateType<StateType>)(
-          this.#state
-        );
-      } catch (e) {
-        this.emit('SetterException', e);
-        return this;
-      }
+      newStateOrUpdater = (newStateOrUpdater as FunctionStateType<StateType>)(
+        this.#state
+      );
     }
     if (isPromise(newStateOrUpdater)) {
       this.#isWaiting = true;
@@ -364,14 +359,9 @@ export default class Store<StateType = any> extends SimpleEmitter<
       // @ts-ignore
       stateAt = this.#getMapUpdater(stateAt, newStateOrUpdater);
     } else if (isFunction(newStateOrUpdater)) {
-      try {
-        stateAt = (newStateOrUpdater as FunctionStateAtType<Path, StateType>)(
-          stateAt
-        );
-      } catch (e) {
-        this.emit('SetterException', e);
-        return this;
-      }
+      stateAt = (newStateOrUpdater as FunctionStateAtType<Path, StateType>)(
+        stateAt
+      );
     } else {
       stateAt = newStateOrUpdater as StateAtType<Path, StateType>;
     }
@@ -416,12 +406,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
   ) => {
     this.setState(old => {
       if (isFunction(newStateOrUpdater)) {
-        try {
-          newStateOrUpdater = (newStateOrUpdater as Function)(old);
-        } catch (e) {
-          this.emit('SetterException', e);
-          return this;
-        }
+        newStateOrUpdater = (newStateOrUpdater as Function)(old);
       }
       if (isPromise(newStateOrUpdater)) {
         return (newStateOrUpdater as Promise<StateType>).then(resolved =>
@@ -450,12 +435,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
       path,
       old => {
         if (isFunction(newStateOrUpdater)) {
-          try {
-            newStateOrUpdater = (newStateOrUpdater as Function)(old);
-          } catch (e) {
-            this.emit('SetterException', e);
-            return this;
-          }
+          newStateOrUpdater = (newStateOrUpdater as Function)(old);
         }
         if (isPromise(newStateOrUpdater)) {
           return (

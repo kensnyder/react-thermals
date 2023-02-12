@@ -463,9 +463,7 @@ describe('Store() with components - auto reset', () => {
     setPage = store.connect(setter('page'));
     setSort = store.connect(setter('sort'));
     thrower = () => {
-      store.setState(() => {
-        throw new Error('my error');
-      });
+      store.setState(Promise.reject('my error'));
     };
     ListComponent = () => {
       const state = useStoreState(store);
