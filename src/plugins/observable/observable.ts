@@ -57,7 +57,7 @@ export default function observable() {
         observer.next(event.data.next);
       }
     });
-    store.on('SetterException', event => {
+    store.on('SetterRejection', event => {
       for (const observer of observers) {
         observer.error?.(event.data);
       }

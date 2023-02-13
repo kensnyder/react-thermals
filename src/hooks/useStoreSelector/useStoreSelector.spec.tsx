@@ -304,7 +304,7 @@ describe('store.on(type, handler)', () => {
       </>
     );
     let caught = null;
-    store.on('SetterException', evt => (caught = evt.data.message));
+    store.on('SetterRejection', evt => (caught = evt.data.message));
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });

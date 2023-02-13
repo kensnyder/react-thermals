@@ -997,7 +997,7 @@ this particular event.
 | AfterUnmount     | Fires after each component unmounts                                 |
 | AfterUpdate      | Fires after each update to state                                    |
 | AfterLastUnmount | Fires when last component unmounts                                  |
-| SetterException  | Fires if a setter function throws an exception                      |
+| SetterRejection  | Fires if a setter function throws an exception                      |
 
 #### Event data
 
@@ -1013,7 +1013,7 @@ events that support it.
 | AfterMount       | The number of components currently mounted                 |
 | AfterUnmount     | The number of components currently mounted                 |
 | AfterUpdate      | { prev: previous state, next: new state }                  |
-| SetterException  | The Error object                                           |
+| SetterRejection  | The Error object                                           |
 
 ### Plugins
 

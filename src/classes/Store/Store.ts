@@ -328,7 +328,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
       this.#isWaiting = true;
       (newStateOrUpdater as Promise<StateType>).then(
         resolved => this.#updateState(resolved, options),
-        error => this.emit('SetterException', error)
+        error => this.emit('SetterRejection', error)
       );
     } else {
       this.#updateState(newStateOrUpdater as StateType, options);
@@ -371,7 +371,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
           const finalState = replacePath(this.#state, path, resolvedStateAt);
           this.#updateState(finalState, options);
         },
-        error => this.emit('SetterException', error)
+        error => this.emit('SetterRejection', error)
       );
     } else {
       const finalState = replacePath(this.#state, path, stateAt);

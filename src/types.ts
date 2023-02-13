@@ -13,7 +13,7 @@ export type KnownEventNames =
   | 'AfterUnmount'
   | 'AfterLastUnmount'
   | 'AfterUpdate'
-  | 'SetterException'
+  | 'SetterRejection'
   | '*';
 
 export type EventDataType<StateType, EventName> = EventName extends
@@ -26,7 +26,7 @@ export type EventDataType<StateType, EventName> = EventName extends
   ? number
   : EventName extends 'AfterUpdate'
   ? { prev: StateType; next: StateType }
-  : EventName extends 'SetterException'
+  : EventName extends 'SetterRejection'
   ? Error
   : undefined;
 

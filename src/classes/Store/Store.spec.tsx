@@ -194,11 +194,11 @@ describe('Store setState async', () => {
     expect(eventSpy).not.toHaveBeenCalled();
     expect(store.getState()).toEqual({ a: 2 });
   });
-  it('should fire SetterException when setState callback throws', async () => {
+  it('should fire SetterRejection when setState callback throws', async () => {
     const state = { a: 1 };
     const store = new Store(state);
     let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => (rejection = evt.data));
     store.setState(old => {
       throw new Error('my rejection');
     });
@@ -206,11 +206,11 @@ describe('Store setState async', () => {
     expect(rejection).toBeInstanceOf(Error);
     expect(rejection.message).toBe('my rejection');
   });
-  it('should fire SetterException when setState callback throws', async () => {
+  it('should fire SetterRejection when setState callback throws', async () => {
     const state = { a: 1 };
     const store = new Store(state);
     let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => (rejection = evt.data));
     store.setStateAt('a', old => {
       throw new Error('my rejection 2');
     });
@@ -218,20 +218,20 @@ describe('Store setState async', () => {
     expect(rejection).toBeInstanceOf(Error);
     expect(rejection.message).toBe('my rejection 2');
   });
-  it('should fire SetterException on rejected promise', async () => {
+  it('should fire SetterRejection on rejected promise', async () => {
     const state = { a: 1 };
     const store = new Store(state);
     let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => (rejection = evt.data));
     store.setState(Promise.reject('my rejection 3'));
     await new Promise(r => setTimeout(r, 15));
     expect(rejection).toBe('my rejection 3');
   });
-  it('should fire SetterException on function returning rejected promise', async () => {
+  it('should fire SetterRejection on function returning rejected promise', async () => {
     const state = { a: 1 };
     const store = new Store(state);
     let rejection;
-    store.on('SetterException', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => (rejection = evt.data));
     store.setState(() => {
       return Promise.reject('my rejection 4');
     });
@@ -501,9 +501,9 @@ describe('Store() with components - auto reset', () => {
     });
     expect(store.getState().page).toBe(1);
   });
-  it('should fire SetterException', async () => {
+  it('should fire SetterRejection', async () => {
     let error;
-    store.on('SetterException', evt => (error = evt.data));
+    store.on('SetterRejection', evt => (error = evt.data));
     const { getByText } = render(<ListComponent />);
     await act(() => {
       fireEvent.click(getByText('Throw'));

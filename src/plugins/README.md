@@ -34,7 +34,7 @@ const store = createStore(/*...*/);
 store.plugin(makeObservable());
 store.subscribe(observer);
 // observer.next(newState) called AfterUpdate
-// observer.error() called on SetterException
+// observer.error() called on SetterRejection
 // observer.complete() called AfterLastUnmount
 
 // or you can simply provide next, error, and complete functions
