@@ -1,4 +1,4 @@
-import { updatePath } from './updatePath';
+import updatePath from './updatePath';
 
 describe('deepUpdater', () => {
   it('should throw exceptions on non-string path', () => {

@@ -12,7 +12,7 @@ const cache = new SimpleCache(5000);
  * @param transform  Transform function(s) to update the value at the given path
  * @return
  */
-export function updatePath(
+export default function updatePath(
   path: string,
   transform: undefined | Function = undefined
 ): Function {

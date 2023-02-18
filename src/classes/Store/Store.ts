@@ -19,7 +19,7 @@ import {
   SetStateOptionsType,
   EventType,
 } from '../../types';
-import { replacePath } from '../../lib/replacePath/replacePath';
+import replacePath from '../../lib/replacePath/replacePath';
 import isPromise from '../../lib/isPromise/isPromise';
 import isFunction from '../../lib/isFunction/isFunction';
 import isArray from '../../lib/isArray/isArray';

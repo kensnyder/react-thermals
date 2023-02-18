@@ -9,7 +9,7 @@ import { StateAtType, FunctionStateAtType } from '../../types';
  * @param transform  Transform function(s) to update the value at the given path
  * @return
  */
-export function replacePath<StateType, Path extends string>(
+export default function replacePath<StateType, Path extends string>(
   fullState: StateType,
   path: Path,
   newValue: StateAtType<Path, StateType> | FunctionStateAtType<Path, StateType>

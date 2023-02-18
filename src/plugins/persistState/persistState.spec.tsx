@@ -125,6 +125,48 @@ describe('persistState() at path', () => {
     expect(getByText('page=2')).toBeInTheDocument();
   });
 });
+describe('persistState() that defaults id', () => {
+  // define store before each test
+  let store: Store;
+  let storage: StorageMock;
+  let Component: FunctionComponent;
+  beforeEach(() => {
+    const state = { search: { page: 1, sort: '-date' } };
+    store = new Store(state, { id: 'myStore' });
+    const setPage = page => store.mergeStateAt('search', { page });
+    storage = {
+      value: undefined,
+      getItem: vitest.fn(() => storage.value),
+      setItem: vitest.fn((id, val) => (storage.value = val)),
+      removeItem: vitest.fn(),
+      clear: vitest.fn(),
+      key: vitest.fn(),
+      length: 0,
+    };
+    store.plugin(
+      persistState({
+        storage,
+        path: 'search.page',
+      })
+    );
+    Component = () => {
+      const state = useStoreState(store);
+      return (
+        <div className="Pagination">
+          <span>page={state.search.page}</span>
+          <span>sort={state.search.sort}</span>
+          <span onClick={() => setPage(state.search.page + 1)}>Next</span>
+        </div>
+      );
+    };
+  });
+  it('should handle no initial state', () => {
+    const { getByText } = render(<Component />);
+    expect(getByText('page=1')).toBeInTheDocument();
+    expect(getByText('sort=-date')).toBeInTheDocument();
+    expect(storage.getItem).toHaveBeenCalledWith('myStore');
+  });
+});
 describe('persistState() plugin error', () => {
   it('should throw on strings', () => {
     const store = new Store({});

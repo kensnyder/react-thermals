@@ -1,7 +1,7 @@
 {
   "name": "react-thermals",
   "description": "Simple and extensible way to manage shared state based on React hooks",
-  "version": "4.0.0-beta.22",
+  "version": "4.0.0-beta.23",
   "main": "dist/index.js",
   "type": "module",
   "sideEffects": false,

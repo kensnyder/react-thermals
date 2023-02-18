@@ -48,7 +48,7 @@ will end up with a state value of `{ colors: { primary: '#f00' } }`.
 The function that creates state update functions is called `updatePath`. If
 you'd like to use it directly, you can import it from `react-thermals/actions`:
 
-`import { updatePath } from 'react-thermals';`
+`import updatePath from 'react-thermals';`
 
 Read more at the [updatePath docs](../src/updatePath/README.md).
 
