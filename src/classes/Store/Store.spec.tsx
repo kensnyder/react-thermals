@@ -373,6 +373,24 @@ describe('Store mergeState', () => {
     await store.nextState();
     expect(store.getState()).toEqual({ user: { name: 'Milo', age: 11 } });
   });
+  it('should merge state at path with star', async () => {
+    const store = new Store({
+      options: [
+        { name: 'one', isSelected: false },
+        { name: 'two', isSelected: true },
+        { name: 'three', isSelected: false },
+      ],
+    });
+    store.mergeStateAt('options.*', { isSelected: true });
+    await store.nextState();
+    expect(store.getState()).toEqual({
+      options: [
+        { name: 'one', isSelected: true },
+        { name: 'two', isSelected: true },
+        { name: 'three', isSelected: true },
+      ],
+    });
+  });
 });
 
 describe('Store plugins', () => {

@@ -1,56 +1,58 @@
 import Store from '../../classes/Store/Store';
 
+type FetcherOptions = {
+  path?: string;
+  url: string | URL;
+  init?: RequestInit;
+  extractor: Function;
+};
+
 /**
  * Helper function to send a fetch() request and add the response to the state
- * @param path  The name of or path that will accept { response, error }
+ * @param path  The path that will get set with resulting data
  * @param url  The url to fetch data from
  * @param init  The initialization options for fetch
+ * @param transformer  A function to transform the json after being fetched
  * @return  A function suitable for a store action
  */
-export function fetcher(
-  path: string,
-  url: string | URL,
-  init: RequestInit = {}
-) {
+export function fetcher({
+  path = '@',
+  url,
+  init = {},
+  extractor,
+}: FetcherOptions) {
   return async function updater(this: Store) {
-    try {
-      const response = await fetch(url, init);
-      this.setStateAt(path, { response, error: null });
-    } catch (error) {
-      this.setStateAt(path, { response: null, error });
-    }
+    const response = await fetch(url, init);
+    const extracted = await extractor(response);
+    this.setStateAt(path, extracted);
   };
 }
 
+type JsonFetcherOptions = {
+  path?: string;
+  url: string | URL;
+  init?: RequestInit;
+  transformer?: Function;
+};
+
 /**
- * Helper function to send a fetch() request and add the response data to the state
- * @param path  The name of or path that will accept { data, status, ok, error }
+ * Helper function to send a fetch() request and add the response to the state
+ * @param path  The path that will get set with resulting data
  * @param url  The url to fetch data from
- * @param options  The options for fetch
+ * @param init  The initialization options for fetch
+ * @param transformer  A function to transform the json after being fetched
  * @return  A function suitable for a store action
  */
-export function jsonFetcher(
-  path: string,
-  url: string | URL,
-  options: RequestInit = {}
-) {
+export function jsonFetcher({
+  path = '@',
+  url,
+  init = {},
+  transformer = k => k,
+}: JsonFetcherOptions) {
   return async function updater(this: Store) {
-    try {
-      const response = await fetch(url, options);
-      const data = await response.json();
-      this.setStateAt(path, {
-        data,
-        status: response.status,
-        ok: response.ok,
-        error: null,
-      });
-    } catch (error) {
-      this.setStateAt(path, {
-        data: null,
-        status: error.status,
-        ok: error.ok,
-        error,
-      });
-    }
+    const response = await fetch(url, init);
+    const data = await response.json();
+    const transformed = await transformer(data);
+    this.setStateAt(path, transformed);
   };
 }

@@ -9,7 +9,6 @@ import {
   MiddlewareType,
   PlainObjectType,
   PluginFunctionType,
-  ExtendStateAtPathType,
   SettableStateAtPathType,
   StateAtType,
   MergeableStateType,
@@ -18,12 +17,12 @@ import {
   FunctionStateAtType,
   KnownEventNames,
   SetStateOptionsType,
-  EventHandlerType,
   EventType,
 } from '../../types';
 import { replacePath } from '../../lib/replacePath/replacePath';
 import isPromise from '../../lib/isPromise/isPromise';
 import isFunction from '../../lib/isFunction/isFunction';
+import isArray from '../../lib/isArray/isArray';
 
 // an internal counter for stores
 let storeIdx = 1;
@@ -355,7 +354,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     let stateAt = this.getStateAt(path);
     if (
       path.includes('*') &&
-      Array.isArray(stateAt) &&
+      isArray(stateAt) &&
       isFunction(newStateOrUpdater)
     ) {
       // type-fest's Get<> doesn't understand asterisks, so we have to suppress warning
@@ -383,6 +382,12 @@ export default class Store<StateType = any> extends SimpleEmitter<
     return this;
   };
 
+  /**
+   * Get a function that can update state at a path containing a *
+   * @param arrayOfState  An array of items
+   * @param updater  A function that will map one item to a new one
+   * @private
+   */
   #getMapUpdater = <T>(
     arrayOfState: T[],
     updater: (old: T) => T
@@ -437,58 +442,25 @@ export default class Store<StateType = any> extends SimpleEmitter<
     if (path === '@') {
       return this.mergeState(newStateOrUpdater, options);
     }
-    let stateAt = this.getStateAt(path);
-    let newStateAt;
-    if (
-      path.includes('*') &&
-      Array.isArray(stateAt) &&
-      isFunction(newStateOrUpdater)
-    ) {
-      // type-fest's Get<> doesn't understand asterisks, so we have to suppress warning
-      // @ts-ignore
-      newStateAt = this.#getMapUpdater(stateAt, newStateOrUpdater);
-    } else if (isFunction(newStateOrUpdater)) {
-      newStateAt = (newStateOrUpdater as FunctionStateAtType<Path, StateType>)(
-        stateAt
-      );
-    } else {
-      newStateAt = newStateOrUpdater as StateAtType<Path, StateType>;
-    }
-    if (isPromise(newStateAt)) {
-      (newStateAt as Promise<StateAtType<Path, StateType>>).then(
-        resolvedStateAt => {
-          const mergedState = shallowOverride(stateAt, resolvedStateAt);
-          const finalState = replacePath(this.#state, path, mergedState);
-          this.#updateState(finalState, options);
-        },
-        rejection => this.emit('SetterRejection', rejection)
-      );
-    } else {
-      const mergedState = shallowOverride(stateAt, newStateAt);
-      const finalState = replacePath(this.#state, path, mergedState);
-      this.#updateState(finalState, options);
-    }
+    this.setStateAt(
+      path,
+      old => {
+        if (isFunction(newStateOrUpdater)) {
+          newStateOrUpdater = (newStateOrUpdater as Function)(old);
+        }
+        if (isPromise(newStateOrUpdater)) {
+          return (
+            newStateOrUpdater as Promise<
+              MergeableStateAtPathType<Path, StateType>
+            >
+          ).then(resolved => shallowOverride(old, resolved));
+        } else {
+          return shallowOverride(old, newStateOrUpdater);
+        }
+      },
+      options
+    );
     return this;
-
-    // this.setStateAt(
-    //   path,
-    //   old => {
-    //     if (isFunction(newStateOrUpdater)) {
-    //       newStateOrUpdater = (newStateOrUpdater as Function)(old);
-    //     }
-    //     if (isPromise(newStateOrUpdater)) {
-    //       return (
-    //         newStateOrUpdater as Promise<
-    //           MergeableStateAtPathType<Path, StateType>
-    //         >
-    //       ).then(resolved => shallowOverride(old, resolved));
-    //     } else {
-    //       return shallowOverride(old, newStateOrUpdater);
-    //     }
-    //   },
-    //   options
-    // );
-    // return this;
   };
 
   /**
@@ -560,42 +532,4 @@ function pluginWarning(pluginName: string, functionName: string): Function {
       `Import ${pluginName} and register it with "store.plugin(${pluginName}())" to use the "store.${functionName}()" function.`
     );
   };
-}
-
-// TODO: remove leading BOM if present
-// visualWidth => string-width
-function slice(str: string, from: number = 0, to: number = undefined): string {
-  return [...str].slice(from, to).join('');
-}
-function length(str: string): number {
-  return [...str].length;
-}
-function split(str: string, on: string = ''): string[] {
-  if (on === '') {
-    return [...str];
-  }
-  return str.split(on);
-}
-function truncateBytes() {}
-function codePointAt(str: string, at: number = 0): number {
-  if (at < 0) {
-    return undefined;
-  }
-  for (const char of str) {
-    if (at-- === 0) {
-      return char.codePointAt(0);
-    }
-  }
-  return undefined;
-}
-function charAt(str: string, at: number = 0): string {
-  if (at < 0) {
-    return '';
-  }
-  for (const char of str) {
-    if (at-- === 0) {
-      return char;
-    }
-  }
-  return '';
 }
