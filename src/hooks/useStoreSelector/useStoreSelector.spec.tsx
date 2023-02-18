@@ -154,7 +154,7 @@ describe('useStoreSelector(mapState)', () => {
   });
   it('should allow overwrite part of initial state', () => {
     store.on('BeforeInitialize', () => {
-      store.extendSync({ planet: 'Neptune' });
+      store.mergeState({ planet: 'Neptune' }, { bypassAll: true });
     });
     const { getByTitle } = render(<PlanetComponent />);
     expect(getByTitle('planet')).toHaveTextContent(/^Neptune$/);
@@ -200,7 +200,7 @@ describe('store.on(type, handler)', () => {
     };
     throwIt = (message: string) => {
       store.setState(() => {
-        throw new Error(message);
+        return Promise.reject(message);
       });
     };
     renderCounts = {
@@ -232,7 +232,7 @@ describe('store.on(type, handler)', () => {
   });
   it('should allow modifying initial state', () => {
     store.on('BeforeInitialize', () => {
-      store.extendSync({ target: 'Venus' });
+      store.mergeState({ target: 'Venus' }, { bypassAll: true });
     });
     const { getByText } = render(<TelescopeComponent />);
     expect(getByText('current target=Venus')).toBeInTheDocument();
@@ -303,13 +303,13 @@ describe('store.on(type, handler)', () => {
         <TelescopeComponent />
       </>
     );
-    let caught = null;
-    store.on('SetterRejection', evt => (caught = evt.data.message));
+    let rejection = null;
+    store.on('SetterRejection', evt => (rejection = evt.data));
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });
     await new Promise(r => setTimeout(r, 0));
-    expect(caught).toBe('foobar');
+    expect(rejection).toBe('foobar');
   });
   it('should return used count', async () => {
     render(

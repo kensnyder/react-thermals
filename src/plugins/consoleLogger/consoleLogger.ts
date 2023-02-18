@@ -1,14 +1,14 @@
 import Store from '../../classes/Store/Store';
-import { EventNameType, EventType } from '../../types';
+import { KnownEventNames, EventType } from '../../types';
 
 type LoggerDataType<StateType> = {
   storeId: string;
-  eventType: EventNameType;
-  event: EventType<StateType, EventNameType>;
+  eventType: KnownEventNames;
+  event: EventType<StateType, KnownEventNames>;
 };
 
 type LoggerConfigType<StateType> = {
-  eventTypes?: EventNameType[];
+  eventTypes?: KnownEventNames[];
   logHandler?: (message: LoggerDataType<StateType>) => void;
 };
 
@@ -32,7 +32,7 @@ export default function consoleLogger<StateType>({
         logHandler({
           storeId: store.id,
           eventType: evt.type,
-          event: evt as EventType<StateType, EventNameType>,
+          event: evt as EventType<StateType, KnownEventNames>,
         });
       });
     }

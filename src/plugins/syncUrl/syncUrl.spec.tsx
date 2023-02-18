@@ -80,7 +80,6 @@ describe('syncUrl()', () => {
     const { getByText, unmount } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
-      store.flushSync();
     });
     expect(getByText('page=3')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
@@ -108,7 +107,6 @@ describe('syncUrl()', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
-      store.flushSync();
     });
     expect(getByText('page=21')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
@@ -120,7 +118,7 @@ describe('syncUrl()', () => {
     ]);
   });
   it('should cast from schema number', async () => {
-    store.setSync({ rating: 16, food: 'fruit' });
+    store.setState({ rating: 16, food: 'fruit' });
     location.search = '?rating=17';
     store.plugin(syncUrl({ schema: { rating: 'number' } }));
     render(<Component />);
@@ -129,7 +127,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ rating: 17, food: 'fruit' });
   });
   it('should cast from schema number[]', async () => {
-    store.setSync({ ids: [1, 2] });
+    store.setState({ ids: [1, 2] });
     location.search = '?ids=3,4';
     store.plugin(syncUrl({ schema: { ids: 'number[]' } }));
     render(<Component />);
@@ -138,7 +136,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ ids: [3, 4] });
   });
   it('should cast from schema string', async () => {
-    store.setSync({ hello: 'world' });
+    store.setState({ hello: 'world' });
     location.search = '?hello=there';
     store.plugin(syncUrl({ schema: { hello: 'string' } }));
     render(<Component />);
@@ -147,7 +145,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ hello: 'there' });
   });
   it('should cast from schema string[]', async () => {
-    store.setSync({ letters: ['a', 'b'] });
+    store.setState({ letters: ['a', 'b'] });
     location.search = '?letters=d,e';
     store.plugin(syncUrl({ schema: { letters: 'string[]' } }));
     render(<Component />);
@@ -156,7 +154,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ letters: ['d', 'e'] });
   });
   it('should cast from schema boolean', async () => {
-    store.setSync({ isValid: false });
+    store.setState({ isValid: false });
     location.search = '?isValid=true';
     store.plugin(syncUrl({ schema: { isValid: 'boolean' } }));
     render(<Component />);
@@ -165,7 +163,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ isValid: true });
   });
   it('should cast from schema boolean[]', async () => {
-    store.setSync({ flags: [false, false] });
+    store.setState({ flags: [false, false] });
     location.search = '?flags=true,false';
     store.plugin(syncUrl({ schema: { flags: 'boolean[]' } }));
     render(<Component />);
@@ -174,7 +172,7 @@ describe('syncUrl()', () => {
     expect(store.getState()).toEqual({ flags: [true, false] });
   });
   it('should cast from schema Date', async () => {
-    store.setSync({ start: '2022-05-23' });
+    store.setState({ start: '2022-05-23' });
     location.search = '?start=2022-05-24';
     store.plugin(syncUrl({ schema: { start: 'Date' } }));
     render(<Component />);
@@ -184,7 +182,7 @@ describe('syncUrl()', () => {
     expect(store.getState().start.toJSON()).toBe('2022-05-24T00:00:00.000Z');
   });
   it('should cast from schema Date[]', async () => {
-    store.setSync({ range: ['2022-05-20', '2022-05-21'] });
+    store.setState({ range: ['2022-05-20', '2022-05-21'] });
     location.search = '?range=2022-05-23,2022-05-24';
     store.plugin(syncUrl({ schema: { range: 'Date[]' } }));
     render(<Component />);
@@ -201,7 +199,7 @@ describe('syncUrl()', () => {
     spy.mockImplementation(() => {});
     // @ts-ignore
     store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
-    store.setSync({ age: 14 });
+    store.setState({ age: 14 });
     location.search = '?age=15';
     render(<Component />);
     // @ts-ignore

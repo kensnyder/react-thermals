@@ -8,7 +8,7 @@ import isPromise from '../../lib/isPromise/isPromise';
  */
 export function composeActions(actions: Function[]) {
   return function actionCombiner(...args: any[]) {
-    actions.forEach(action => action(...args));
+    return actions.map(action => action(...args));
   };
 }
 
@@ -18,12 +18,27 @@ export function composeActions(actions: Function[]) {
  * @return  A function to run the actions
  */
 export function pipeActions(actions: Function[]) {
-  return async function actionPiper(this: Store, ...args: any[]) {
+  return function actionPiper(result: any): any {
     for (const action of actions) {
-      let result = action(...args);
+      result = action(result);
+    }
+    return result;
+  };
+}
+
+/**
+ * Given a list of actions, pipe results of action to the next action, i.e. in series
+ * @param actions  The array of action functions to pipe together
+ * @return  A function to run the actions
+ */
+export function pipeActionsAsync(actions: Function[]) {
+  return async function actionPiper(result: any): Promise<any> {
+    for (const action of actions) {
+      result = action(result);
       if (isPromise(result)) {
         result = await result;
       }
     }
+    return result;
   };
 }

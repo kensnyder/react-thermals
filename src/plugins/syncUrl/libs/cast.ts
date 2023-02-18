@@ -1,4 +1,6 @@
 import { PlainObjectType } from '../../../types';
+// @ts-ignore
+import dateParser from 'any-date-parser';
 
 export type SchemaType =
   | 'string'
@@ -39,11 +41,13 @@ function _castToString(schema: CastableSchema, field: string, value: any) {
     case 'number[]':
       return String(value);
     case 'date':
-      return new Intl.DateTimeFormat().format(value);
+      const date = dateParser.fromString(value);
+      return new Intl.DateTimeFormat().format(date);
     case 'date[]':
-      return value.map((v: number | Date | undefined) =>
-        new Intl.DateTimeFormat().format(v)
-      );
+      return value.map((v: number | Date | undefined) => {
+        const date = dateParser.fromString(v);
+        return new Intl.DateTimeFormat().format(date);
+      });
     case 'boolean':
       return value ? 'true' : 'false';
     case 'boolean[]':

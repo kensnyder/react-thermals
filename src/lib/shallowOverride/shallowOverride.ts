@@ -9,7 +9,7 @@ import isArray from '../isArray/isArray';
 export default function shallowOverride(value: any, overrides: any): any {
   if (isArray(value)) {
     if (isArray(overrides)) {
-      return [...value, overrides];
+      return [...value, ...overrides];
     } else {
       return [...value];
     }

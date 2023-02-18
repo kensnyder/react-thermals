@@ -62,7 +62,6 @@ describe('persistState()', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
-      store.flushSync();
     });
     expect(storage.value).toEqual(JSON.stringify({ page: 2, sort: '-date' }));
     expect(getByText('page=2')).toBeInTheDocument();
@@ -121,7 +120,6 @@ describe('persistState() at path', () => {
     const { getByText } = render(<Component />);
     await act(() => {
       fireEvent.click(getByText('Next'));
-      store.flushSync();
     });
     expect(storage.value).toEqual(JSON.stringify(2));
     expect(getByText('page=2')).toBeInTheDocument();
@@ -214,7 +212,7 @@ describe('persistState() JSON errors', () => {
   it('should error on JSON.stringify error', () => {
     const cyclic: Record<string, any> = { a: 1 };
     cyclic.self = cyclic;
-    store.setSync(cyclic);
+    store.setState(cyclic);
     store.plugin(persistState({ storage, key: 'food' }));
     render(<Component />);
     expect(consoleSpy.mock.calls[0][0]).toContain('react-thermals');

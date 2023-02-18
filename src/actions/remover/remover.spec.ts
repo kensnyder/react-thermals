@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { remover, removerSync } from './remover';
+import remover from './remover';
 
 describe('remover(propName)', () => {
   it('should remove one or more args', async () => {
@@ -28,15 +28,5 @@ describe('remover(propName)', () => {
     removeId(1);
     await new Promise(r => setTimeout(r, 15));
     expect(store.getState()).toEqual({ ids: null });
-  });
-});
-describe('removerSync(propName)', () => {
-  it('should remove one or more args', () => {
-    const store = new Store({ ids: [1, 2, 3, 4] });
-    const removeId = removerSync('ids').bind(store);
-    removeId(2);
-    expect(store.getState()).toEqual({ ids: [1, 3, 4] });
-    removeId(3, 4);
-    expect(store.getState()).toEqual({ ids: [1] });
   });
 });

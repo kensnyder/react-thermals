@@ -5,7 +5,7 @@ describe('shallowOverride()', () => {
     const value = [1, 2, 3];
     const override = [4];
     const copy = shallowOverride(value, override);
-    expect(copy).toEqual([4, 2, 3]);
+    expect(copy).toEqual([1, 2, 3, 4]);
   });
   it('should copy an Array if no overrides are given', () => {
     const value = [1, 2, 3];

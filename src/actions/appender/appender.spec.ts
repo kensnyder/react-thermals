@@ -1,10 +1,12 @@
 import Store from '../../classes/Store/Store';
 import appender from './appender';
 
+type VowelType = 'a' | 'e' | 'i' | 'o' | 'u';
+
 describe('appender(propName)', () => {
   it('should append one or more args', async () => {
     const store = new Store({ vowels: [] });
-    const addVowel = store.connect(appender('vowels'));
+    const addVowel = store.connect(appender<VowelType>('vowels'));
     addVowel('a');
     await store.nextState();
     expect(store.getState()).toEqual({ vowels: ['a'] });
@@ -14,7 +16,7 @@ describe('appender(propName)', () => {
   });
   it('should append one or more args with path', () => {
     const store = new Store({ spec: { vowels: [] } });
-    const addVowel = store.connect(appender('spec.vowels'));
+    const addVowel = store.connect(appender<VowelType>('spec.vowels'));
     addVowel('a');
     expect(store.getState()).toEqual({ spec: { vowels: ['a'] } });
     addVowel('e', 'i');

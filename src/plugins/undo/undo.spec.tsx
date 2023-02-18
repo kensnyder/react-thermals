@@ -76,16 +76,24 @@ describe('undo()', () => {
       fireEvent.click(getByText('redo'));
     });
     expect(getByTitle('output')).toHaveTextContent(/^output=h$/);
-    await act(() => {
+    await act(async () => {
       fireEvent.click(getByText('e'));
+      await store.nextState();
       fireEvent.click(getByText('l'));
+      await store.nextState();
       fireEvent.click(getByText('l'));
+      await store.nextState();
       fireEvent.click(getByText('o'));
+      await store.nextState();
     });
     expect(getByTitle('output')).toHaveTextContent(/^output=hello$/);
+    // console.log('========== ', JSON.stringify(store.getHistory(), null, 4));
     expect(store.getHistory()).toEqual([
       { keys: [], minutes: 60 },
       { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e'], minutes: 60 },
+      { keys: ['h', 'e', 'l'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l'], minutes: 60 },
       { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
     ]);
     await act(() => {
@@ -95,6 +103,9 @@ describe('undo()', () => {
     expect(store.getHistory()).toEqual([
       { keys: [], minutes: 60 },
       { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e'], minutes: 60 },
+      { keys: ['h', 'e', 'l'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l'], minutes: 60 },
       { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
     ]);
     await act(() => {
@@ -107,6 +118,9 @@ describe('undo()', () => {
     expect(store.getHistory()).toEqual([
       { keys: [], minutes: 60 },
       { keys: ['h'], minutes: 60 },
+      { keys: ['h', 'e'], minutes: 60 },
+      { keys: ['h', 'e', 'l'], minutes: 60 },
+      { keys: ['h', 'e', 'l', 'l'], minutes: 60 },
       { keys: ['h', 'e', 'l', 'l', 'o'], minutes: 60 },
     ]);
   });

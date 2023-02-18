@@ -66,5 +66,8 @@
         "out": "README.md"
       }
     }
+  },
+  "dependencies": {
+    "any-date-parser": "1.5.3"
   }
 }

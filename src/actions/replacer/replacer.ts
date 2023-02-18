@@ -16,8 +16,6 @@ export default function replacer<Path extends string>(path: Path) {
       | ((old: Item) => Item)
       | ((old: Item) => PromiseLike<Item>)
   ) {
-    // type-fest's Get<> doesn't understand asterisks, so we have to suppress warning
-    // @ts-ignore
     this.setStateAt(`${path}.*`, (item: Item) => {
       if (item === itemToReplace) {
         return isFunction(newItem) ? (newItem as Function)(item) : newItem;

@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { setter, setterInput, setterSync } from './setter';
+import { setter, setterInput } from './setter';
 
 describe('setter(propName)', () => {
   it('should set scalar value', async () => {
@@ -14,20 +14,6 @@ describe('setter(propName)', () => {
     const setCentury = setter('century').bind(store);
     setCentury(old => old + 1);
     await new Promise(r => setTimeout(r, 15));
-    expect(store.getState()).toEqual({ genre: 'classical', century: 19 });
-  });
-});
-describe('setterSync(propName)', () => {
-  it('should set scalar value', () => {
-    const store = new Store({ genre: 'classical', century: 16 });
-    const setCentury = setterSync('century').bind(store);
-    setCentury(17);
-    expect(store.getState()).toEqual({ genre: 'classical', century: 17 });
-  });
-  it('should set with callback', () => {
-    const store = new Store({ genre: 'classical', century: 18 });
-    const setCentury = setterSync('century').bind(store);
-    setCentury(old => old + 1);
     expect(store.getState()).toEqual({ genre: 'classical', century: 19 });
   });
 });

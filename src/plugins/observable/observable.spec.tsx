@@ -17,9 +17,7 @@ describe('observable()', () => {
       store.setState((old: number) => old + 1);
     };
     thrower = () => {
-      store.setState(() => {
-        throw new Error('my error');
-      });
+      store.setState(() => Promise.reject('my error'));
     };
     store.plugin(observable());
     CountComponent = () => {
@@ -58,7 +56,7 @@ describe('observable()', () => {
     await act(() => {
       fireEvent.click(getByText('throw'));
     });
-    expect(observer.error.mock.calls[0][0].message).toBe('my error');
+    expect(observer.error.mock.calls[0][0]).toBe('my error');
     unmount();
     expect(observer.complete).toHaveBeenCalled();
   });
@@ -77,7 +75,7 @@ describe('observable()', () => {
     await act(() => {
       fireEvent.click(getByText('throw'));
     });
-    expect(error.mock.calls[0][0].message).toBe('my error');
+    expect(error.mock.calls[0][0]).toBe('my error');
     unmount();
     expect(complete).toHaveBeenCalled();
   });
@@ -95,7 +93,7 @@ describe('observable()', () => {
     await act(() => {
       fireEvent.click(getByText('throw'));
     });
-    expect(error.mock.calls[0][0].message).toBe('my error');
+    expect(error.mock.calls[0][0]).toBe('my error');
     unmount();
   });
   it('should allow passing 1 function', async () => {
