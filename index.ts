@@ -1,5 +1,6 @@
 // Store
 export { default as Store } from './src/classes/Store/Store';
+export { default as Slice } from './src/classes/Slice/Slice';
 export { default as useStoreSelector } from './src/hooks/useStoreSelector/useStoreSelector';
 export { default as useStoreState } from './src/hooks/useStoreState/useStoreState';
 // actions

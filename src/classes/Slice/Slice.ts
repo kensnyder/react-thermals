@@ -1,4 +1,4 @@
-import { SettableStateAtPathType, StateAtType } from '../../types';
+import { SetStateOptionsType, SettableStateAtPathType } from '../../types';
 import Store from '../Store/Store';
 
 export default class Slice<SlicePath extends string, StateType> {
@@ -8,28 +8,19 @@ export default class Slice<SlicePath extends string, StateType> {
     this.path = path;
     this.store = store;
   }
-  setState(newState: SettableStateAtPathType<SlicePath, StateType>) {
-    return this.store.setStateAt(this.path, newState);
+  setState(
+    newStateOrUpdater: SettableStateAtPathType<SlicePath, StateType>,
+    options: SetStateOptionsType = {}
+  ) {
+    return this.store.setStateAt(this.path, newStateOrUpdater, options);
   }
-  setSync(newState: SettableStateAtPathType<SlicePath, StateType>) {
-    return this.store.setSyncAt(this.path, newState);
+  mergeState(
+    newStateOrUpdater: SettableStateAtPathType<SlicePath, StateType>,
+    options: SetStateOptionsType = {}
+  ) {
+    return this.store.mergeStateAt(this.path, newStateOrUpdater, options);
   }
-  mergeState(newState: SettableStateAtPathType<SlicePath, StateType>) {
-    return this.store.mergeStateAt(this.path, newState);
-  }
-  mergeSync(newState: SettableStateAtPathType<SlicePath, StateType>) {
-    return this.store.mergeSyncAt(this.path, newState);
-  }
-  resetState() {
-    return this.store.resetStateAt(this.path);
-  }
-  resetSync() {
-    return this.store.resetSyncAt(this.path);
-  }
-  replaceSync(newState: StateAtType<SlicePath, StateType>) {
-    return this.store.replaceSyncAt(this.path, newState);
-  }
-  extendSync(newState: StateAtType<SlicePath, StateType>) {
-    return this.store.extendSyncAt(this.path, newState);
+  resetState(options: SetStateOptionsType = {}) {
+    return this.store.resetStateAt(this.path, options);
   }
 }

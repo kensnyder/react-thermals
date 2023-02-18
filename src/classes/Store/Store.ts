@@ -153,11 +153,12 @@ export default class Store<StateType = any> extends SimpleEmitter<
   /**
    * Reset a store to its initial condition and initial state values,
    *   and notifies all consumer components
+   * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
    * @chainable
    */
-  reset = () => {
-    this.resetState();
+  reset = (options: SetStateOptionsType = {}) => {
+    this.resetState(options);
     this.#hasInitialized = false;
     this.#usedCount = 0;
     return this;
@@ -166,18 +167,22 @@ export default class Store<StateType = any> extends SimpleEmitter<
   /**
    * Reset the store to its initial state values
    *   and notifies all consumer components
+   * @param options  Options to allow bypassing render, middleware, event, all
+   * @chainable
    */
-  resetState = () => {
-    this.setState(this.#initialState);
+  resetState = (options: SetStateOptionsType = {}) => {
+    this.setState(this.#initialState, options);
     return this;
   };
 
   /**
    * Reset the store at the given path to its initial state values
    *   and notifies all consumer components
+   * @param options  Options to allow bypassing render, middleware, event, all
+   * @chainable
    */
-  resetStateAt = (path: string) => {
-    this.setStateAt(path, this.getInitialStateAt(path));
+  resetStateAt = (path: string, options: SetStateOptionsType = {}) => {
+    this.setStateAt(path, this.getInitialStateAt(path), options);
     return this;
   };
 
