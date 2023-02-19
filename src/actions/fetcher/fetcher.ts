@@ -4,7 +4,7 @@ type FetcherOptions = {
   path?: string;
   url: string | URL;
   init?: RequestInit;
-  extractor: Function;
+  extractor: (r: Response) => any;
 };
 
 /**
@@ -12,7 +12,7 @@ type FetcherOptions = {
  * @param path  The path that will get set with resulting data
  * @param url  The url to fetch data from
  * @param init  The initialization options for fetch
- * @param transformer  A function to transform the json after being fetched
+ * @param extractor  A function that receives the response object and returns new state
  * @return  A function suitable for a store action
  */
 export function fetcher({
@@ -32,7 +32,7 @@ type JsonFetcherOptions = {
   path?: string;
   url: string | URL;
   init?: RequestInit;
-  transformer?: Function;
+  transformer?: (data: any) => any;
 };
 
 /**

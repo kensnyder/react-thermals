@@ -1,3 +1,4 @@
+import isFunction from '../isFunction/isFunction';
 import shallowCopy from '../shallowCopy/shallowCopy';
 import { StateAtType, FunctionStateAtType } from '../../types';
 
@@ -5,8 +6,9 @@ import { StateAtType, FunctionStateAtType } from '../../types';
  * Deep updater takes a path plus a transformer and returns a function
  *   that will take in an object and return a copy of that object
  *   with that transform applied to the value at "path"
- * @param path  Path string such as "cart" or "cart.total"
- * @param transform  Transform function(s) to update the value at the given path
+ * @param fullState  The entire state
+ * @param path  Path string such as "cart" or "cart.total" to the desired state
+ * @param newValue  New value or a function to update the value at that given path
  * @return
  */
 export default function replacePath<StateType, Path extends string>(
@@ -41,7 +43,7 @@ function descend(object: any, segments: string[], newValue: any): any {
     return copy.map(leaf => {
       if (segments.length === 0) {
         // star is at the end of path
-        return typeof newValue === 'function' ? newValue(leaf) : newValue;
+        return isFunction(newValue) ? newValue(leaf) : newValue;
       } else {
         // we can recurse further
         return descend(leaf, segments, newValue);
@@ -51,8 +53,9 @@ function descend(object: any, segments: string[], newValue: any): any {
     // we need to apply the transform or recurse
     if (segments.length === 1) {
       // last segment
-      copy[segments[0]] =
-        typeof newValue === 'function' ? newValue(copy[segments[0]]) : newValue;
+      copy[segments[0]] = isFunction(newValue)
+        ? newValue(copy[segments[0]])
+        : newValue;
     } else {
       // recurse to next level
       copy[segments[0]] = descend(
@@ -64,8 +67,9 @@ function descend(object: any, segments: string[], newValue: any): any {
   } else if (typeof copy === 'object') {
     // When path doesn't exist, create empty objects along the way
     if (segments.length === 1) {
-      copy[segments[0]] =
-        typeof newValue === 'function' ? newValue(copy[segments[0]]) : newValue;
+      copy[segments[0]] = isFunction(newValue)
+        ? newValue(copy[segments[0]])
+        : newValue;
     } else {
       if (segments[1] === '*') {
         copy[segments[0]] = [];

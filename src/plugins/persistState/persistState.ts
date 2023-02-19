@@ -23,7 +23,7 @@ export type PersistStateConfig = {
  * @param key  The key under which to persist in localStorage/sessionStorage (defaults to store id)
  * @param [path=@]  The path to the part of state you want to persist
  * @param [storage=localStorage]  localStorage/sessionStorage or compatible
- * @param [parse=JSON.parse]  The unserialization function
+ * @param [parse=JSON.parse]  The deserialization function
  * @param [stringify=JSON.stringify]  The serialization function
  *
  * @example

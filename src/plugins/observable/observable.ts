@@ -1,4 +1,5 @@
 import Store from '../../classes/Store/Store';
+import isFunction from '../../lib/isFunction/isFunction';
 
 type Observer = {
   next: Function;
@@ -26,7 +27,7 @@ export default function observable() {
     const observers: Observer[] = [];
     store.subscribe = function subscribe(...args: Function[]) {
       let observer: Observer;
-      if (typeof args[0] === 'function') {
+      if (isFunction(args[0])) {
         const [next, error, complete] = args;
         observer = {
           next,

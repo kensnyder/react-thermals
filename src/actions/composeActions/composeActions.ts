@@ -1,4 +1,3 @@
-import Store from '../../classes/Store/Store';
 import isPromise from '../../lib/isPromise/isPromise';
 
 /**

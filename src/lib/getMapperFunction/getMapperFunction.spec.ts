@@ -39,7 +39,14 @@ describe('getMapperFunction(function|string|int|array)', () => {
     expect(tryIt).toThrowError();
   });
   it('should accept mixed arrays', () => {
-    const mapper = getMapperFunction(['name', state => state.phone]);
+    type ContactType = {
+      name: string;
+      phone: string;
+    };
+    const mapper = getMapperFunction<ContactType>([
+      'name',
+      state => state.phone,
+    ]);
     const slice = mapper({ name: 'John', phone: '867-5309' });
     expect(slice).toEqual(['John', '867-5309']);
   });

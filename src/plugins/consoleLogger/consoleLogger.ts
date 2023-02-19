@@ -1,5 +1,6 @@
 import Store from '../../classes/Store/Store';
 import { KnownEventNames, EventType } from '../../types';
+import isArray from '../../lib/isArray/isArray';
 
 type LoggerDataType<StateType> = {
   storeId: string;
@@ -22,7 +23,7 @@ export default function consoleLogger<StateType>({
   logHandler = console.log as (message: LoggerDataType<StateType>) => void,
 }: LoggerConfigType<StateType> = {}) {
   return function plugin(store: Store<StateType>) {
-    if (!Array.isArray(eventTypes) || eventTypes.length === 0) {
+    if (!isArray(eventTypes) || eventTypes.length === 0) {
       throw new Error(
         'react-thermals: consoleLogger must receive one or more eventTypes'
       );

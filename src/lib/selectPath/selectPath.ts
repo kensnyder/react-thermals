@@ -1,4 +1,5 @@
 import SimpleCache from '../../classes/SimpleCache/SimpleCache';
+import isArray from '../isArray/isArray';
 
 const identity = state => state;
 
@@ -25,7 +26,7 @@ export function doSelect(path: string): Function {
   function descend(state: any, segments: string[]): any {
     if (segments.length === 0) {
       return state;
-    } else if (segments[0] === '*' && Array.isArray(state)) {
+    } else if (segments[0] === '*' && isArray(state)) {
       // we need to map over array items and recurse
       segments = segments.slice(1); // remove that * segment
       return state.map((item: any) => descend(item, segments)).flat();

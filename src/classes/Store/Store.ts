@@ -178,6 +178,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
   /**
    * Reset the store at the given path to its initial state values
    *   and notifies all consumer components
+   * @param path  The path to the value to reset
    * @param options  Options to allow bypassing render, middleware, event, all
    * @chainable
    */
@@ -359,7 +360,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     let stateAt = this.getStateAt(path);
     if (
       path.includes('*') &&
-      isArray(stateAt) &&
+      isArray(stateAt as any) &&
       isFunction(newStateOrUpdater)
     ) {
       // type-fest's Get<> doesn't understand asterisks, so we have to suppress warning
@@ -434,6 +435,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
 
   /**
    * Merge state at the given path into an Object or Array
+   * @param path  The path to the value to merge
    * @param newStateOrUpdater  The new value or function that will return the new value
    * @param options  Options to allow bypassing render, middleware, event, all
    * @return  This store
@@ -472,6 +474,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
    * Tell connected components to re-render if applicable
    * @param prev  The previous state value
    * @param next  The new state value
+   * @param options  Specifies how changes should be broadcast
    */
   #notifyComponents = (
     prev: StateType,
@@ -501,10 +504,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
    */
   #getComponentUpdater = (prev: StateType, next: StateType) => {
     return function _maybeSetState(setter: SetterType<StateType, any>) {
-      if (
-        typeof setter.mapState === 'function' &&
-        typeof setter.equalityFn === 'function'
-      ) {
+      if (isFunction(setter.mapState) && isFunction(setter.equalityFn)) {
         // registered from useStoreSelector so only re-render
         // components when the relevant slice of state changes
         const prevSelected = setter.mapState(prev);

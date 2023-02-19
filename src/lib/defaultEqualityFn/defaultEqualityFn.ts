@@ -1,3 +1,5 @@
+import isArray from '../isArray/isArray';
+
 const directlyComparable = [
   'bigint',
   'boolean',
@@ -23,12 +25,20 @@ export default function defaultEqualityFn(prev: any, next: any): boolean {
   } else if (prev === null || next === null) {
     // one is null but not both
     return false;
+  } else if (
+    typeof prev === 'number' &&
+    isNaN(prev) &&
+    typeof next === 'number' &&
+    isNaN(next)
+  ) {
+    // both NaN
+    return true;
   }
   if (directlyComparable.includes(typeof prev)) {
     return prev === next;
   }
-  if (Array.isArray(prev)) {
-    if (!Array.isArray(next)) {
+  if (isArray(prev)) {
+    if (!isArray(next)) {
       // one array and one non-array
       return false;
     }
@@ -44,7 +54,7 @@ export default function defaultEqualityFn(prev: any, next: any): boolean {
     }
     return true;
   } else if (typeof prev === 'object') {
-    if (!next || typeof next !== 'object' || Array.isArray(next)) {
+    if (!next || typeof next !== 'object' || isArray(next)) {
       // one object and one non-object
       return false;
     }

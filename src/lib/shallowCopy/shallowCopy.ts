@@ -1,3 +1,5 @@
+import isFunction from '../isFunction/isFunction';
+
 /**
  * Copy a value shallowly
  * @param value  Any value, but often an object
@@ -7,7 +9,7 @@ export default function shallowCopy(value: any): any {
   if (!value || typeof value === 'string') {
     // falsy scalar or a string
     return value;
-  } else if (typeof value[Symbol.iterator] === 'function') {
+  } else if (isFunction(value[Symbol.iterator])) {
     // e.g. Set, Array, DOMNodeList, etc
     return [...value];
   } else if (typeof value === 'object') {
