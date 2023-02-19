@@ -4,6 +4,7 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.20)](https://ci.appveyor.com/project/kensnyder/react-thermals)
 [![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.20)](https://codecov.io/gh/kensnyder/react-thermals)
 [![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.20)](https://opensource.org/licenses/ISC)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkensnyder%2Freact-thermals.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkensnyder%2Freact-thermals?ref=badge_shield)
 
 React thermals is a simple and extensible way to manage state in React
 
@@ -46,6 +47,9 @@ npm install react-thermals
    1. [Contributing](#contributing)
    2. [ISC License](#isc-license)
    3. [Credits](#credits)
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkensnyder%2Freact-thermals.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkensnyder%2Freact-thermals?ref=badge_large)
 
 ## Features
 
