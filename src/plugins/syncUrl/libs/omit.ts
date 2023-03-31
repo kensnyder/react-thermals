@@ -1,4 +1,4 @@
-import { PlainObjectType } from '../../../types';
+import type { PlainObjectType } from '../../../types';
 
 export function omitUnknown(fields: string[], obj: PlainObjectType) {
   const known: PlainObjectType = {};

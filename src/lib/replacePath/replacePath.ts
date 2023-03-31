@@ -1,6 +1,6 @@
 import isFunction from '../isFunction/isFunction';
 import shallowCopy from '../shallowCopy/shallowCopy';
-import { StateAtType, FunctionStateAtType } from '../../types';
+import type { StateAtType, FunctionStateAtType } from '../../types';
 
 /**
  * Deep updater takes a path plus a transformer and returns a function

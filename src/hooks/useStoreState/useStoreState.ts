@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Store from '../../classes/Store/Store';
-import { SetterType } from '../../types';
+import type { SetterType } from '../../types';
 
 /**
  * Hook to request state values any time state changes

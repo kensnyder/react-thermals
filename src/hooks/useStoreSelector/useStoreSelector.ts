@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import defaultEqualityFn from '../../lib/defaultEqualityFn/defaultEqualityFn';
 import getMapperFunction from '../../lib/getMapperFunction/getMapperFunction';
-import { SetterType, StateMapperOrMappersType } from '../../types';
+import type { SetterType, StateMapperOrMappersType } from '../../types';
 import Store from '../../classes/Store/Store';
 
 /**

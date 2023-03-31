@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import { setter } from '../../actions/setter/setter';
 import Store from './Store';
-import { PluginFunctionType } from '../../types';
+import type { PluginFunctionType } from '../../types';
 
 describe('Store constructor', () => {
   it('should have an id', () => {

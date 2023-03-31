@@ -1,4 +1,4 @@
-import { SetStateOptionsType, SettableStateAtPathType } from '../../types';
+import type { SetStateOptionsType, SettableStateAtPathType } from '../../types';
 import Store from '../Store/Store';
 
 export default class Slice<SlicePath extends string, StateType> {

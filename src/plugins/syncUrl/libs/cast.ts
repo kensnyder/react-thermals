@@ -1,4 +1,4 @@
-import { PlainObjectType } from '../../../types';
+import type { PlainObjectType } from '../../../types';
 // @ts-ignore
 import dateParser from 'any-date-parser';
 

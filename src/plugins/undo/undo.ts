@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { EventType } from '../../types';
+import type { EventType } from '../../types';
 
 //
 // Basic usage:

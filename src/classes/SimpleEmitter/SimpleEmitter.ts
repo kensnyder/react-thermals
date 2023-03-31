@@ -1,4 +1,4 @@
-import { EventHandlerType, EventType, EventDataType } from '../../types';
+import type { EventHandlerType, EventType, EventDataType } from '../../types';
 
 export default class SimpleEmitter<StateType, KnownEventNames extends string> {
   #_handlers: Partial<

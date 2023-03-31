@@ -1,4 +1,4 @@
-import { PlainObjectType } from '../../../types';
+import type { PlainObjectType } from '../../../types';
 
 export function parse(search: string) {
   const obj: PlainObjectType = {};

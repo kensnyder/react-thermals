@@ -1,4 +1,4 @@
-import { PlainObjectType } from '../../../types';
+import type { PlainObjectType } from '../../../types';
 
 export default function isEmpty(obj: PlainObjectType): boolean {
   for (const key in obj) {

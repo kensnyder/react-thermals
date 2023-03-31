@@ -1,7 +1,7 @@
 import Store from '../../classes/Store/Store';
 import consoleLogger from './consoleLogger';
 import { vitest, SpyInstance } from 'vitest';
-import { KnownEventNames } from '../../types';
+import type { KnownEventNames } from '../../types';
 
 describe('consoleLogger plugin', () => {
   let spy: SpyInstance;

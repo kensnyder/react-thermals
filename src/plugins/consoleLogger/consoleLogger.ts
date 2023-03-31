@@ -1,5 +1,5 @@
 import Store from '../../classes/Store/Store';
-import { KnownEventNames, EventType } from '../../types';
+import type { KnownEventNames, EventType } from '../../types';
 import isArray from '../../lib/isArray/isArray';
 
 type LoggerDataType<StateType> = {

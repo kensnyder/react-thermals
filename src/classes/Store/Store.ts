@@ -1,7 +1,7 @@
 import SimpleEmitter from '../SimpleEmitter/SimpleEmitter';
 import shallowOverride from '../../lib/shallowOverride/shallowOverride';
 import selectPath from '../../lib/selectPath/selectPath';
-import {
+import type {
   StoreConfigType,
   SetterType,
   SettableStateType,
