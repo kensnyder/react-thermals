@@ -1,6 +1,6 @@
 # Plugins shipped with react-thermals
 
-Plugins can be imported from `react-thermals/plugins/{pluginName}`
+Plugins can be imported directly from `react-thermals`.
 
 ## Table of contents
 
@@ -16,7 +16,7 @@ Plugins can be imported from `react-thermals/plugins/{pluginName}`
 Log store lifecycle events to the console. Helpful for debugging timing or writing plugins.
 
 ```js
-import consoleLogger from 'react-thermals/plugins/consoleLogger';
+import { consoleLogger } from 'react-thermals';
 // log all store events to console
 store.plugin(consoleLogger());
 // log all AfterUpdate events to console
@@ -28,10 +28,10 @@ store.plugin(consoleLogger({ eventTypes: ['AfterUpdate'] }));
 Turn the store into an observable to observe state changes.
 
 ```js
-import makeObservable from 'react-thermals/plugins/observable';
+import { observable } from 'react-thermals';
 const store = createStore(/*...*/);
 // turn store into an observable
-store.plugin(makeObservable());
+store.plugin(observable());
 store.subscribe(observer);
 // observer.next(newState) called AfterUpdate
 // observer.error() called on SetterRejection
@@ -49,9 +49,10 @@ When first component mounts, load state or partial state from localStorage.
 When state is updated, save state or partial state to localStorage.
 
 ```js
-import persistState from 'react-thermals/plugins/persistState';
+import { persistState } from 'react-thermals';
 const store = createStore({
-  state: { query: '', sort: 'name' },
+  query: '', 
+  sort: 'name',
   // ...
 });
 // persist "sort" value to localStorage
@@ -73,10 +74,11 @@ When state is updated, save state or partial state to the URL.
 
 ```js
 import qs from 'qs';
-import syncUrl from 'react-thermals/plugins/syncUrl';
+import { syncUrl } from 'react-thermals';
 
 const store = createStore({
-  state: { query: '', page: 1, sort: 'name' },
+  query: '', page: 1,
+  sort: 'name' ,
   // ...
 });
 store.plugin(
@@ -85,8 +87,8 @@ store.plugin(
     replace: true,
     // save query and page to URL
     schema: {
-      query: 'String',
-      page: 'Number', // when pulling from URL, parse as Number
+      query: 'string',
+      page: 'number', // when pulling from URL, parse as Number
     },
     // OPTIONAL:
     // override the default use of URLSearchParams for serializing
@@ -99,10 +101,10 @@ store.plugin(
 
 Valid schema types:
 
-- `String and String[]`
-- `Number` and `Number[]`
+- `string and string[]`
+- `number` and `number[]`
 - `Date` and `Date[]`
-- `Boolean` and `Boolean[]`
+- `boolean` and `boolean[]`
 
 ## undo
 
@@ -110,7 +112,7 @@ Maintain an undo history and
 add .undo(), .redo(), .jump(), .jumpTo() methods to the store.
 
 ```js
-import undo from 'react-thermals/plugins/undo';
+import { undo } from 'react-thermals';
 const store = createStore({
   /* ... */
 });
