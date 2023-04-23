@@ -284,12 +284,13 @@ export default class Store<StateType = any> extends SimpleEmitter<
       options.bypassMiddleware ||
       options.bypassAll
     ) {
-      // shortcut for speed
+      // speedier implementation for common use case
       const prev = this.#state;
       this.#state = newState;
       this.#notifyComponents(prev, newState, options);
       return;
     }
+    // slightly slower process that handles middleware
     const context = {
       prev: Object.freeze(this.#state),
       next: newState,

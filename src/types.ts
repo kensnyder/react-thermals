@@ -57,7 +57,6 @@ export type SetStateOptionsType = {
 export interface MiddlewareContextInterface<StateType> {
   prev: StateType;
   next: StateType;
-  isAsync?: boolean;
   store: Store<StateType>;
 }
 

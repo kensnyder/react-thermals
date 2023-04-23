@@ -1,4 +1,4 @@
-<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png" height="64" />
+<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.0-beta.23" height="64" />
 
 [![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.23)](https://npmjs.com/package/react-thermals)
 [![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.23)](https://ci.appveyor.com/project/kensnyder/react-thermals)
@@ -30,10 +30,11 @@ npm install react-thermals
    2. [Action creators](#action-creators)
    3. [Action batching](#action-batching)
    4. [Asynchronous actions](#asynchronous-actions)
+   4. [Synchronous actions](#synchronous-actions)
 5. [Strongly typed state](#strongly-typed-state)
    1. [TypeScript definitions](#typescript-definitions)
-6. [Full documentation](#all-store-options)
-   1. [All store options](#all-store-options)
+6. [Store class documentation](#store-class-documentation)
+   1. [Constructor](#constructor)
    2. [State Setters](#state-setters)
    3. [State Getters](#state-getters)
    4. [Most common store methods](#most-common-store-methods)
@@ -175,7 +176,7 @@ state.
 Thanks to [Sindre Sorhus's](https://www.npmjs.com/~sindresorhus) awesome
 [type-fest](https://npmjs.com/package/type-fest) package, you will get
 autocomplete, type inference, and type checking on methods that have a
-`path` argument.
+`path` argument (getStateAt, setStateAt, mergeStateAt, resetStateAt).
 
 Example:
 
@@ -188,10 +189,11 @@ type GlobalSchemaType = {
 };
 const initialState: GlobalSchemaType = { hello: { world: 42 } };
 const store = new Store(initialState);
-store.extendSync({ foo: 'bar' });
+store.mergeState({ foo: 'bar' });
 store.getStateAt('hello.world'); // TypeScript knows return value is number
 store.setStateAt('hello.world', 'me'); // TypeScript knows "me" is invalid
 store.setStateAt('hello.world', () => 'me'); // TypeScript knows "me" is invalid
+store.setStateAt('foo', () => 42); // TypeScript knows 24 is invalid
 ```
 
 However, note that when your path contains an asterisk, TypeScript will not
@@ -243,10 +245,10 @@ describe('updatePath', () => {
 
 ### Persistence
 
-By default, a store's state value will persist even when all components unmount.
-To reset the state instead, add `autoReset: true` to the store definition and
-the state will automatically revert back to its initial value after all
-components unmount.
+By default, a store's state value will persist even when all consumer components 
+unmount. To reset the state instead, add `autoReset: true` to the store 
+definition and the state will automatically revert back to its initial value 
+after all components unmount.
 
 ```js
 const autoResettingStore = new Store(initialState, {
@@ -452,13 +454,13 @@ export function restart() {
 }
 
 export function moveBy(x: number, y: number): void {
-  store.setSyncAt('board.user', (old: Record<string, number>) => ({
+  store.setStateAt('board.user', (old: Record<string, number>) => ({
     x: old.x + x,
     y: old.y + y,
   }));
   const { user, flag } = store.getStateAt('board');
   if (flag.x === user.x && flag.y === user.y) {
-    store.mergeSync({ hasWon: true });
+    store.mergeState({ hasWon: true });
   }
 }
 
@@ -537,7 +539,7 @@ import globalStore, { useGlobalStore } from '../globalStore';
 import { persistState, appender, merger, remover } from 'react-thermals';
 
 // extend the state at any time
-globalStore.replaceSync(old => ({ ...old, todos: [] }));
+globalStore.mergeState({ todos: [] }, { bypassAll: true });
 
 // add actions at any time
 export const addTodo = globalStore.connect(appender('todos'));
@@ -660,7 +662,7 @@ export function useAuth() {
   return useGlobalStore('user');
 }
 
-globalStore.replaceSync(old => ({
+globalStore.replaceState(old => ({
   ...old,
   user: {
     isLoggedIn: false,
@@ -783,38 +785,50 @@ There are also two functions for combining action functions:
 
 [Full docs](src/actions/README.md) on action creators.
 
-### Synchronous Actions
-
-TBD
-
 ### Asynchronous Actions
 
-When `setState()` receives a promise or a function that returns a promise,
+When a setter function receives a promise or a function that returns a promise,
 React Thermals will automatically await that value. If more than one promise
 is batched for changes, they will be awaited serially, such that a promise
 operates on the resolved state of the previous promise; and re-renders will
 not be triggered until all batched promises have resolved.
 
-## Full Documentation
+Keep in mind that middleware may perform further state changes synchronously or
+asynchronously.
 
-### All Store Options
+You can use `await store.nextState()` to take action when the next state is
+resolved and all components have been re-rendered.
 
-`new Store(state, options)` takes an options object with the following properties:
+### Synchronous Actions
 
-- {Boolean} autoReset - If true, reset the store when all consumer components
+When a setter function receives a value or a function that returns a value,
+React Thermals will synchronously trigger a re-render.
+
+Keep in mind that a middleware that executes asynchronously will make all
+actions synchronous. That could be a problem, for example, if an action
+responds to an `<input onChange={action} />` event where the user's cursor
+will not work as intended unless re-renders are synchronous.
+
+## Store Class Documentation
+
+### Constructor
+
+`new Store(state, options)` takes an `options` object with the following properties:
+
+- **autoReset** _boolean_ - If true, reset the store when all consumer components
   unmount (default false)
-- {String} id - An identifier that could be used by plugins or event listeners
+- **id** _string_ - An identifier that could be used by plugins or event listeners
 
 ### State Setters
 
 The following state setters will cause a change and re-render all components
 that subscribe to affected state.
 
-| Action | Update whole state | Update state at path      |
-| ------ | ------------------ | ------------------------- |
-| Set    | setState(value)    | setStateAt(path, value)   |
-| Merge  | mergeState(value)  | mergeStateAt(path, value) |
-| Reset  | resetState(value)  | resetStateAt(path, value) |
+| Action | Update whole state         | Update state at path               |
+| ------ |----------------------------|------------------------------------|
+| Set    | setState(value, options)   | setStateAt(path, value, options)   |
+| Merge  | mergeState(value, options) | mergeStateAt(path, value, options) |
+| Reset  | resetState(value, options) | resetStateAt(path, value, options) |
 
 The `value` parameter supports values, promises, functions that return values,
 and functions that return promises.
@@ -830,10 +844,10 @@ store.setState(old => Promise.resolve(old + 42));
 
 #### Bypassing middleware, rendering and AfterUpdate event
 
-State setters accept an additional parameter that allows you to replace the
-state value without the usual effects.
+The `options` parameter allows you to replace the state value without the usual 
+effects.
 
-That options object has up to 3 properties:
+That options object has up to 4 properties:
 
 1. `bypassRender` - If true, do not notify components of the change.
 2. `bypassMiddleware` - If true, skip any registered middleware.
@@ -848,8 +862,7 @@ this.setState(newState, {
 });
 ```
 
-For convenience, instead of setting all three to true, you can use the
-`bypassAll`.
+Which is the same as:
 
 ```js
 this.setState(newState, {
@@ -868,11 +881,11 @@ this.setState(newState, {
 ### Other Store Methods
 
 | Method               | Description                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| -------------------- |------------------------------------------------------------------------------------------------------|
 | clone(withOverrides) | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
-| hasInitialized()     | True if any component has ever used this store (but may not have mounted yet)                        |
+| hasInitialized()     | True if any component has ever used this store (but may not have returned JSX yet)                   |
 | getMountCount()      | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
-| on(type, handler)    | Register a handler to be called for the given event type                                             |
+| on(type, handler)    | Register a handler to be called for the given event type (see [events docs](#events))                |
 | off(type, handler)   | De-register a handler for the given event type                                                       |
 | once(type, handler)  | Register a handler to be called ONCE for the given event type                                        |
 | plugin(initializer)  | Register a plugin                                                                                    |
@@ -891,17 +904,23 @@ store should preferrably pass a callback to a state setter function.
 Example:
 
 ```js
+const store = new Store(21);
+
+// ✅ preferred
 store.setState(old => old * 2);
+
+// ❌ discouraged but still works fine
+store.setState(store.getState() * 2);
 ```
 
-Components should normally access state only through a hook:
+Components should normally access state only through one of two hooks:
 
-1. useStoreState(store) - Select the whole state, rerendering any time any part
-   of the state changes.
-2. useStoreSelector(selector) - Select part of or a computed part of state,
-   rerendering any time that portion changes.
+1. `useStoreState(store)` - Select the whole state, re-rendering any time any 
+   part of the state changes.
+2. `useStoreSelector(selector)` - Select part of or a computed part of the 
+   state, re-rendering any time that portion changes.
 
-And you'll also notice that most of the examples in this README do not actually
+And you'll also notice that all of the examples in this README do not actually
 export the store at all; you can export hooks that call `useStoreState()` or
 `useStoreSelector()` internally.
 
@@ -942,7 +961,7 @@ import myStore, { addToCart } from './myStore';
 
 describe('myStore', () => {
   it('should add to cart with addToCart(item)', async () => {
-    myStore.setSync({ cart: [], total: 0 });
+    myStore.setState({ cart: [], total: 0 });
     addToCart({
       id: 101,
       name: 'White Shoe',
@@ -971,25 +990,23 @@ Stores fire a series of lifecycle events. For example:
 
 ```js
 store.on('BeforeInitialize', () => {
-  store.extendSync({ my: 'external', initial: 'state' });
+  // add values to the store but don't notify or re-render
+  store.mergeState({ my: 'external', initial: 'state' }, { bypassAll: true });
 });
 store.on('AfterLastUnmount', evt => {
+  // cancel side effects such as http requests
   cancelPendingStuff();
 });
 ```
 
 #### List of events
 
-The following events fire during the life cycle of the store. Some events allow
-you call `event.preventDefault()` to block the next step. For example,
-cancelling the BeforeSet event will block all pending state updates. Handlers
-can also call `event.stopPropagation()` to block other handlers from receiving
-this particular event.
+The following events fire during the life cycle of the store.
 
 | Event            | Description                                                         |
-| ---------------- | ------------------------------------------------------------------- |
+| ---------------- |---------------------------------------------------------------------|
 | BeforeInitialize | Allows changing initial state before first component sees the state |
-| AfterInitialize  | Fires after the initialization                                      |
+| AfterInitialize  | Fires after the first component sees the state                      |
 | BeforeFirstUse   | Fires after initialization but before being used for the first time |
 | AfterFirstUse    | Fires after store has been used by the first time                   |
 | AfterFirstMount  | Fires after first component mounts                                  |
@@ -1038,28 +1055,27 @@ Interested in writing your own plugins? Check out
 
 ### Middleware
 
-React Thermals has a simple middleware system for modifying state before it is
-saved and propagated to components.
+React Thermals has a simple middleware system that allows modifying state 
+before it is saved and propagated to components.
 
 Middleware examples:
 
 ```js
-// observe the state but do not alter
+// Example: observe the state but do not alter
 myStore.use((context, done) => {
   context.prev; // the old state value
   context.next; // the new state value - alter to modify state
-  context.isAsync; // false if middleware is expected to call next right away
   logToServer(context.next);
-  done();
+  done(); // call done to trigger the next middleware
 });
 
-// alter the state
+// Example: alter the state
 myStore.use((context, done) => {
   context.next = doSomeModifications(conext.next);
   done();
 });
 
-// call next asynchronously
+// Example: call node asynchronously
 myStore.use((context, done) => {
   doSomeAsyncModifications(context).then(done);
 });
