@@ -124,4 +124,8 @@ describe('defaultEqualityFn', () => {
     const res = isEqual(fn, fn);
     expect(res).toBe(true);
   });
+  it('should say NaN args are equal', () => {
+    const res = isEqual(NaN, NaN);
+    expect(res).toBe(true);
+  });
 });

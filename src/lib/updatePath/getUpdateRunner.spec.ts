@@ -19,8 +19,8 @@ describe('getUpdateRunner()', () => {
     expect(transform(null, () => 'foo')).toBe('foo');
     expect(transform(3, x => x + 1)).toBe(4);
   });
-  // it('should allow function transforms', () => {
-  //   const transform = getUpdateRunner(p => p + 1);
-  //   expect(transform(2, p => p ** p)).toBe(9);
-  // });
+  it('should allow function transforms', () => {
+    const transform = getUpdateRunner(p => p + 1);
+    expect(transform(2, p => p * 7)).toBe(15);
+  });
 });

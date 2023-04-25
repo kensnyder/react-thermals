@@ -19,7 +19,7 @@ export default function getUpdateRunner(
     // run transform directly
     return function runTransform(old: any, newValue: any, ...args: any[]) {
       if (isFunction(newValue)) {
-        newValue = newValue(old, ...args);
+        old = newValue(old, ...args);
       }
       return transform(old, newValue, ...args);
     };
