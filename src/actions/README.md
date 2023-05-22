@@ -231,6 +231,11 @@ const addTodo = useCallback(
   },
   [setState]
 );
+
+// and may be called once like this:
+function addItemToCart(item) {
+  store.action(appender('cart.items'), item);
+}
 ```
 
 #### Examples
@@ -305,6 +310,11 @@ const setField = useCallback(
   },
   [setState]
 );
+
+// and may be called once like this:
+function removeItemFromCart(item) {
+  store.action(remover('cart.items'), item);
+}
 ```
 
 #### Examples
@@ -382,6 +392,11 @@ const renameTag = useCallback(
   },
   [setState]
 );
+
+// and may be called once like this:
+function updatePostTag(oldTag, newTag) {
+  store.action(replacer('post.tags'), oldTag, newTag);
+}
 ```
 
 ### replacerSync()

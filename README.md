@@ -30,7 +30,7 @@ npm install react-thermals
    2. [Action creators](#action-creators)
    3. [Action batching](#action-batching)
    4. [Asynchronous actions](#asynchronous-actions)
-   4. [Synchronous actions](#synchronous-actions)
+   5. [Synchronous actions](#synchronous-actions)
 5. [Strongly typed state](#strongly-typed-state)
    1. [TypeScript definitions](#typescript-definitions)
 6. [Store class documentation](#store-class-documentation)
@@ -64,10 +64,10 @@ npm install react-thermals
 7. Stores persist data even if all consumers unmount (optional)
 8. Stores allow worry-free code splitting
 9. Store actions are easily testable
-10. Store state can be strongly typed with TypeScript
+10. Store state is strongly typed using TypeScript Generics
 11. Stores can respond to component lifecycle events including unmount
     (e.g. to abort fetching data)
-12. No higher-order functions are needed in `<App />` or elsewhere
+12. No Context Provider components are needed in `<App />` or elsewhere
 
 Also see the
 [changelog](https://github.com/kensnyder/react-thermals/blob/master/CHANGELOG.md)
@@ -169,7 +169,8 @@ const [subject, sender, recipientsEmails] = useStoreSelector(myStore, [
 
 If your component would like to receive the entire state, you can utilize
 `useStoreSate(myStore)` which acts like useStoreSelector but selects the whole
-state.
+state. Note that your component will re-render any time any part of the state
+changes.
 
 #### TypeScript goodness
 
@@ -204,7 +205,7 @@ understand that the preceding element is an array.
 Stores should treat state as immutable. When using path expressions for actions
 or calling `setStateAt`, React Thermals automatically ensures relevant parts of
 state are replaced instead of changed. Replacing is more efficient than cloning
-the entire state and ensures that components rerender only when replaced parts
+the entire state and ensures that components re-render only when replaced parts
 of the state change.
 
 Under the hood, React Thermals has a `replacePath(path, value)` function
@@ -245,9 +246,9 @@ describe('updatePath', () => {
 
 ### Persistence
 
-By default, a store's state value will persist even when all consumer components 
-unmount. To reset the state instead, add `autoReset: true` to the store 
-definition and the state will automatically revert back to its initial value 
+By default, a store's state value will persist even when all consumer components
+unmount. To reset the state instead, add `autoReset: true` to the store
+definition and the state will automatically revert back to its initial value
 after all components unmount.
 
 ```js
@@ -745,12 +746,13 @@ export default function SubHeader() {
 For many actions, you can use action creators as introduced in the next
 section and as documented [here](src/actions/README.md).
 
+Otherwise, you have the following building blocks to write your own actions.
 `store.setState` works exactly like a setter function from a `useState()` pair.
 `store.mergeState` works similarly, except the store will merge current state
 with the partial state passed to mergeState--with the assumption that the
 current state and new state are both Arrays or both plain Objects.
 
-Calling `state.setState` will trigger a rerender on all components that consume
+Calling `state.setState` will trigger a re-render on all components that consume
 the whole state and components that consume selected state that changes.
 
 Note that by default, state persists even when all consumers have unmounted.
@@ -764,8 +766,8 @@ must `import` any stores they want to consume.
 
 ### Action creators
 
-For common types of state changes, React Thermals has 7 functions that will
-create action functions. Supported state changes are:
+For common types of state changes, React Thermals has several functions that
+will create action functions. Supported state changes are:
 
 1. [setter(path)](src/actions/README.md#setter) - Set a single value
 2. [toggler(path)](src/actions/README.md#toggler) - Toggle a boolean value
@@ -774,14 +776,14 @@ create action functions. Supported state changes are:
 5. [replacer(path)](src/actions/README.md#replacer) - Replace an item in a list (i.e. edit)
 6. [adder(path)](src/actions/README.md#adder) - Add to or subtract from a number
 7. [merger(path)](src/actions/README.md#merger) - Merge one object into another
-8. [fetcher(path, url, init)](src/actions/README.md#fetcher) - Fetch and store data from an API
+8. [fetcher({ path, url, init, extractor })](src/actions/README.md#fetcher) - Fetch and store data from an API
 
 There are also two functions for combining action functions:
 
-1. [composeActions(actions)](src/actions/README.md#composeactions) - Run multiple
-   actions where one action doesn't depend on the changes from another
+1. [composeActions(actions)](src/actions/README.md#composeactions) - Run
+   multiple actions where one action doesn't depend on the changes from another
 2. [pipeActions(actions)](src/actions/README.md#pipeactions) - Run multiple
-   actions in sequence where one state change depends on another
+   actions in sequence where one action's change depends on another
 
 [Full docs](src/actions/README.md) on action creators.
 
@@ -807,7 +809,8 @@ React Thermals will synchronously trigger a re-render.
 Keep in mind that a middleware that executes asynchronously will make all
 actions synchronous. That could be a problem, for example, if an action
 responds to an `<input onChange={action} />` event where the user's cursor
-will not work as intended unless re-renders are synchronous.
+will not work as intended unless re-renders are synchronous. In that case, be
+sure that all middleware is synchronous.
 
 ## Store Class Documentation
 
@@ -825,10 +828,11 @@ The following state setters will cause a change and re-render all components
 that subscribe to affected state.
 
 | Action | Update whole state         | Update state at path               |
-| ------ |----------------------------|------------------------------------|
+| ------ | -------------------------- | ---------------------------------- |
 | Set    | setState(value, options)   | setStateAt(path, value, options)   |
 | Merge  | mergeState(value, options) | mergeStateAt(path, value, options) |
-| Reset  | resetState(value, options) | resetStateAt(path, value, options) |
+| Reset  | resetState(options)        | resetStateAt(value, options)       |
+| Init   | initState(options)         | initStateAt(value, options)        |
 
 The `value` parameter supports values, promises, functions that return values,
 and functions that return promises.
@@ -844,7 +848,7 @@ store.setState(old => Promise.resolve(old + 42));
 
 #### Bypassing middleware, rendering and AfterUpdate event
 
-The `options` parameter allows you to replace the state value without the usual 
+The `options` parameter allows you to replace the state value without the usual
 effects.
 
 That options object has up to 4 properties:
@@ -855,7 +859,7 @@ That options object has up to 4 properties:
 4. `bypassAll` - If true, bypass all three of the effects above.
 
 ```js
-this.setState(newState, {
+store.setState(newState, {
   bypassRender: true,
   bypassMiddleware: true,
   bypassEvent: true,
@@ -865,9 +869,11 @@ this.setState(newState, {
 Which is the same as:
 
 ```js
-this.setState(newState, {
+store.setState(newState, {
   bypassAll: true,
 });
+// OR
+store.initState(newState);
 ```
 
 ### Most Common Store Methods
@@ -881,7 +887,7 @@ this.setState(newState, {
 ### Other Store Methods
 
 | Method               | Description                                                                                          |
-| -------------------- |------------------------------------------------------------------------------------------------------|
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
 | clone(withOverrides) | Create a clone of this store, including plugins but excluding event listeners. Useful for unit tests |
 | hasInitialized()     | True if any component has ever used this store (but may not have returned JSX yet)                   |
 | getMountCount()      | Get the number of mounted components that us this store with useStoreState() or useStoreSelector()   |
@@ -915,12 +921,12 @@ store.setState(store.getState() * 2);
 
 Components should normally access state only through one of two hooks:
 
-1. `useStoreState(store)` - Select the whole state, re-rendering any time any 
-   part of the state changes.
-2. `useStoreSelector(selector)` - Select part of or a computed part of the 
+1. `useStoreSelector(selector)` - Select part of or a computed part of the
    state, re-rendering any time that portion changes.
+2. `useStoreState(store)` - Select the whole state, re-rendering any time any
+   part of the state changes.
 
-And you'll also notice that all of the examples in this README do not actually
+And you'll also notice that all the examples in this README do not actually
 export the store at all; you can export hooks that call `useStoreState()` or
 `useStoreSelector()` internally.
 
@@ -1004,7 +1010,7 @@ store.on('AfterLastUnmount', evt => {
 The following events fire during the life cycle of the store.
 
 | Event            | Description                                                         |
-| ---------------- |---------------------------------------------------------------------|
+| ---------------- | ------------------------------------------------------------------- |
 | BeforeInitialize | Allows changing initial state before first component sees the state |
 | AfterInitialize  | Fires after the first component sees the state                      |
 | BeforeFirstUse   | Fires after initialization but before being used for the first time |
@@ -1055,7 +1061,7 @@ Interested in writing your own plugins? Check out
 
 ### Middleware
 
-React Thermals has a simple middleware system that allows modifying state 
+React Thermals has a simple middleware system that allows modifying state
 before it is saved and propagated to components.
 
 Middleware examples:

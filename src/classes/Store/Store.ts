@@ -196,6 +196,16 @@ export default class Store<StateType = any> extends SimpleEmitter<
   };
 
   /**
+   * Run an unbound creator function
+   * For example, it is equivalent to state.connect(remover('cart.items'))(item)
+   * @param creator  The function to run
+   * @param args  The args to pass to the function
+   */
+  action = (creator: Function, ...args: any[]) => {
+    return creator.apply(this, args);
+  };
+
+  /**
    * Return a promise that will resolve once the store gets a new state
    * @return Resolves with the new state value
    */
@@ -387,6 +397,26 @@ export default class Store<StateType = any> extends SimpleEmitter<
       this.#updateState(finalState, options);
     }
     return this;
+  };
+
+  /**
+   * Set state but bypass all middleware and rendering
+   * @param newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   */
+  initState = (newStateOrUpdater: SettableStateType<StateType>) => {
+    return this.setState(newStateOrUpdater, { bypassAll: true });
+  };
+
+  /**
+   * Set state at the given path but bypass all middleware and rendering
+   * @param path  The path to the value
+   * @param newStateOrUpdater  The new value or a function that receives "oldState" as a first parameter
+   */
+  initStateAt = <Path extends string>(
+    path: Path,
+    newStateOrUpdater: SettableStateAtPathType<Path, StateType>
+  ) => {
+    return this.setStateAt(path, newStateOrUpdater, { bypassAll: true });
   };
 
   /**

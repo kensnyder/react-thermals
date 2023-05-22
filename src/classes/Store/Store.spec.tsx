@@ -6,6 +6,7 @@ import useStoreState from '../../hooks/useStoreState/useStoreState';
 import { setter } from '../../actions/setter/setter';
 import Store from './Store';
 import type { PluginFunctionType } from '../../types';
+import remover from '../../actions/remover/remover';
 
 describe('Store constructor', () => {
   it('should have an id', () => {
@@ -193,6 +194,24 @@ describe('Store setState async', () => {
     await new Promise(r => setTimeout(r, 15));
     expect(eventSpy).not.toHaveBeenCalled();
     expect(store.getState()).toEqual({ a: 2 });
+  });
+  it('should bypassAll', async () => {
+    const eventSpy = vitest.fn();
+    const state = { a: 1 };
+    const store = new Store(state);
+    store.on('AfterUpdate', eventSpy);
+    store.initState({ a: 2 });
+    expect(eventSpy).not.toHaveBeenCalled();
+    expect(store.getState()).toEqual({ a: 2 });
+  });
+  it('should bypassAll at path', async () => {
+    const eventSpy = vitest.fn();
+    const state = { letters: { a: 1 } };
+    const store = new Store(state);
+    store.on('AfterUpdate', eventSpy);
+    store.initStateAt('letters', { a: 2 });
+    expect(eventSpy).not.toHaveBeenCalled();
+    expect(store.getState()).toEqual({ letters: { a: 2 } });
   });
   it('should fire SetterRejection when setState callback throws', async () => {
     const state = { a: 1 };
@@ -414,6 +433,15 @@ describe('Store plugins', () => {
     for (const thrower of throwers) {
       expect(thrower).toThrow();
     }
+  });
+});
+
+describe('Store actions', () => {
+  it('should handle store.action()', () => {
+    const users = [{ name: 'Joe' }, { name: 'Jane' }, { name: 'Milo' }];
+    const store = new Store({ users });
+    store.action(remover('users'), users[1]);
+    expect(store.getState().users).toEqual([users[0], users[2]]);
   });
 });
 
