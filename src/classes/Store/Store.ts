@@ -110,6 +110,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     if (this.#setters.length === 0) {
       if (this.#autoReset) {
         this.reset();
+        this.emit('AfterReset');
       }
       this.emit('AfterLastUnmount');
     }
@@ -188,24 +189,6 @@ export default class Store<StateType = any> extends SimpleEmitter<
   };
 
   /**
-   * Bind an action creator function to this store
-   * @param creator  The function to bind
-   */
-  connect = (creator: Function) => {
-    return creator.bind(this);
-  };
-
-  /**
-   * Run an unbound creator function
-   * For example, it is equivalent to state.connect(remover('cart.items'))(item)
-   * @param creator  The function to run
-   * @param args  The args to pass to the function
-   */
-  action = (creator: Function, ...args: any[]) => {
-    return creator.apply(this, args);
-  };
-
-  /**
    * Return a promise that will resolve once the store gets a new state
    * @return Resolves with the new state value
    */
@@ -215,6 +198,64 @@ export default class Store<StateType = any> extends SimpleEmitter<
         resolve(evt.data.next)
       );
     });
+  };
+
+  /**
+   * Bind an action updater function to operate on the given path in the store
+   * @param path  The path to the value the updater will operate
+   * @param updater  The function to bind
+   * @param [callback]  After state is updated, callback receives new state at path
+   * @example
+   * const store = new Store({ favorites: 0 });
+   * const increment = old => old + 1;
+   * const incrementFavs = store.connect('favorites', increment);
+   * // Also supports a callback that receives the new state
+   * const incrementFavsAndSave = store.connect('favorites', increment, newCount => {
+   *   fetch('/favs', { method: 'PUT', body: newCount });
+   *   window.postMessage({ type: 'FAVS_UPDATED', data: newCount });
+   * });
+   */
+  connect = <Path extends string>(
+    path: Path,
+    updater:
+      | ((...args: any) => FunctionStateAtType<Path, StateType>)
+      | ((...args: any) => StateAtType<Path, StateType>),
+    callback: (finalState: StateAtType<Path, StateType>) => void = null
+  ) => {
+    return (...args) => {
+      this.setStateAt(path, updater(...args));
+      if (!callback) {
+        return;
+      }
+      this.nextState().then(() => {
+        callback(this.getStateAt(path));
+      });
+    };
+  };
+
+  /**
+   * Bind a list of (possibly async) action updater functions to operate on the given path in the store
+   * Each updater will receive the return value of the previous updater
+   * @param path  The path to the value the updater will operate
+   * @param updaters  The functions to run in sequence
+   * @returns a function that returns a Promise with the final value
+   * const store = new Store({ emails: [] });
+   * const addEmail = appender();
+   * const lower = newEmails => newEmails.map(email => email.toLowerCase());
+   * const addAndLower = store.chain('emails', [addEmail, lower]);
+   */
+  chain = <Path extends string>(
+    path: Path,
+    updaters: Array<FunctionStateAtType<Path, StateType>>
+  ): ((...args: any) => Promise<StateAtType<Path, StateType>>) => {
+    return async () => {
+      let value = this.getStateAt(path);
+      for (const updater of updaters) {
+        value = await updater(value);
+      }
+      this.setStateAt(path, value);
+      return value;
+    };
   };
 
   /**
@@ -521,7 +562,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
       });
     }
     if (!options.bypassEvent && !options.bypassAll) {
-      // announce the final state
+      // announce the final state on next tick (after re-renders)
       Promise.resolve().then(() =>
         this.emit('AfterUpdate', { prev, next: this.#state })
       );

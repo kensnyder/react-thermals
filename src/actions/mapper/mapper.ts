@@ -1,12 +1,11 @@
-import Store from '../../classes/Store/Store';
-
 /**
  * Build a setState function that runs a map function against an array value
- * @param path  The name of or path to the property to update
- * @return  A function suitable for a store action
+ * @return  A function suitable for store.connect(path, fn);
  */
-export default function mapper(path: string) {
-  return function updater(this: Store, mapFn: (item: any) => any) {
-    return this.setStateAt(`${path}.*`, mapFn);
+export default function mapper<Item extends any>(mapFn: (item: Item) => any) {
+  return function updater() {
+    return (items: Item[]) => {
+      return items.map(mapFn);
+    };
   };
 }

@@ -30,7 +30,7 @@ export function doSelect(path: string): Function {
       // we need to map over array items and recurse
       segments = segments.slice(1); // remove that * segment
       return state.map((item: any) => descend(item, segments)).flat();
-    } else if (segments[0] in state) {
+    } else if (state && segments[0] in state) {
       return descend(state[segments[0]], segments.slice(1));
     } else {
       return undefined;

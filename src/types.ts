@@ -12,23 +12,26 @@ export type KnownEventNames =
   | 'AfterMount'
   | 'AfterUnmount'
   | 'AfterLastUnmount'
+  | 'AfterReset'
   | 'AfterUpdate'
   | 'SetterRejection'
   | '*';
 
-export type EventDataType<StateType, EventName> = EventName extends
-  | 'BeforeInitialize'
-  | 'AfterInitialize'
-  | 'BeforeFirstUse'
-  | 'AfterFirstUse'
-  ? StateType
-  : EventName extends 'AfterMount' | 'AfterUnmount'
-  ? number
-  : EventName extends 'AfterUpdate'
-  ? { prev: StateType; next: StateType }
-  : EventName extends 'SetterRejection'
-  ? Error
-  : undefined;
+export type EventDataType<StateType, EventName> =
+  EventName extends // these 4 events get the state as data
+  'BeforeInitialize' | 'AfterInitialize' | 'BeforeFirstUse' | 'AfterFirstUse'
+    ? StateType
+    : // these 2 events get the number of mounted components that use this store
+    EventName extends 'AfterMount' | 'AfterUnmount'
+    ? number
+    : // AfterUpdate gets the previous and next state
+    EventName extends 'AfterUpdate'
+    ? { prev: StateType; next: StateType }
+    : // SetterRejection gets the error that was thrown
+    EventName extends 'SetterRejection'
+    ? Error
+    : // all other events get no data
+      undefined;
 
 export type EventType<StateType, EventName extends string> = {
   target: SimpleEmitter<StateType, EventName> | Store<StateType>;

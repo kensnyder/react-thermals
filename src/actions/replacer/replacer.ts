@@ -1,27 +1,27 @@
-import Store from '../../classes/Store/Store';
 import isFunction from '../../lib/isFunction/isFunction';
 
 /**
  * Build a setState function that replaces a particular array item
- * @param path  The name of or path to the value to replace
- * @return  A function suitable for a store action
+ * @return  A function suitable for store.connect(path, fn)
+ * @example
+ *
  */
-export default function replacer<Path extends string>(path: Path) {
+export default function replacer() {
   return function updater<Item extends any>(
-    this: Store,
     itemToReplace: Item,
-    newItem:
-      | Item
-      | PromiseLike<Item>
-      | ((old: Item) => Item)
-      | ((old: Item) => PromiseLike<Item>)
+    newItem: Item | ((oldItem: Item) => Item)
   ) {
-    this.setStateAt(`${path}.*`, (item: Item) => {
-      if (item === itemToReplace) {
-        return isFunction(newItem) ? (newItem as Function)(item) : newItem;
-      } else {
+    return (old: Item[]) => {
+      return old.map(item => {
+        if (item === itemToReplace) {
+          if (isFunction(newItem)) {
+            return newItem(item);
+          } else {
+            return newItem;
+          }
+        }
         return item;
-      }
-    });
+      });
+    };
   };
 }

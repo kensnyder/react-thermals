@@ -8,7 +8,7 @@ describe('replacer()', () => {
       { name: 'Steve Nash', jersey: '13' },
     ];
     const store = new Store({ players });
-    const substitutePlayer = store.connect(replacer('players'));
+    const substitutePlayer = store.connect('players', replacer());
     substitutePlayer(players[0], {
       name: 'Kobe Bryant',
       jersey: '24',
@@ -18,40 +18,21 @@ describe('replacer()', () => {
       { name: 'Kobe Bryant', jersey: '24' },
       { name: 'Steve Nash', jersey: '13' },
     ]);
+    // Do nothing if itemToReplace is not found
     substitutePlayer({}, { name: 'Carmelo Anthony', jersey: '00' });
     expect(store.getState().players).toEqual([
       { name: 'Kobe Bryant', jersey: '24' },
       { name: 'Steve Nash', jersey: '13' },
     ]);
   });
-  it('should receive Promises', async () => {
-    const favorites = [3, 17, 28, 45];
-    const store = new Store({ favorites });
-    const changeFavorite = store.connect(replacer('favorites'));
-    changeFavorite(3, 4);
-    await store.nextState();
-    expect(store.getState().favorites).toEqual([4, 17, 28, 45]);
-  });
   it('should receive functions', async () => {
     const favorites = ['Pumpkin Pie', 'Brownies', 'Donuts'];
     const store = new Store({ favorites });
-    const changeFavorite = store.connect(replacer('favorites'));
-    changeFavorite('Pumpkin Pie', () => 'Sheet Cake');
+    const changeFavorite = store.connect('favorites', replacer());
+    changeFavorite('Pumpkin Pie', old => `Custard ${old}`);
     await store.nextState();
     expect(store.getState().favorites).toEqual([
-      'Sheet Cake',
-      'Brownies',
-      'Donuts',
-    ]);
-  });
-  it('should receive functions that return promises', async () => {
-    const favorites = ['Pumpkin Pie', 'Brownies', 'Donuts'];
-    const store = new Store({ favorites });
-    const changeFavorite = store.connect(replacer('favorites'));
-    changeFavorite('Pumpkin Pie', old => Promise.resolve(old + ' x2'));
-    await store.nextState();
-    expect(store.getState().favorites).toEqual([
-      'Pumpkin Pie x2',
+      'Custard Pumpkin Pie',
       'Brownies',
       'Donuts',
     ]);

@@ -36,6 +36,10 @@ export default function replacePath<StateType, Path extends string>(
 
 // the recursive copy/update function
 function descend(object: any, segments: string[], newValue: any): any {
+  if (!object) {
+    // path does not exist
+    return object;
+  }
   const copy = shallowCopy(object);
   if (segments[0] === '*' && copy instanceof Array) {
     // we need to map over array items

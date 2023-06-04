@@ -1,8 +1,10 @@
-import Store from '../../classes/Store/Store';
-
-export default function cycler(path: string, values: any[]) {
-  let idx = 0;
-  return function updater(this: Store) {
-    this.setStateAt(path, values[idx++ % values.length]);
+export default function cycler<PossibleValues extends any>(
+  values: PossibleValues[]
+) {
+  return function updater() {
+    return (old: PossibleValues) => {
+      const currIdx = values.indexOf(old);
+      return values[(currIdx + 1) % values.length];
+    };
   };
 }

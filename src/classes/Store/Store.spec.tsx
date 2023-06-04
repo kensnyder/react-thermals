@@ -324,6 +324,17 @@ describe('Store setStateAt', () => {
     const next = await store.nextState();
     expect(next).toEqual({ primes: [22, 33, 55, 77] });
   });
+  it('should chain with store.chain()', async () => {
+    const store = new Store({ primes: [2, 3, 5, 7] });
+    const calculate = store.chain('primes', [
+      primes => primes.map(old => old - 1),
+      primes => primes.map(old => old * 2),
+      primes => primes.map(old => old + 4),
+    ]);
+    calculate();
+    const next = await store.nextState();
+    expect(next).toEqual({ primes: [6, 8, 12, 16] });
+  });
 });
 describe('Store resetState', () => {
   it('should reset state', async () => {
@@ -436,15 +447,6 @@ describe('Store plugins', () => {
   });
 });
 
-describe('Store actions', () => {
-  it('should handle store.action()', () => {
-    const users = [{ name: 'Joe' }, { name: 'Jane' }, { name: 'Milo' }];
-    const store = new Store({ users });
-    store.action(remover('users'), users[1]);
-    expect(store.getState().users).toEqual([users[0], users[2]]);
-  });
-});
-
 describe('Store() with components', () => {
   // define store before each test
   let store: Store;
@@ -454,7 +456,7 @@ describe('Store() with components', () => {
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     store = new Store(state);
-    setPage = store.connect(setter('page'));
+    setPage = store.connect('page', setter());
     ListComponent = () => {
       const state = useStoreState(store);
       return (
@@ -504,8 +506,8 @@ describe('Store() with components - auto reset', () => {
     store = new Store(state, {
       autoReset: true,
     });
-    setPage = store.connect(setter('page'));
-    setSort = store.connect(setter('sort'));
+    setPage = store.connect('page', setter());
+    setSort = store.connect('sort', setter());
     thrower = () => {
       store.setState(Promise.reject('my error'));
     };

@@ -95,7 +95,7 @@ const recipients = useStoreState(store, 'email.recipients');
 const recipients = store.getStateAt('email.recipients');
 
 // 3. Creating store action functions
-const addRecipient = store.connect(appender('email.recipients'));
+const addRecipient = store.connect('email.recipients', appender());
 
 // 4. Updating values in the store
 store.setStateAt('email.recipients', recipients);
@@ -799,7 +799,7 @@ Keep in mind that middleware may perform further state changes synchronously or
 asynchronously.
 
 You can use `await store.nextState()` to take action when the next state is
-resolved and all components have been re-rendered.
+resolved and all affected components have been re-rendered.
 
 ### Synchronous Actions
 
