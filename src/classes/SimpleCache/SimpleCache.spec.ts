@@ -8,7 +8,7 @@ describe('new SimpleCache()', () => {
     expect(cache.size).toBe(1);
   });
   it('should return cached values', () => {
-    const cache = new SimpleCache(10);
+    const cache = new SimpleCache();
     cache.set('a', 1);
     expect(cache.has('a')).toBe(true);
     expect(cache.get('a')).toBe(1);

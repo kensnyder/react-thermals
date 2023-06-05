@@ -335,6 +335,21 @@ describe('Store setStateAt', () => {
     const next = await store.nextState();
     expect(next).toEqual({ primes: [6, 8, 12, 16] });
   });
+  it('should connect with callback', async () => {
+    const callback = vitest.fn();
+    const store = new Store({ primes: [2, 3, 5, 7] });
+    const multBy = store.connect(
+      'primes',
+      multiplier => {
+        return primes => primes.map(old => old * multiplier);
+      },
+      callback
+    );
+    multBy(3);
+    const next = await store.nextState();
+    expect(next).toEqual({ primes: [6, 9, 15, 21] });
+    expect(callback).toHaveBeenCalledWith([6, 9, 15, 21]);
+  });
 });
 describe('Store resetState', () => {
   it('should reset state', async () => {
@@ -384,6 +399,16 @@ describe('Store mergeState', () => {
     store.mergeStateAt('user', { age: 11 });
     await store.nextState();
     expect(store.getState()).toEqual({ user: { name: 'Milo', age: 11 } });
+  });
+  it('should merge state at root', async () => {
+    const store = new Store({ color: 'orange', flavor: 'orange' });
+    store.mergeStateAt('@', { fruit: 'orange' });
+    await store.nextState();
+    expect(store.getState()).toEqual({
+      color: 'orange',
+      flavor: 'orange',
+      fruit: 'orange',
+    });
   });
   it('should merge state at path from Promise', async () => {
     const store = new Store({ user: { name: 'Milo', age: 10 } });

@@ -26,4 +26,11 @@ describe('remover(propName)', () => {
     const next = await store.nextState();
     expect(next).toEqual({ ids: [1, 2, 3, 4] });
   });
+  it('should change nothing if target is falsy', async () => {
+    const store = new Store({ ids: null });
+    const removeId = store.connect('ids', remover());
+    removeId(99);
+    const next = await store.nextState();
+    expect(next).toEqual({ ids: null });
+  });
 });

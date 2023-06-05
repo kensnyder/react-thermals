@@ -76,7 +76,8 @@ export default class Store<StateType = any> extends SimpleEmitter<
   }
 
   /**
-   * Connect a component to the store so that when relevant state changes, the component will be re-rendered
+   * Connect a component to the store so that when relevant state changes,
+   * we can tell the component to re-render
    * @param setState  A setState function from React.useState()
    * @note private but used by useStoreSelector()
    */

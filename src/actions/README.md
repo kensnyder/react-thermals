@@ -5,13 +5,16 @@ Actions that update state values can be generated automatically.
 1. [Introduction](#introduction)
 2. [Properties and Paths](#properties-and-paths)
 3. [Documentation and Examples](#documentation-and-examples)
-   1. [setter](#setter--) - Set a single value
-   2. [toggler](#toggler--) - Toggle a boolean value
-   3. [appender](#appender--) - Append an item to a list
-   4. [remover](#remover--) - Remove an item from a list
-   5. [replacer](#replacer--) - Replace an item in a list
-   6. [adder](#adder--) - Add to or subtract from a number
-   7. [merger](#merger--) - Merge one object into another
+   1. [adder](#adder--) - Add to or subtract from a number
+   2. [appender](#appender--) - Append an item to a list
+   3. [cycler](#cycler--) - Cycle through a list of values
+   4. [fetcher](#fetcher--) - `fetch()` and store data
+   5. [mapper](#mapper--) - Update each value in a list
+   6. [merger](#merger--) - Merge one object into another
+   7. [remover](#remover--) - Remove an item from a list
+   8. [replacer](#replacer--) - Replace an item in a list
+   9. [setter](#setter--) - Set a single value
+   10. [toggler](#toggler--) - Toggle a boolean value
 
 ## Introduction
 
@@ -46,11 +49,11 @@ For example, if the state is `{}` and you set `colors.primary` to `#f00` you
 will end up with a state value of `{ colors: { primary: '#f00' } }`.
 
 The function that creates state update functions is called `updatePath`. If
-you'd like to use it directly, you can import it from `react-thermals/actions`:
+you'd like to use it directly, you can import it:
 
-`import updatePath from 'react-thermals';`
+`import { updatePath } from 'react-thermals';`
 
-Read more at the [updatePath docs](../src/updatePath/README.md).
+Note that if a path contains `@` or `*`, no intellisense can be provided.
 
 ## Documentation and Examples
 
@@ -61,7 +64,7 @@ Set a single value.
 #### Equivalent code
 
 ```jsx
-const setUser = store.connect(setter('user'));
+const setUser = store.connect('user', setter());
 // is equivalent to
 const [state, setState] = useState({});
 const setUser = useCallback(
@@ -78,13 +81,13 @@ const setUser = useCallback(
 #### Examples
 
 ```jsx
-// In /stores/postsStore.ts
+// --- In /stores/postsStore.ts ---
 import { Store, setter } from 'react-thermals';
 
 const store = new Store({ page: 1 });
-export const setPage = store.connect(setter('page'));
+export const setPage = store.connect('page', setter());
 
-// In components/PostsPagination.tsx
+// --- In components/PostsPagination.tsx ---
 import store, { setPage } from '../stores/postsStore';
 export default function Pagination() {
   return (
@@ -93,39 +96,6 @@ export default function Pagination() {
       <button onClick={() => setPage(old => old.page - 1)}>Prev Page</button>
       <button onClick={() => setPage(old => old.page + 1)}>Next Page</button>
     </>
-  );
-}
-```
-
-### setterSync()
-
-Set a single value synchronously.
-
-#### Examples
-
-stores/postsStore.js
-
-```js
-import { createStore, useStoreSelector, setterSync } from 'react-thermals';
-
-const store = new Store({ searchTerm: '' });
-export const setSearchTermSync = store.connect(setterSync('searchTerm'));
-export function useSearchTerm() {
-  return useStoreSelector(store, state => state.searchTerm);
-}
-```
-
-components/PostsSearch.jsx
-
-```jsx
-import { setSearchTermSync, useSearchTerm } from '../stores/postsStore';
-export default function PostsSearch() {
-  const searchTerm = useSearchTerm();
-  return (
-    <input
-      value={searchTerm}
-      onChange={evt => setSearchTermSync(evt.target.value)}
-    />
   );
 }
 ```
@@ -142,7 +112,7 @@ stores/postsStore.js
 import { createStore, useStoreSelector, setterSync } from 'react-thermals';
 
 const store = new Store({ searchTerm: '' });
-export const setSearchInput = store.connect(setterInput('searchTerm'));
+export const setSearchInput = store.connect('searchTerm', setterInput());
 export function useSearchTerm() {
   return useStoreSelector(store, state => state.searchTerm);
 }
@@ -165,9 +135,9 @@ Toggle a boolean value.
 #### Equivalent code
 
 ```js
-const toggleIsActive = store.connect(toggler('isActive'));
+const toggleIsActive = store.connect('isActive', toggler());
 // is equivalent to
-const [state, setState] = useState({});
+const [state, setState] = useState({ isActive: false });
 const toggleIsActive = useCallback(
   () =>
     setState(old => ({
@@ -186,7 +156,7 @@ stores/postStore.js
 import { useStoreSelector, toggler } from 'react-thermals';
 
 const store = new Store({ showDetails: false });
-export const toggleDetails = store.connect(toggler('showDetails'));
+export const toggleDetails = store.connect('showDetails', toggler());
 export function usePostsStore(selector) {
   return useStoreSelector(postsStore, selector);
 }
@@ -198,7 +168,7 @@ components/PostText.jsx
 import { usePostsStore, toggleDetails } from '../stores/postsStore';
 
 export default function PostText() {
-  const showDetails = usePostsStore(state => state.showDetails);
+  const showDetails = usePostsStore('showDetails');
   return (
     <>
       <p>Summary text</p>
@@ -211,10 +181,6 @@ export default function PostText() {
 }
 ```
 
-### togglerSync()
-
-Equivalent to toggler but synchronous.
-
 ### appender()
 
 Add an item to an array.
@@ -222,7 +188,7 @@ Add an item to an array.
 #### Equivalent code
 
 ```js
-const addTodo = state.connect(appender('todos'));
+const addTodo = state.connect('todos', appender());
 // is equivalent to
 const [state, setState] = useState({ todos: [] });
 const addTodo = useCallback(
@@ -231,11 +197,6 @@ const addTodo = useCallback(
   },
   [setState]
 );
-
-// and may be called once like this:
-function addItemToCart(item) {
-  store.action(appender('cart.items'), item);
-}
 ```
 
 #### Examples
@@ -246,7 +207,7 @@ stores/todoStore.js
 import { Store, useStoreSelector, appender } from 'react-thermals';
 
 const store = new Store({ todos: [] });
-export const addTodo = store.connect(appender('todos'));
+export const addTodo = store.connect('todos', appender());
 export function useTodos() {
   return useStoreSelector(todoStore, 'todos');
 }
@@ -285,10 +246,6 @@ export default function TodoList() {
 }
 ```
 
-### appenderSync()
-
-Equivalent to appender but synchronous.
-
 ### remover()
 
 Remove an item from an array.
@@ -296,7 +253,7 @@ Remove an item from an array.
 #### Equivalent code
 
 ```js
-const removeTodo = store.connect(remover('todos'));
+const removeTodo = store.connect('todos', remover());
 // is equiavlent to
 const [state, setState] = useState({ todos: [] });
 const setField = useCallback(
@@ -310,11 +267,6 @@ const setField = useCallback(
   },
   [setState]
 );
-
-// and may be called once like this:
-function removeItemFromCart(item) {
-  store.action(remover('cart.items'), item);
-}
 ```
 
 #### Examples
@@ -325,8 +277,8 @@ stores/todoStore.js
 import { Store, useStoreSelector, appender, remover } from 'react-thermals';
 
 const store = new Store({ todos: [] });
-export const addTodo = store.connect(appender('todos'));
-export const removeTodo = store.connect(remover('todos'));
+export const addTodo = store.connect('todos', appender());
+export const removeTodo = store.connect('todos', remover());
 export function useTodos() {
   return useStoreSelector(todoStore, 'todos');
 }
@@ -367,10 +319,6 @@ export default function TodoList() {
 }
 ```
 
-### removerSync()
-
-Equivalent to remover but synchronous.
-
 ### replacer()
 
 Replace one item with another.
@@ -378,7 +326,7 @@ Replace one item with another.
 #### Equivalent code
 
 ```js
-const replaceTag = store.connect(replacer('tags'));
+const replaceTag = store.connect('tags', replacer());
 // is equivalent to
 const [state, setState] = useState({
   tags: [{ id: 12, name: 'Apple' }],
@@ -392,11 +340,6 @@ const renameTag = useCallback(
   },
   [setState]
 );
-
-// and may be called once like this:
-function updatePostTag(oldTag, newTag) {
-  store.action(replacer('post.tags'), oldTag, newTag);
-}
 ```
 
 ### replacerSync()
@@ -409,11 +352,16 @@ Add or subtract from a given number.
 
 #### Equivalent code
 
-```jsx
-const [state, setState] = useState({});
+```js
+const replaceTag = store.connect('total', adder());
+// is equivalent to
+const [state, setState] = useState({ total: 0 });
 const setField = useCallback(
-  (name, addend) => {
-    setState(old => (old[name] = old[name] + addend));
+  addend => {
+    setState(old => ({
+      ...old,
+      total: old.total + addend,
+    }));
   },
   [setState]
 );
@@ -424,15 +372,12 @@ In stores/gameStore.js
 ```jsx harmony
 import { Store, adder } from 'react-thermals';
 
-const gameStore = new Store({
-  state: { x: 0, y: 0 },
-  actions: {
-    moveUp: adder('y', 1),
-    moveDown: adder('y', -1),
-    moveRight: adder('x', 1),
-    moveLeft: adder('x', -1),
-  },
-});
+const gameStore = new Store({ x: 0, y: 0 });
+
+export const moveUp = store.connect('y', adder(1));
+export const moveDown = store.connect('y', adder(-1));
+export const moveRight = store.connect('x', adder(1));
+export const moveLeft = store.connect('x', adder(-1));
 
 export default gameStore;
 ```
@@ -466,21 +411,16 @@ stores/gameStore.js
 ```jsx harmony
 import { Store, adder } from 'react-thermals';
 
-const gameStore = new Store({
-  state: { x: 0, y: 0 },
-  actions: {
-    vertical: adder('y'),
-    horizontal: adder('x'),
-  },
-});
+export const gameStore = new Store({ x: 0, y: 0 });
 
-export default gameStore;
+export const vertical = store.connect('y', adder());
+export const horizontal = store.connect('x', adder());
 ```
 
 components/GamePad.jsx
 
 ```jsx
-import gameStore, { vertical, horizontal } from '../stores/gameStore';
+import { gameStore, vertical, horizontal } from '../stores/gameStore';
 
 export default function GamePad() {
   return (
@@ -494,12 +434,31 @@ export default function GamePad() {
 }
 ```
 
-### adderSync()
-
-Equivalent to adder but synchronous.
-
 ### merger()
 
-### mergerSync()
+Like setter, but merges the partial state into the full state.
 
-Equivalent to merger but synchronous.
+#### Equivalent code
+
+```js
+const replaceTag = store.connect('user', merger());
+// is equivalent to
+const [state, setState] = useState({
+  user: {
+    first: 'Josh',
+    last: 'Smith',
+  },
+});
+const updateUser = useCallback(
+  partial => {
+    setState(old => ({
+      ...old,
+      user: {
+        ...old.user,
+        ...partial,
+      },
+    }));
+  },
+  [setState]
+);
+```
