@@ -48,13 +48,27 @@ type InputEvent = {
 
 /**
  * Run setter and then flush pending state changes
- * using a DOM event object to set value to evt.target.value
+ *   using a DOM event object to set value to evt.target.value
  * @return  A function suitable for an input's handler for onChange/onBlur/onKeyUp etc.
  * @example
+ * // In /stores/search.ts
  * const store = new Store({ criteria: { term: '', category: undefined } });
- * const setTerm = store.connect('criteria.term', setterInput());
- * ...
- * <input value={store.getStateAt('criteria.term')} onChange={setTerm} />
+ * export const setTerm = store.connect('criteria.term', setterInput());
+ * export const setCategory = store.connect('criteria.category', setterInput());
+ * export function useCriteria() {
+ *   return return useStoreSelector(store, 'criteria');
+ * }
+ * // In /components/SearchForm.tsx
+ * import { setTerm, setCategory, useCriteria } from '../stores/search';
+ * export default function SearchForm() {
+ *   const { term, category } = useCriteria();
+ *   return (
+ *     <form>
+ *       <input value={term} onChange={setTerm} />
+ *       <select value={category} onChange={setCategory}>...</select>
+ *     </form>
+ *   );
+ * }
  */
 export function setterInput() {
   return function updater(evt: InputEvent) {
