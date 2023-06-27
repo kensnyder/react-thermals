@@ -2,7 +2,7 @@ import isArray from '../../lib/isArray/isArray';
 
 /**
  * Build an action function that appends the given item(s) to an array
- * @return  A function suitable for Store#connect(function)
+ * @return  A function suitable for store.connect(path, <function>)
  * @example
  * const store = new Store({ primes: [2, 3, 5, 7] });
  * const appendPrime = store.connect('primes', appender());

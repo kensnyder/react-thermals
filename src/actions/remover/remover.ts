@@ -2,7 +2,7 @@ import isArray from '../../lib/isArray/isArray';
 
 /**
  * Build an action function that removes the given item(s) from an array
- * @return  A function suitable for Store#connect(function)
+ * @return  A function suitable for store.connect(path, <function>)
  * @example
  * const store = new Store({ primes: [2, 3, 5, 7, 11] });
  * const removePrime = store.connect('primes', remover());

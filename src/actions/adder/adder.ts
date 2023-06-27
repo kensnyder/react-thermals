@@ -2,7 +2,7 @@
  * Helper function to create a setState function that adds the given amount
  * @param baseAmount  A base amount to add
  *   e.g. use baseAmount = 1 to create an incrementer function and baseAmount = -1 for a decremeter function
- * @return  A function suitable for store.connect(path, fn)
+ * @return  A function suitable for store.connect(path, <function>)
  * @example
  * const store = new Store({ score: 0, highScore: 1000 });
  * const maybeUpdateHighScore = newScore => {
