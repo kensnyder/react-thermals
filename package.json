@@ -1,7 +1,7 @@
 {
   "name": "react-thermals",
-  "description": "Simple and extensible way to manage shared state based on React hooks",
-  "version": "4.0.0-beta.26",
+  "description": "Simple and type-safe way to manage shared state based on React hooks",
+  "version": "4.0.0-beta.27",
   "main": "dist/index.js",
   "type": "module",
   "sideEffects": false,
@@ -29,32 +29,33 @@
     "build": "npm run clean && npx -p typescript tsc --project tsconfig.build.json",
     "coverage": "vitest run --coverage",
     "view-coverage": "open ./coverage/lcov-report/index.html",
-    "release": "npm test && npm run build && npm publish"
+    "release": "npm install && npm test && npm run build && npm publish"
   },
   "peerDependencies": {
     "react": ">=16.8.0"
   },
   "devDependencies": {
     "@release-it/bumper": "4.0.2",
-    "@testing-library/jest-dom": "5.16.5",
-    "@testing-library/react": "14.0.0",
-    "@types/jsdom": "21.1.1",
-    "@types/react": "18.2.6",
-    "@types/react-dom": "18.2.4",
-    "@vitejs/plugin-react": "4.0.0",
-    "@vitest/coverage-istanbul": "0.31.1",
-    "happy-dom": "9.19.2",
-    "jsdom": "22.0.0",
+    "@testing-library/jest-dom": "6.1.5",
+    "@testing-library/react": "14.1.2",
+    "@types/jsdom": "21.1.6",
+    "@types/react": "18.2.39",
+    "@types/react-dom": "18.2.17",
+    "@vitejs/plugin-react": "4.2.0",
+    "@vitest/coverage-istanbul": "0.34.6",
+    "happy-dom": "12.10.3",
+    "jsdom": "23.0.1",
     "jsdom-global": "3.0.2",
-    "prettier": "2.8.8",
+    "prettier": "3.1.0",
+    "prettier-plugin-organize-imports": "3.2.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "release-it": "15.10.3",
-    "rimraf": "5.0.1",
-    "type-fest": "3.11.0",
-    "typescript": "5.0.4",
-    "vitest": "0.31.1",
-    "vitest-dom": "0.1.0"
+    "release-it": "16.3.0",
+    "rimraf": "5.0.5",
+    "type-fest": "4.8.2",
+    "typescript": "5.3.2",
+    "vitest": "0.34.6",
+    "vitest-dom": "0.1.1"
   },
   "release-it": {
     "github": {
