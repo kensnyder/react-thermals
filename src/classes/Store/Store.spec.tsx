@@ -1,12 +1,15 @@
-import { FunctionComponent, MouseEventHandler, useState } from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
-import { vitest } from 'vitest';
 import '@testing-library/jest-dom';
-import useStoreState from '../../hooks/useStoreState/useStoreState';
+import { act, fireEvent, render } from '@testing-library/react';
+import { FunctionComponent, MouseEventHandler, useState } from 'react';
+import { vitest } from 'vitest';
+import {
+  composeActions,
+  pipeActions,
+} from '../../actions/composeActions/composeActions';
 import { setter } from '../../actions/setter/setter';
-import Store from './Store';
+import useStoreState from '../../hooks/useStoreState/useStoreState';
 import type { PluginFunctionType } from '../../types';
-import remover from '../../actions/remover/remover';
+import Store from './Store';
 
 describe('Store constructor', () => {
   it('should have an id', () => {
@@ -580,5 +583,52 @@ describe('Store() with components - auto reset', () => {
       fireEvent.click(getByText('Throw'));
     });
     expect(rejection).toBe('my error');
+  });
+});
+describe('Store() with composed actions', () => {
+  // define store before each test
+  let store: Store;
+  let ListComponent: FunctionComponent;
+  let setPage;
+  let setSort;
+  const spy1 = vitest.fn(k => k);
+  const spy2 = vitest.fn(k => k);
+  beforeEach(() => {
+    const state = { page: 1, sort: '-date' };
+    store = new Store(state);
+    setPage = store.connect(
+      'page',
+      composeActions([
+        setter(),
+        updater => spy1(updater(store.getState().page)),
+      ])
+    );
+    setSort = store.connect('sort', pipeActions([setter(), spy2]));
+    ListComponent = () => {
+      const state = useStoreState(store);
+      return (
+        <div className="List">
+          <span>page={state.page}</span>
+          <span>sort={state.sort}</span>
+          <button onClick={() => setPage(old => old + 1)}>Next</button>
+          <button onClick={() => setPage(old => old - 1)}>Prev</button>
+          <button onClick={() => setSort('name')}>Sort by name</button>
+        </div>
+      );
+    };
+  });
+  it('should call spies', async () => {
+    const { getByText } = render(<ListComponent />);
+    expect(store.getState().page).toBe(1);
+    await act(() => {
+      fireEvent.click(getByText('Next'));
+    });
+    expect(store.getState().page).toBe(2);
+    expect(spy1).toHaveBeenCalledWith(2);
+    await act(() => {
+      fireEvent.click(getByText('Sort by name'));
+    });
+    expect(store.getState().sort).toBe('name');
+    expect(spy2).toHaveBeenCalledWith('name');
   });
 });

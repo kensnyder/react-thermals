@@ -1,11 +1,12 @@
-<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.0-beta.25" height="64" />
+<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.0-beta.27" height="64" />
 
-[![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.25)](https://npmjs.com/package/react-thermals)
-[![Build Status](https://ci.appveyor.com/api/projects/status/8lsgas1onep08hq3?svg=true&v=4.0.0-beta.25)](https://ci.appveyor.com/project/kensnyder/react-thermals)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?token=KW4PAS3KKM&v=4.0.0-beta.25)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://img.shields.io/npm/l/react-thermals.svg?v=4.0.0-beta.25)](https://opensource.org/licenses/ISC)
+[![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.27)](https://npmjs.com/package/react-thermals)
+[![Dependencies](https://badgen.net/static/dependencies/1/green?v=4.0.0.-beta.27)](https://npmjs.com/package/react-thermals)
+[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/node.js.yml/badge.svg?v=4.0.0.-beta.27)](https://github.com/kensnyder/react-thermals/actions)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.0.-beta.27)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://badgen.net/static/license/ISC/green?v=4.0.0.-beta.27)](https://opensource.org/licenses/ISC)
 
-React thermals is a simple and extensible way to manage state in React
+React Thermals is a simple and type-safe way to manage shared state in React
 
 ```bash
 npm install react-thermals

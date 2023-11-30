@@ -53,7 +53,7 @@ you'd like to use it directly, you can import it:
 
 `import { updatePath } from 'react-thermals';`
 
-Note that if a path contains `@` or `*`, no intellisense can be provided.
+Note that if a path contains `@` or `*`, typechecking and intellisense is not available.
 
 ## Documentation and Examples
 
@@ -80,15 +80,19 @@ const setUser = useCallback(
 
 #### Examples
 
+stores/postsStore.ts
+
 ```jsx
-// --- In /stores/postsStore.ts ---
 import { Store, setter } from 'react-thermals';
 
 const store = new Store({ page: 1 });
 export const setPage = store.connect('page', setter());
+```
 
-// --- In components/PostsPagination.tsx ---
-import store, { setPage } from '../stores/postsStore';
+components/PostsPagination.tsx
+
+```jsx
+import { setPage } from '../stores/postsStore';
 export default function Pagination() {
   return (
     <>
@@ -103,6 +107,23 @@ export default function Pagination() {
 ### setterInput()
 
 Set a single value synchronously from an input's onChange event.
+
+#### Equivalent code
+
+```jsx
+const setSearchTerm = store.connect('searchTerm', setterInput());
+// is equivalent to
+const [state, setState] = useState({ searchTerm: '' });
+const setSearchTerm = useCallback(
+  evt => {
+    setState(old => ({
+      ...old,
+      searchTerm: evt.target.value,
+    }));
+  },
+  [setState]
+);
+```
 
 #### Examples
 
@@ -441,7 +462,7 @@ Like setter, but merges the partial state into the full state.
 #### Equivalent code
 
 ```js
-const replaceTag = store.connect('user', merger());
+const updateUser = store.connect('user', merger());
 // is equivalent to
 const [state, setState] = useState({
   user: {

@@ -52,11 +52,12 @@ type InputEvent = {
  * @return  A function suitable for an input's handler for onChange/onBlur/onKeyUp etc.
  * @example
  * // In /stores/search.ts
+ * import { Store, setterInput, useStoreSelector } from 'react-thermals';
  * const store = new Store({ criteria: { term: '', category: undefined } });
  * export const setTerm = store.connect('criteria.term', setterInput());
  * export const setCategory = store.connect('criteria.category', setterInput());
  * export function useCriteria() {
- *   return return useStoreSelector(store, 'criteria');
+ *   return useStoreSelector(store, 'criteria');
  * }
  * // In /components/SearchForm.tsx
  * import { setTerm, setCategory, useCriteria } from '../stores/search';
