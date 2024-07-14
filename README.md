@@ -1,10 +1,10 @@
 <img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.0-beta.27" height="64" />
 
 [![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.27)](https://npmjs.com/package/react-thermals)
-[![Dependencies](https://badgen.net/static/dependencies/1/green?v=4.0.0.-beta.27)](https://npmjs.com/package/react-thermals)
-[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/node.js.yml/badge.svg?v=4.0.0.-beta.27)](https://github.com/kensnyder/react-thermals/actions)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.0.-beta.27)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://badgen.net/static/license/ISC/green?v=4.0.0.-beta.27)](https://opensource.org/licenses/ISC)
+[![Dependencies](https://badgen.net/static/dependencies/0/green?v=4.0.0)](https://www.npmjs.com/package/react-thermals?activeTab=dependencies)
+[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/node.js.yml/badge.svg?v=4.0.0)](https://github.com/kensnyder/react-thermals/actions)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.0)](https://codecov.io/gh/kensnyder/react-thermals)
+[![ISC License](https://badgen.net/static/license/ISC/green?v=4.0.0)](https://opensource.org/licenses/ISC)
 
 React Thermals is a simple and type-safe way to manage shared state in React
 

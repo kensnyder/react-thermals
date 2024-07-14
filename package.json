@@ -1,7 +1,7 @@
 {
   "name": "react-thermals",
   "description": "Simple and type-safe way to manage shared state based on React hooks",
-  "version": "4.0.0-beta.27",
+  "version": "4.0.0",
   "main": "dist/index.js",
   "type": "module",
   "sideEffects": false,
@@ -35,26 +35,28 @@
     "react": ">=16.8.0"
   },
   "devDependencies": {
-    "@release-it/bumper": "4.0.2",
-    "@testing-library/jest-dom": "6.1.5",
-    "@testing-library/react": "14.1.2",
-    "@types/jsdom": "21.1.6",
-    "@types/react": "18.2.39",
-    "@types/react-dom": "18.2.17",
-    "@vitejs/plugin-react": "4.2.0",
-    "@vitest/coverage-istanbul": "0.34.6",
-    "happy-dom": "12.10.3",
-    "jsdom": "23.0.1",
+    "@release-it/bumper": "6.0.1",
+    "@testing-library/dom": "10.3.1",
+    "@testing-library/jest-dom": "6.4.6",
+    "@testing-library/react": "16.0.0",
+    "@types/jsdom": "21.1.7",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "@vitest/coverage-istanbul": "2.0.2",
+    "any-date-parser": "1.5.4",
+    "happy-dom": "14.12.3",
+    "jsdom": "24.1.0",
     "jsdom-global": "3.0.2",
-    "prettier": "3.1.0",
-    "prettier-plugin-organize-imports": "3.2.4",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "release-it": "16.3.0",
-    "rimraf": "5.0.5",
-    "type-fest": "4.8.2",
-    "typescript": "5.3.2",
-    "vitest": "0.34.6",
+    "prettier": "3.3.3",
+    "prettier-plugin-organize-imports": "4.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "release-it": "17.5.0",
+    "rimraf": "6.0.1",
+    "type-fest": "4.21.0",
+    "typescript": "5.5.3",
+    "vitest": "2.0.2",
     "vitest-dom": "0.1.1"
   },
   "release-it": {
@@ -67,8 +69,5 @@
         "out": "README.md"
       }
     }
-  },
-  "dependencies": {
-    "any-date-parser": "1.5.4"
   }
 }
