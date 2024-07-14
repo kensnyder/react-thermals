@@ -82,9 +82,9 @@ and
 React Thermals supports property names and path expressions in 4 use cases:
 
 1. Selecting state inside a component
-2. Reading state from the store
+2. Updating values in the store
 3. Creating store actions
-4. Updating values in the store
+4. Reading state from the store (uncommon)
 
 Example of these 4 use cases:
 
@@ -92,14 +92,14 @@ Example of these 4 use cases:
 // 1. Selecting state from the store (inside a component)
 const recipients = useStoreState(store, 'email.recipients');
 
-// 2. Reading state from the store
-const recipients = store.getStateAt('email.recipients');
+// 2. Updating values in the store
+store.setStateAt('email.recipients', recipients);
 
 // 3. Creating store action functions
 const addRecipient = store.connect('email.recipients', appender());
 
-// 4. Updating values in the store
-store.setStateAt('email.recipients', recipients);
+// 4. Reading state from the store (uncommon)
+const recipients = store.getStateAt('email.recipients');
 ```
 
 Path expression examples:
@@ -128,19 +128,19 @@ selectors.
 #### Selector examples
 
 ```js
-// Select the value of a single field
+// 2 ways to select the value of a single field
 const todos = useStoreSelector(myStore, state => state.todos);
 const todos = useStoreSelector(myStore, 'todos');
 
-// Select a deeper value
+// 2 ways to select a deeper value
 const userId = useStoreSelector(myStore, state => state.user.id);
 const userId = useStoreSelector(myStore, 'user.id');
 
-// Select a list of deeper values
+// 2 ways to select a list of deeper values
 const bookIds = useStoreSelector(myStore, state => state.books.map(b => b.id));
 const bookIds = useStoreSelector(myStore, 'books[*].id');
 
-// Select multiple fields using an array
+// 2 ways to select multiple fields using an array
 const [sender, recipients] = useStoreSelector(myStore, [
   state => state.sender,
   state => state.recipients,
@@ -150,7 +150,7 @@ const [sender, recipients] = useStoreSelector(myStore, [
   'recipients',
 ]);
 
-// Select multiple deeper values using an array
+// 2 ways to select multiple deeper values using an array
 const [senderEmail, recipientsEmails] = useStoreSelector(myStore, [
   state => state.sender.email,
   state => state.recipients.map(r => r.email),
@@ -233,14 +233,16 @@ describe('updatePath', () => {
         return [...recipients, newRecipient];
       }
     );
-    const updated = addRecipient(state, { id: 4, name: 'Lili' });
-    expect(updated).not.toBe(state);
-    expect(updated.email).not.toBe(state.email);
-    expect(updated.email.subject).toBe(state.email.subject);
+    const newRecipient = { id: 4, name: 'Lili' };
+    const updated = addRecipient(state, newRecipient);
+    expect(updated).not.toBe(state); // different object
+    expect(updated.email).not.toBe(state.email); // different object
+    expect(updated.email.subject).toBe(state.email.subject); // same value
     expect(updated.email.sender).toBe(state.email.sender); // same object!
     expect(updated.email.recipients).not.toBe(state.email.recipients);
     expect(updated.email.recipients[0]).toBe(state.email.recipients[0]); // same object!
     expect(updated.email.recipients[1]).toBe(state.email.recipients[1]); // same object!
+    expect(updated.email.recipients[2]).toBe(newRecipient); // our newly added recipient
   });
 });
 ```
@@ -305,7 +307,7 @@ export const removeFromCart = store.connect(
   ])
 );
 
-export const setDiscount = store.connect(setter('discount'));
+export const setDiscount = store.connect('discount', setter());
 
 export function useCartItems() {
   return useStoreSelector(store, 'items');
@@ -544,14 +546,9 @@ import { persistState, appender, merger, remover } from 'react-thermals';
 globalStore.mergeState({ todos: [] }, { bypassAll: true });
 
 // add actions at any time
-export const addTodo = globalStore.connect(appender('todos'));
-export const toggleTodoComplete = globalStore.connect(
-  replacer('todos', todo => ({
-    ...todo,
-    isComplete: !todo.isComplete,
-  }))
-);
-export const removeTodo = globalStore.connect(remover('todos'));
+export const addTodo = globalStore.connect('todos', appender());
+export const replaceTodo = globalStore.connect('todos', replacer());
+export const removeTodo = globalStore.connect('todos', remover());
 
 // you can provide a hook for conveniently selecting this state
 export function useTodos() {
