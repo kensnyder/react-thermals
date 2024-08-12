@@ -1,9 +1,18 @@
 {
   "name": "react-thermals",
   "description": "Simple and type-safe way to manage shared state based on React hooks",
-  "version": "4.0.0",
-  "main": "dist/index.js",
+  "version": "4.0.1",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "sideEffects": false,
   "repository": {
     "type": "git",
@@ -25,38 +34,44 @@
   "scripts": {
     "test": "vitest run",
     "test-watch": "vitest",
-    "clean": "rimraf dist/ && mkdir dist && touch dist/.gitkeep",
-    "build": "npm run clean && npx -p typescript tsc --project tsconfig.build.json",
+    "build": "npm run build:clean && npm run build:dts && npm run build:esm && npm run build:cjs",
+    "build:clean": "rimraf dist/ && mkdir dist",
+    "build:dts": "yes | npx dts-bundle-generator -o dist/index.d.ts index.ts",
+    "build:esm": "yes | npx esbuild index.ts --bundle --format=esm --platform=node --external:react --external:any-date-parser --outfile=dist/index.mjs",
+    "build:cjs": "yes | npx esbuild index.ts --bundle --format=cjs --platform=node --external:react --external:any-date-parser --outfile=dist/index.cjs",
     "coverage": "vitest run --coverage",
     "view-coverage": "open ./coverage/lcov-report/index.html",
     "release": "npm install && npm test && npm run build && npm publish"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "any-date-parser": ">=1"
   },
   "devDependencies": {
+    "@types/node": "22.2.0",
+    "@vitest/coverage-v8": "2.0.5",
     "@release-it/bumper": "6.0.1",
-    "@testing-library/dom": "10.3.1",
-    "@testing-library/jest-dom": "6.4.6",
+    "@testing-library/dom": "10.4.0",
+    "@testing-library/jest-dom": "6.4.8",
     "@testing-library/react": "16.0.0",
     "@types/jsdom": "21.1.7",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@vitejs/plugin-react": "4.3.1",
-    "@vitest/coverage-istanbul": "2.0.2",
+    "@vitest/coverage-istanbul": "2.0.5",
     "any-date-parser": "1.5.4",
     "happy-dom": "14.12.3",
-    "jsdom": "24.1.0",
+    "jsdom": "24.1.1",
     "jsdom-global": "3.0.2",
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "4.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "release-it": "17.5.0",
+    "release-it": "17.6.0",
     "rimraf": "6.0.1",
-    "type-fest": "4.21.0",
-    "typescript": "5.5.3",
-    "vitest": "2.0.2",
+    "type-fest": "4.24.0",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5",
     "vitest-dom": "0.1.1"
   },
   "release-it": {

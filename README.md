@@ -1,10 +1,13 @@
-<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.0-beta.27" height="64" />
+<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.1-beta.27" height="64" />
 
-[![NPM Link](https://img.shields.io/npm/v/react-thermals?v=4.0.0-beta.27)](https://npmjs.com/package/react-thermals)
-[![Dependencies](https://badgen.net/static/dependencies/0/green?v=4.0.0)](https://www.npmjs.com/package/react-thermals?activeTab=dependencies)
-[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/node.js.yml/badge.svg?v=4.0.0)](https://github.com/kensnyder/react-thermals/actions)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.0)](https://codecov.io/gh/kensnyder/react-thermals)
-[![ISC License](https://badgen.net/static/license/ISC/green?v=4.0.0)](https://opensource.org/licenses/ISC)
+[![NPM Link](https://badgen.net/npm/v/my-project?v=4.0.1)](https://npmjs.com/package/my-project)
+[![Language](https://badgen.net/static/language/TS?v=4.0.1)](https://github.com/search?q=repo:kensnyder/my-project++language:TypeScript&type=code)
+[![Build Status](https://github.com/kensnyder/my-project/actions/workflows/workflow.yml/badge.svg?v=4.0.1)](https://github.com/kensnyder/my-project/actions)
+[![Code Coverage](https://codecov.io/gh/kensnyder/my-project/branch/main/graph/badge.svg?v=4.0.1)](https://codecov.io/gh/kensnyder/my-project)
+[![Gzipped Size](https://badgen.net/bundlephobia/minzip/my-project?label=minzipped&v=4.0.1)](https://bundlephobia.com/package/my-project@4.0.1)
+[![Dependency details](https://badgen.net/bundlephobia/dependency-count/my-project?v=4.0.1)](https://www.npmjs.com/package/my-project?activeTab=dependencies)
+[![Tree shakeable](https://badgen.net/bundlephobia/tree-shaking/my-project?v=4.0.1)](https://www.npmjs.com/package/my-project)
+[![ISC License](https://badgen.net/github/license/kensnyder/my-project?v=4.0.1)](https://opensource.org/licenses/ISC)
 
 React Thermals is a simple and type-safe way to manage shared state in React
 
@@ -183,6 +186,7 @@ autocomplete, type inference, and type checking on methods that have a
 Example:
 
 ```ts
+// (react thermals will infer type if not given)
 type GlobalSchemaType = {
   hello?: {
     world: number;
