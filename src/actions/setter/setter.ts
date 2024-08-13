@@ -42,7 +42,7 @@ export function setterFn<ShapeAtPath>(
   };
 }
 
-type InputEvent = {
+type AnyInputEvent = {
   target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 };
 
@@ -72,7 +72,7 @@ type InputEvent = {
  * }
  */
 export function setterInput() {
-  return function updater(evt: InputEvent) {
+  return function updater(evt: AnyInputEvent) {
     return evt.target.value;
   };
 }

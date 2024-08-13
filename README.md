@@ -435,9 +435,9 @@ describe('cartStore', () => {
 ### Example 2: A store used by one component
 
 Even if a store is only used by one component, it can be a nice way to separate
-concerns. And the store file doesn't necessarily need to be exported. You might
-want your application to interact with the store only through its exported hooks
-and functions.
+concerns. And the store object itself doesn't necessarily need to be exported.
+You might want your application to interact with the store only through hooks
+and functions exported by your store file.
 
 In components/Game/gameStore.ts
 
@@ -462,7 +462,7 @@ export function restart() {
 }
 
 export function moveBy(x: number, y: number): void {
-  store.setStateAt('board.user', (old: Record<string, number>) => ({
+  store.setStateAt('board.user', old => ({
     x: old.x + x,
     y: old.y + y,
   }));
@@ -809,10 +809,10 @@ When a setter function receives a value or a function that returns a value,
 React Thermals will synchronously trigger a re-render.
 
 Keep in mind that a middleware that executes asynchronously will make all
-actions synchronous. That could be a problem, for example, if an action
-responds to an `<input onChange={action} />` event where the user's cursor
-will not work as intended unless re-renders are synchronous. In that case, be
-sure that all middleware is synchronous.
+actions asynchronous. That could be a problem, for example, if an action
+responds to an `<input onChange={action} />` event where the user's keyboard
+cursor will not work as intended unless re-renders are synchronous. In that
+case, be sure that all middleware is synchronous.
 
 ## Store Class Documentation
 
@@ -851,7 +851,8 @@ store.setState(old => Promise.resolve(old + 42));
 #### Bypassing middleware, rendering and AfterUpdate event
 
 The `options` parameter allows you to replace the state value without the usual
-effects.
+effects. This can be useful for plugins or testing, but not generally
+necessary.
 
 That options object has up to 4 properties:
 
@@ -901,13 +902,16 @@ store.initState(newState);
 
 ### State Getters
 
+Generally you'll want to avoid getting the current state. Components should only
+access state using `useStoreState`/`useStoreState`. Functions that update the
+store should preferably pass a callback to a state setter function.
+
+If you do need to directly set state, you have 4 choices:
+
 | Get           | Whole state       | State at path           |
 | ------------- | ----------------- | ----------------------- |
 | Current State | getState()        | getStateAt(path)        |
 | Initial State | getInitialState() | getInitialStateAt(path) |
-
-Generally you'll want to avoid getting the current state. Methods that update
-store should preferrably pass a callback to a state setter function.
 
 Example:
 
@@ -917,7 +921,7 @@ const store = new Store(21);
 // ✅ preferred
 store.setState(old => old * 2);
 
-// ❌ discouraged but still works fine
+// ❌ discouraged but still works in most cases
 store.setState(store.getState() * 2);
 ```
 
@@ -942,7 +946,7 @@ component must import the store; that way, any components loaded from
 
 A global store can be extended at any time using `store.replaceState()`
 so a global store can be defined in one file and only extended when
-needed by another store.
+needed by another feature.
 
 ### Suggested File Structure
 
@@ -955,8 +959,8 @@ For reusable components or pages with private stores, e.g. a header:
 
 - src/components/Header/Header.jsx
 - src/components/Header/Header.spec.jsx
-- src/components/Header/store/headerStore.js
-- src/components/Header/store/headerStore.spec.js
+- src/components/Header/headerStore.js
+- src/components/Header/headerStore.spec.js
 
 ### Testing stores
 
@@ -998,7 +1002,7 @@ Stores fire a series of lifecycle events. For example:
 
 ```js
 store.on('BeforeInitialize', () => {
-  // add values to the store but don't notify or re-render
+  // The following adds values to the store but uses bypassAll to avoid re-render
   store.mergeState({ my: 'external', initial: 'state' }, { bypassAll: true });
 });
 store.on('AfterLastUnmount', evt => {
@@ -1026,7 +1030,7 @@ The following events fire during the life cycle of the store.
 
 #### Event data
 
-Note that some events with a `data` property. Below is the available data for
+Note that some events have a `data` property. Below is the available data for
 events that support it.
 
 | Event            | event.data property                                        |
@@ -1064,7 +1068,7 @@ Interested in writing your own plugins? Check out
 ### Middleware
 
 React Thermals has a simple middleware system that allows modifying state
-before it is saved and propagated to components.
+before the store is updated and before components rerender.
 
 Middleware examples:
 
