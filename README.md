@@ -547,7 +547,7 @@ import globalStore, { useGlobalStore } from '../globalStore';
 import { persistState, appender, merger, remover } from 'react-thermals';
 
 // extend the state at any time
-globalStore.mergeState({ todos: [] }, { bypassAll: true });
+globalStore.initState(old => ({ ...old, todos: [] }));
 
 // add actions at any time
 export const addTodo = globalStore.connect('todos', appender());
@@ -665,7 +665,8 @@ export function useAuth() {
   return useGlobalStore('user');
 }
 
-globalStore.replaceState(old => ({
+// initState updates state but avoids rerendering
+globalStore.initState(old => ({
   ...old,
   user: {
     isLoggedIn: false,
@@ -826,15 +827,15 @@ case, be sure that all middleware is synchronous.
 
 ### State Setters
 
-The following state setters will cause a change and re-render all components
-that subscribe to affected state.
+The following state setters will cause update state with a value or function
+that takes old state and returns new state.
 
-| Action | Update whole state         | Update state at path               |
-| ------ | -------------------------- | ---------------------------------- |
-| Set    | setState(value, options)   | setStateAt(path, value, options)   |
-| Merge  | mergeState(value, options) | mergeStateAt(path, value, options) |
-| Reset  | resetState(options)        | resetStateAt(value, options)       |
-| Init   | initState(options)         | initStateAt(value, options)        |
+| Action | Update whole state         | Update state at path               | Rerender? |
+| ------ | -------------------------- | ---------------------------------- | --------- |
+| Set    | setState(value, options)   | setStateAt(path, value, options)   | Yes       |
+| Merge  | mergeState(value, options) | mergeStateAt(path, value, options) | Yes       |
+| Reset  | resetState(options)        | resetStateAt(value, options)       | Yes       |
+| Init   | initState(options)         | initStateAt(value, options)        | No        |
 
 The `value` parameter supports values, promises, functions that return values,
 and functions that return promises.
@@ -902,9 +903,8 @@ store.initState(newState);
 
 ### State Getters
 
-Generally you'll want to avoid getting the current state. Components should only
-access state using `useStoreState`/`useStoreState`. Functions that update the
-store should preferably pass a callback to a state setter function.
+Generally you'll want to avoid manually reading the current state. And
+components should ALWAYS access state using `useStoreState`/`useStoreState`.
 
 If you do need to directly set state, you have 4 choices:
 
@@ -933,8 +933,8 @@ Components should normally access state only through one of two hooks:
    part of the state changes.
 
 And you'll also notice that all the examples in this README do not actually
-export the store at all; you can export hooks that call `useStoreState()` or
-`useStoreSelector()` internally.
+export the store at all; your feature can export hooks that call
+`useStoreState()` or `useStoreSelector()` internally.
 
 ## Best Practices
 
@@ -944,9 +944,9 @@ A store can be global or used by a number of components. Regardless, each
 component must import the store; that way, any components loaded from
 `React.lazy` will allow automatic code splitting.
 
-A global store can be extended at any time using `store.replaceState()`
-so a global store can be defined in one file and only extended when
-needed by another feature.
+A global store can be extended at any time using `store.initState()` or
+`store.initStateAt()` so a global store can be defined in one file and only
+extended when needed by another feature.
 
 ### Suggested File Structure
 
@@ -1030,10 +1030,9 @@ The following events fire during the life cycle of the store.
 
 #### Event data
 
-Note that some events have a `data` property. Below is the available data for
-events that support it.
+Note that all events have a `data` property containing the following values.
 
-| Event            | event.data property                                        |
+| Event            | event.data value                                           |
 | ---------------- | ---------------------------------------------------------- |
 | BeforeInitialize | The initial state (used by plugins to load persisted data) |
 | AfterInitialize  | The state value after initialization                       |
@@ -1083,11 +1082,11 @@ myStore.use((context, done) => {
 
 // Example: alter the state
 myStore.use((context, done) => {
-  context.next = doSomeModifications(conext.next);
+  context.next = doSomeModifications(context.next);
   done();
 });
 
-// Example: call node asynchronously
+// Example: alter the state asynchronously
 myStore.use((context, done) => {
   doSomeAsyncModifications(context).then(done);
 });
