@@ -1,13 +1,13 @@
-<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.1-beta.27" height="64" />
+<img alt="React Thermals Logo" src="https://github.com/kensnyder/react-thermals/raw/main/assets/glider-logotype.png?v=4.0.2-beta.27" height="64" />
 
-[![NPM Link](https://badgen.net/npm/v/react-thermals?v=4.0.1)](https://npmjs.com/package/react-thermals)
-[![Language](https://badgen.net/static/language/TS?v=4.0.1)](https://github.com/search?q=repo:kensnyder/react-thermals++language:TypeScript&type=code)
-[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/workflow.yml/badge.svg?v=4.0.1)](https://github.com/kensnyder/react-thermals/actions)
-[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.1)](https://codecov.io/gh/kensnyder/react-thermals)
-[![Gzipped Size](https://badgen.net/bundlephobia/minzip/react-thermals?label=minzipped&v=4.0.1)](https://bundlephobia.com/package/react-thermals@4.0.1)
-[![Dependency details](https://badgen.net/bundlephobia/dependency-count/react-thermals?v=4.0.1)](https://www.npmjs.com/package/react-thermals?activeTab=dependencies)
-[![Tree shakeable](https://badgen.net/bundlephobia/tree-shaking/react-thermals?v=4.0.1)](https://www.npmjs.com/package/react-thermals)
-[![ISC License](https://badgen.net/github/license/kensnyder/react-thermals?v=4.0.1)](https://opensource.org/licenses/ISC)
+[![NPM Link](https://badgen.net/npm/v/react-thermals?v=4.0.2)](https://npmjs.com/package/react-thermals)
+[![Language](https://badgen.net/static/language/TS?v=4.0.2)](https://github.com/search?q=repo:kensnyder/react-thermals++language:TypeScript&type=code)
+[![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/workflow.yml/badge.svg?v=4.0.2)](https://github.com/kensnyder/react-thermals/actions)
+[![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.0.2)](https://codecov.io/gh/kensnyder/react-thermals)
+[![Gzipped Size](https://badgen.net/bundlephobia/minzip/react-thermals?label=minzipped&v=4.0.2)](https://bundlephobia.com/package/react-thermals@4.0.2)
+[![Dependency details](https://badgen.net/bundlephobia/dependency-count/react-thermals?v=4.0.2)](https://www.npmjs.com/package/react-thermals?activeTab=dependencies)
+[![Tree shakeable](https://badgen.net/bundlephobia/tree-shaking/react-thermals?v=4.0.2)](https://www.npmjs.com/package/react-thermals)
+[![ISC License](https://badgen.net/github/license/kensnyder/react-thermals?v=4.0.2)](https://opensource.org/licenses/ISC)
 
 React Thermals is a simple and type-safe way to manage shared state in React
 
