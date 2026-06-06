@@ -8,7 +8,9 @@ import {
 describe('composeActions', () => {
   it('should run in series', () => {
     let spiedN = 0;
-    const spies = [jest.fn(n => n * 3), jest.fn(n => (spiedN = n))];
+    const spies = [jest.fn(n => n * 3), jest.fn(n => {
+      (spiedN = n);
+    })];
     const result = composeActions(spies)(7);
     expect(result).toEqual(21);
     expect(spies[0]).toHaveBeenCalledWith(7);

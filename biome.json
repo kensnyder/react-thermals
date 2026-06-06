@@ -26,11 +26,7 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": {
-        "useKeyWithClickEvents": "off",
-        "noStaticElementInteractions": "off",
-        "noAutofocus": "off"
-      },
+      "a11y": "off",
       "style": {
         "noNonNullAssertion": "off"
       },

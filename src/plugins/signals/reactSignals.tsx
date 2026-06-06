@@ -1,7 +1,7 @@
-import { useEffect, useReducer, type FC, type ReactNode } from 'react';
+import { type FC, type ReactNode, useEffect, useReducer } from 'react';
 import Store from '../../classes/Store/Store';
 
-// see https://github.com/tc39/proposal-signals
+// see https://github.com/tc39/proposal-signals for details about signal behavior
 export type Setter<T> = (newValue: T | ((old: T) => T)) => void;
 export type Getter<T> = () => T;
 export type Signal<T> = {
@@ -24,14 +24,14 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
   if (typeof window === 'undefined') {
     return {
       Value: () => <>{initialValue as ReactNode}</>,
-      set: _newValue => {},
+      set: (_newValue) => {},
       get: () => initialValue,
       store,
     } as Signal<T>;
   }
 
   const Value: FC = () => {
-    const [, reRender] = useReducer(x => x + 1, 0);
+    const [, reRender] = useReducer((x) => x + 1, 0);
     useEffect(() => {
       store.on('AfterUpdate', reRender);
       return () => {
@@ -73,7 +73,7 @@ export function createComputed<T>(
   compute: ComputedCallback<T>,
   options: {
     equals?: (a: T, b: T) => boolean;
-  } = {}
+  } = {},
 ) {
   const equals = options.equals ?? Object.is;
   const signal = createSignal<T>(undefined as unknown as T);
@@ -82,7 +82,9 @@ export function createComputed<T>(
 
   const runEffect = () => {
     // Unsubscribe old dependencies before re-running
-    subscribedStores.forEach(s => s.off('AfterUpdate', runEffect));
+    subscribedStores.forEach((s) => {
+      s.off('AfterUpdate', runEffect);
+    });
     subscribedStores.clear();
 
     // Push a new tracking Set onto the stack for this computation
@@ -94,20 +96,19 @@ export function createComputed<T>(
       newValue = compute();
       if (lastValue instanceof Error || !equals(lastValue as T, newValue)) {
         lastValue = newValue;
-        // @ts-ignore Internally it is ok to set signal to an Error
         signal.set(newValue);
       }
     } catch (e) {
       newValue = e as Error;
       lastValue = newValue;
-      // @ts-ignore Internally it is ok to set signal to an Error
+      // @ts-expect-error Internally it is ok to set signal to an Error
       signal.set(newValue);
     } finally {
       computingStack.pop();
     }
 
     // Subscribe to newly discovered dependencies
-    tracking.forEach(s => {
+    tracking.forEach((s) => {
       s.on('AfterUpdate', runEffect);
       subscribedStores.add(s);
     });
@@ -126,7 +127,9 @@ export function effect(callback: () => any): () => void {
 
   const run = () => {
     // Unsubscribe old dependencies before re-running
-    subscribedStores.forEach(s => s.off('AfterUpdate', run));
+    subscribedStores.forEach((s) => {
+      s.off('AfterUpdate', run);
+    });
     subscribedStores.clear();
 
     const tracking = new Set<Store<any>>();
@@ -138,7 +141,7 @@ export function effect(callback: () => any): () => void {
       computingStack.pop();
     }
 
-    tracking.forEach(s => {
+    tracking.forEach((s) => {
       s.on('AfterUpdate', run);
       subscribedStores.add(s);
     });
@@ -147,7 +150,9 @@ export function effect(callback: () => any): () => void {
   run();
 
   return () => {
-    subscribedStores.forEach(s => s.off('AfterUpdate', run));
+    subscribedStores.forEach((s) => {
+      s.off('AfterUpdate', run);
+    });
     subscribedStores.clear();
   };
 }
