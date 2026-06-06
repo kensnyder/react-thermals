@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useEffect, useReducer } from 'react';
+import { type FC, type ReactNode, useSyncExternalStore } from 'react';
 import Store from '../../classes/Store/Store';
 
 // see https://github.com/tc39/proposal-signals for details about signal behavior
@@ -22,8 +22,10 @@ export type ComputedSignal<T> = ReadonlySignal<T> & {
   dispose: () => void;
 };
 
-// depth counter so nested untrack() calls are re-entrant
-let frozenDepth = 0;
+// depth counter so nested untrack() calls are re-entrant for reads
+let untrackDepth = 0;
+// flag to prevent setting signals during compute
+let isComputing = false;
 // stack of dependency-tracking Sets for nested computeds/effects
 const computingStack: Array<Set<Store<any>>> = [];
 // batch state: pending store writes flushed at the outermost batch exit
@@ -41,6 +43,12 @@ function resolveCurrentValue<T>(store: Store<T>): T {
  * Defer all signal writes inside fn until the outermost batch exits.
  * Effects and computeds only see fully-committed state when they run,
  * preventing partial-update reads. Nested batch() calls are supported.
+ *
+ * Note (Architectural Limitation): If you modify a dependency inside a batch
+ * and immediately call get() on a computed that relies on it, the computed
+ * will return a stale value because the dependency's AfterUpdate event
+ * hasn't fired yet. Do not read derived computations inside the same
+ * synchronous batch where their dependencies are modified.
  */
 export function batch(fn: () => void): void {
   batchDepth++;
@@ -50,10 +58,16 @@ export function batch(fn: () => void): void {
     batchDepth--;
     if (batchDepth === 0) {
       const updates = [...pendingBatchUpdates];
-      pendingBatchUpdates.clear();
+
+      // Temporarily mock batch depth so synchronous listeners triggered
+      // by setState can still resolve pending values via resolveCurrentValue
+      batchDepth++;
       for (const [store, value] of updates) {
         store.setState(value);
       }
+      batchDepth--;
+
+      pendingBatchUpdates.clear();
     }
   }
 }
@@ -75,14 +89,16 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
   }
 
   const Value: FC = () => {
-    const [, reRender] = useReducer(x => x + 1, 0);
-    useEffect(() => {
-      store.on('AfterUpdate', reRender);
-      return () => {
-        store.off('AfterUpdate', reRender);
-      };
-    }, []);
-    return <>{store.getState() as ReactNode}</>;
+    const value = useSyncExternalStore(
+      callback => {
+        store.on('AfterUpdate', callback);
+        return () => {
+          store.off('AfterUpdate', callback);
+        };
+      },
+      () => store.getState()
+    );
+    return <>{value as ReactNode}</>;
   };
   Value.displayName = 'SignalValue';
 
@@ -94,15 +110,15 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
 
   const get: Getter<T> = () => {
     const current = computingStack[computingStack.length - 1];
-    if (frozenDepth === 0 && current) {
+    if (untrackDepth === 0 && current) {
       current.add(store);
     }
     return peek();
   };
 
   const set: Setter<T> = (newValue: T | ((old: T) => T)) => {
-    if (frozenDepth > 0) {
-      throw new Error('Cannot set signal while frozen');
+    if (isComputing) {
+      throw new Error('Cannot set signal during compute');
     }
     const current = resolveCurrentValue(store);
     const value =
@@ -143,12 +159,15 @@ export function createComputed<T>(
 
     let newValue: T | Error;
     try {
+      isComputing = true;
       newValue = compute();
+      isComputing = false; // Release lock BEFORE signal.set()
       if (lastValue instanceof Error || !equals(lastValue as T, newValue)) {
         lastValue = newValue;
         signal.set(newValue);
       }
     } catch (e) {
+      isComputing = false;
       newValue = e as Error;
       lastValue = newValue;
       // @ts-expect-error Internally it is ok to set signal to an Error
@@ -171,6 +190,10 @@ export function createComputed<T>(
     });
     subscribedStores.clear();
   };
+
+  if (currentRoot) {
+    currentRoot.add(dispose);
+  }
 
   return {
     Value: signal.Value,
@@ -217,13 +240,19 @@ export function effect(callback: () => (() => void) | void): () => void {
 
   run();
 
-  return () => {
+  const dispose = () => {
     if (teardown) teardown();
     subscribedStores.forEach(s => {
       s.off('AfterUpdate', run);
     });
     subscribedStores.clear();
   };
+
+  if (currentRoot) {
+    currentRoot.add(dispose);
+  }
+
+  return dispose;
 }
 
 /**
@@ -231,11 +260,11 @@ export function effect(callback: () => (() => void) | void): () => void {
  * Calls are re-entrant; throws if signal.set() is called inside.
  */
 export function untrack<T>(callback: () => T): T {
-  frozenDepth++;
+  untrackDepth++;
   try {
     return callback();
   } finally {
-    frozenDepth--;
+    untrackDepth--;
   }
 }
 
@@ -245,12 +274,37 @@ export function untrack<T>(callback: () => T): T {
  * for non-primitive values and enables conditional rendering based on signal state.
  */
 export function useSignalValue<T>(signal: ReadonlySignal<T>): T {
-  const [, reRender] = useReducer(x => x + 1, 0);
-  useEffect(() => {
-    signal.store.on('AfterUpdate', reRender);
-    return () => {
-      signal.store.off('AfterUpdate', reRender);
-    };
-  }, [signal.store]);
-  return signal.peek();
+  return useSyncExternalStore(
+    callback => {
+      signal.store.on('AfterUpdate', callback);
+      return () => {
+        signal.store.off('AfterUpdate', callback);
+      };
+    },
+    () => signal.peek()
+  );
+}
+
+let currentRoot: Set<() => void> | null = null;
+
+/**
+ * Creates a reactive root that manages the lifecycle of computeds and effects.
+ * Call the provided dispose function to clean up all reactive subscriptions
+ * created within the callback.
+ */
+export function createRoot<T>(fn: (dispose: () => void) => T): T {
+  const root = new Set<() => void>();
+  const parentRoot = currentRoot;
+  currentRoot = root;
+
+  const dispose = () => {
+    root.forEach(cleanup => cleanup());
+    root.clear();
+  };
+
+  try {
+    return fn(dispose);
+  } finally {
+    currentRoot = parentRoot;
+  }
 }

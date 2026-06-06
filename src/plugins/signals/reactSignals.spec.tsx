@@ -126,14 +126,6 @@ describe('createSignal()', () => {
     expect(container.textContent).toBe('');
   });
 
-  it('should throw when set() is called inside untrack()', () => {
-    const signal = createSignal(0);
-    expect(() => {
-      untrack(() => {
-        signal.set(1);
-      });
-    }).toThrow('Cannot set signal while frozen');
-  });
 
   it('should work in SSR mode when window is undefined', () => {
     const originalWindow = globalThis.window;
@@ -785,29 +777,33 @@ describe('createComputed() dispose()', () => {
 });
 
 describe('untrack() nesting', () => {
-  it('should remain frozen through nested untrack() calls', () => {
+  it('should not prevent signal mutation inside nested untrack() calls', () => {
     const signal = createSignal(0);
     expect(() => {
       untrack(() => {
         untrack(() => {
-          signal.set(1); // should still throw
+          signal.set(1);
         });
       });
-    }).toThrow('Cannot set signal while frozen');
+    }).not.toThrow();
+    expect(signal.get()).toBe(1);
   });
 
-  it('should restore frozen state correctly after nested calls', () => {
-    const signal = createSignal(0);
-    untrack(() => {
-      untrack(() => {
-        // inner exits, outer still running
+  it('should correctly disable dependency tracking during nested untrack calls', () => {
+    const base = createSignal(0);
+    const computed = createComputed(() => {
+      return untrack(() => {
+        return untrack(() => {
+          return base.get();
+        });
       });
-      // still inside outer — set should still throw
-      expect(() => signal.set(1)).toThrow('Cannot set signal while frozen');
     });
-    // fully restored — set should work
-    expect(() => signal.set(2)).not.toThrow();
-    expect(signal.get()).toBe(2);
+
+    expect(computed.get()).toBe(0);
+    base.set(1);
+    
+    // Dependency tracking was disabled, so computed should not update when base changes
+    expect(computed.get()).toBe(0);
   });
 });
 
