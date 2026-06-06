@@ -9,7 +9,7 @@
 [![Tree shakeable](https://badgen.net/static/tree-shakeable/Yes)](https://www.npmjs.com/package/react-thermals)
 [![ISC License](https://badgen.net/github/license/kensnyder/react-thermals?v=4.1.0)](https://opensource.org/licenses/ISC)
 
-React Thermals is a simple and type-safe way to manage shared state in React
+React Thermals is a simple and type-safe way to manage shared state in React.
 
 ```bash
 npm install react-thermals
@@ -29,6 +29,7 @@ npm install react-thermals
    1. [Example 1: A store used by multiple components](#example-1-a-store-used-by-multiple-components)
    2. [Example 2: A store used by one component](#example-2-a-store-used-by-one-component)
    3. [Example 3: A store with global state](#example-3-a-store-with-global-state)
+   4. [Example 4: React Signals](#example-4-targeted-rendering-with-signals)
 4. [Action functions](#action-functions)
    1. [Writing actions](#writing-actions)
    2. [Action creators](#action-creators)
@@ -294,6 +295,12 @@ A root global store extended slice-by-slice (todos, auth) using `initState`,
 with per-slice hooks, actions, and a `persistState` plugin.
 
 [View full example](examples/global-store.md)
+
+### Example 4: Targeted rendering with Signals
+
+You can responsively render a Signal value without re-rendering the whole component.
+
+[View full example](examples/react-signals.md)
 
 ## Action Functions
 
