@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render } from '@testing-library/react';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { FunctionComponent, MouseEventHandler, useState } from 'react';
-import { vitest } from 'vitest';
 import {
   composeActions,
   pipeActions,
@@ -153,7 +153,7 @@ describe('Store middleware', () => {
   it('should allow bypassing middleware', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const spy = vitest.fn();
+    const spy = mock();
     store.use(spy);
     store.setState({ a: 42 }, { bypassMiddleware: true });
     expect(store.getState()).toEqual({ a: 42 });
@@ -189,7 +189,7 @@ describe('Store setState async', () => {
     expect(store.getState()).toEqual({ a: 20 });
   });
   it('should bypassEvent', async () => {
-    const eventSpy = vitest.fn();
+    const eventSpy = mock();
     const state = { a: 1 };
     const store = new Store(state);
     store.on('AfterUpdate', eventSpy);
@@ -199,7 +199,7 @@ describe('Store setState async', () => {
     expect(store.getState()).toEqual({ a: 2 });
   });
   it('should bypassAll', async () => {
-    const eventSpy = vitest.fn();
+    const eventSpy = mock();
     const state = { a: 1 };
     const store = new Store(state);
     store.on('AfterUpdate', eventSpy);
@@ -208,7 +208,7 @@ describe('Store setState async', () => {
     expect(store.getState()).toEqual({ a: 2 });
   });
   it('should bypassAll at path', async () => {
-    const eventSpy = vitest.fn();
+    const eventSpy = mock();
     const state = { letters: { a: 1 } };
     const store = new Store(state);
     store.on('AfterUpdate', eventSpy);
@@ -339,7 +339,7 @@ describe('Store setStateAt', () => {
     expect(next).toEqual({ primes: [6, 8, 12, 16] });
   });
   it('should connect with callback', async () => {
-    const callback = vitest.fn();
+    const callback = mock();
     const store = new Store({ primes: [2, 3, 5, 7] });
     const multBy = store.connect(
       'primes',
@@ -404,7 +404,7 @@ describe('Store mergeState', () => {
     expect(store.getState()).toEqual({ user: { name: 'Milo', age: 11 } });
   });
   it('should merge state at root', async () => {
-    const store = new Store({ color: 'orange', flavor: 'orange' });
+    const store = new Store<unknown>({ color: 'orange', flavor: 'orange' });
     store.mergeStateAt('@', { fruit: 'orange' });
     await store.nextState();
     expect(store.getState()).toEqual({
@@ -453,7 +453,7 @@ describe('Store mergeState', () => {
 
 describe('Store plugins', () => {
   it('should allow plugins', () => {
-    const spy: Function = vitest.fn();
+    const spy: Function = mock();
     const store = new Store();
     store.plugin(spy as PluginFunctionType);
     expect(spy).toHaveBeenCalledWith(store);
@@ -570,10 +570,27 @@ describe('Store() with components - auto reset', () => {
     await act(() => {
       fireEvent.click(getByText('Hide'));
     });
+    // allow the deferred reset timer to fire
+    await act(() => new Promise(r => setTimeout(r, 0)));
     await act(() => {
       fireEvent.click(getByText('Show'));
     });
     expect(store.getState().page).toBe(1);
+  });
+  it('should not reset when a component re-subscribes before the timer fires (Strict Mode)', async () => {
+    const { getByText } = render(<PageComponent />);
+    await act(() => {
+      fireEvent.click(getByText('Next'));
+    });
+    expect(store.getState().page).toBe(2);
+    // simulate Strict Mode: detach then immediately re-attach before setTimeout fires
+    // Use Hide then Show without awaiting a tick — store should NOT reset
+    await act(() => {
+      fireEvent.click(getByText('Hide'));
+      fireEvent.click(getByText('Show'));
+    });
+    // no tick awaited — timer was cancelled by re-attach
+    expect(store.getState().page).toBe(2);
   });
   it('should fire SetterRejection', async () => {
     let rejection;
@@ -591,8 +608,8 @@ describe('Store() with composed actions', () => {
   let ListComponent: FunctionComponent;
   let setPage;
   let setSort;
-  const spy1 = vitest.fn(k => k);
-  const spy2 = vitest.fn(k => k);
+  const spy1 = mock(k => k);
+  const spy2 = mock(k => k);
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     store = new Store(state);

@@ -1,13 +1,17 @@
-import { vitest } from 'vitest';
+import { mock } from 'bun:test';
 
 /* istanbul ignore next @preserve */
 export const MockHistory = {
-  pushState: vitest.fn((data: any, title: string, url: string) => {
+  pushState: mock((data: any, title: string, url: string) => {
     location.search = url;
   }),
-  replaceState: vitest.fn((data: any, title: string, url: string) => {
+  replaceState: mock((data: any, title: string, url: string) => {
     location.search = url;
   }),
 };
 
-vitest.stubGlobal('history', MockHistory);
+Object.defineProperty(globalThis, 'history', {
+  value: MockHistory,
+  writable: true,
+  configurable: true,
+});

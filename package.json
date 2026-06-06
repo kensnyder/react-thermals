@@ -1,16 +1,16 @@
 {
   "name": "react-thermals",
   "description": "Simple and type-safe way to manage shared state based on React hooks",
-  "version": "4.0.2",
+  "version": "4.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/index.cjs",
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/index.mjs"
     }
   },
   "files": [
@@ -34,18 +34,18 @@
     "state",
     "state management",
     "global state",
-    "component state"
+    "component state",
+    "react signals"
   ],
   "scripts": {
-    "test": "vitest run",
-    "test-watch": "vitest",
+    "lint": "bunx biome lint .",
+    "format": "bunx biome format --write .",
+    "check": "bunx biome check --write .",
     "build": "npm run build:clean && npm run build:dts && npm run build:esm && npm run build:cjs",
     "build:clean": "rimraf dist/ && mkdir dist",
-    "build:dts": "yes | npx dts-bundle-generator -o dist/index.d.ts index.ts",
-    "build:esm": "yes | npx esbuild index.ts --minify --bundle --format=esm --platform=node --external:react --external:any-date-parser --outfile=dist/index.mjs",
-    "build:cjs": "yes | npx esbuild index.ts --minify --bundle --format=cjs --platform=node --external:react --external:any-date-parser --outfile=dist/index.cjs",
-    "coverage": "vitest run --coverage",
-    "view-coverage": "open ./coverage/lcov-report/index.html",
+    "build:dts": "yes | bunx dts-bundle-generator --project tsconfig.bundle-generator.json -o dist/index.d.ts ./index.ts",
+    "build:esm": "bun build ./index.ts --bundle --minify --platform=node --format=esm --external:react --external:any-date-parser --outfile=dist/index.mjs",
+    "build:cjs": "bun build ./index.ts --bundle --minify --platform=node --format=cjs --external:react --external:any-date-parser --outfile=dist/index.cjs",
     "release": "npm install && npm test && npm run build && npm publish"
   },
   "peerDependencies": {
@@ -53,31 +53,23 @@
     "any-date-parser": ">=1"
   },
   "devDependencies": {
-    "@types/node": "22.5.5",
-    "@vitest/coverage-v8": "2.1.1",
-    "@release-it/bumper": "6.0.1",
-    "@testing-library/dom": "10.4.0",
-    "@testing-library/jest-dom": "6.5.0",
-    "@testing-library/react": "16.0.1",
-    "@types/jsdom": "21.1.7",
-    "@types/react": "18.3.7",
-    "@types/react-dom": "18.3.0",
-    "@vitejs/plugin-react": "4.3.1",
-    "@vitest/coverage-istanbul": "2.1.1",
-    "any-date-parser": "1.5.4",
-    "happy-dom": "15.7.4",
-    "jsdom": "25.0.0",
-    "jsdom-global": "3.0.2",
-    "prettier": "3.3.3",
-    "prettier-plugin-organize-imports": "4.0.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "release-it": "17.6.0",
-    "rimraf": "6.0.1",
-    "type-fest": "4.26.1",
-    "typescript": "5.6.2",
-    "vitest": "2.1.1",
-    "vitest-dom": "0.1.1"
+    "@happy-dom/global-registrator": "20.10.2",
+    "@release-it/bumper": "7.0.6",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/bun": "1.3.14",
+    "@types/node": "25.9.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "any-date-parser": "2.2.3",
+    "happy-dom": "20.10.2",
+    "@biomejs/biome": "2.2.4",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "release-it": "20.2.0",
+    "type-fest": "5.7.0",
+    "typescript": "6.0.3"
   },
   "release-it": {
     "github": {
@@ -89,5 +81,7 @@
         "out": "README.md"
       }
     }
+  },
+  "dependencies": {
   }
 }

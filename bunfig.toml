@@ -1,0 +1,13 @@
+telemetry = false
+
+[install]
+peer = true
+exact = true
+
+[test]
+preload = ["./test/setup-happy-dom.ts"]
+root = "src"
+
+[console]
+depth = 8
+

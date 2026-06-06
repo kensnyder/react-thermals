@@ -1,16 +1,15 @@
-import React, { FunctionComponent, MouseEventHandler } from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { act, fireEvent, render } from '@testing-library/react';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { FunctionComponent, MouseEvent, MouseEventHandler } from 'react';
 import Store from '../../classes/Store/Store';
-import observable from './observable';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
-import { vitest } from 'vitest';
+import observable from './observable';
 
 describe('observable()', () => {
   let store: Store;
   let CountComponent: FunctionComponent;
-  let increment;
-  let thrower;
+  let increment: MouseEventHandler;
+  let thrower: { (): void; (event: MouseEvent<Element, MouseEvent>): void };
   beforeEach(() => {
     store = new Store(0);
     increment = () => {
@@ -32,18 +31,19 @@ describe('observable()', () => {
     };
   });
   it('should fire on change', async () => {
-    const observer = { next: vitest.fn() };
+    const observer = { next: mock() };
     store.subscribe(observer);
-    increment();
+    // @ts-ignore Event is irrelevant
+    increment({});
     await store.nextState();
     expect(store.getState()).toBe(1);
     expect(observer.next).toHaveBeenCalledWith(1);
   });
   it('should fire on user actions', async () => {
     const observer = {
-      next: vitest.fn(),
-      complete: vitest.fn(),
-      error: vitest.fn(),
+      next: mock(),
+      complete: mock(),
+      error: mock(),
     };
     store.subscribe(observer);
     const { getByText, getByTitle, unmount } = render(<CountComponent />);
@@ -58,12 +58,13 @@ describe('observable()', () => {
     });
     expect(observer.error.mock.calls[0][0]).toBe('my error');
     unmount();
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(observer.complete).toHaveBeenCalled();
   });
   it('should allow passing 3 functions', async () => {
-    const next = vitest.fn();
-    const error = vitest.fn();
-    const complete = vitest.fn();
+    const next = mock();
+    const error = mock();
+    const complete = mock();
     store.subscribe(next, error, complete);
     const { getByText, getByTitle, unmount } = render(<CountComponent />);
     await act(() => {
@@ -77,11 +78,12 @@ describe('observable()', () => {
     });
     expect(error.mock.calls[0][0]).toBe('my error');
     unmount();
+    await new Promise(resolve => setTimeout(resolve, 0));
     expect(complete).toHaveBeenCalled();
   });
   it('should allow passing 2 functions', async () => {
-    const next = vitest.fn();
-    const error = vitest.fn();
+    const next = mock();
+    const error = mock();
     store.subscribe(next, error);
     const { getByText, getByTitle, unmount } = render(<CountComponent />);
     await act(() => {
@@ -97,7 +99,7 @@ describe('observable()', () => {
     unmount();
   });
   it('should allow passing 1 function', async () => {
-    const next = vitest.fn();
+    const next = mock();
     store.subscribe(next);
     const { getByText, getByTitle, unmount } = render(<CountComponent />);
     await act(() => {
@@ -112,7 +114,7 @@ describe('observable()', () => {
     unmount();
   });
   it('should allow unsubscribing', async () => {
-    const next = vitest.fn();
+    const next = mock();
     const sub = store.subscribe(next);
     sub.unsubscribe();
     const { getByText } = render(<CountComponent />);

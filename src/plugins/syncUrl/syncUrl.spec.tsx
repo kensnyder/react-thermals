@@ -1,18 +1,18 @@
-import { vitest, Mock, SpyInstance } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import React, { FunctionComponent } from 'react';
+import { act, fireEvent, render } from '@testing-library/react';
+import { FunctionComponent } from 'react';
+import { beforeEach, describe, expect, it, spyOn, type Mock } from 'bun:test';
 import Store from '../../classes/Store/Store';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
-import syncUrl from './syncUrl';
-import '../../mocks/mock-location';
 import '../../mocks/mock-history';
+import '../../mocks/mock-location';
+import syncUrl from './syncUrl';
 
 describe('syncUrl()', () => {
   // define store before each test
   let store: Store;
   let Component: FunctionComponent;
-  let setPage;
+  let setPage: ((page: number) => Store<any>) | ((arg0: any) => void);
   let setSort;
   beforeEach(() => {
     document.title = 'My Page';
@@ -195,16 +195,16 @@ describe('syncUrl()', () => {
     );
   });
   it('should throw when casting unknown type', async () => {
-    const spy: SpyInstance = vitest.spyOn(console, 'error');
+    const spy = spyOn(console, 'error');
     spy.mockImplementation(() => {});
     // @ts-ignore
     store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
     store.setState({ age: 14 });
     location.search = '?age=15';
     render(<Component />);
-    // @ts-ignore
-    expect(String(spy.mock.lastCall[0])).toContain(
-      'unknown schema type "NOT_A_THING"'
+    console.log('spy.mock.calls', Object.keys(spy.mock.calls[0][0]));
+    expect(String(spy.mock.calls[0][2])).toMatch(
+      /react-thermals: unknown schema type "NOT_A_THING"/
     );
     spy.mockRestore();
   });

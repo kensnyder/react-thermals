@@ -1,4 +1,4 @@
-import { vitest, SpyInstance } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import cycler from './cycler';
 import Store from '../../classes/Store/Store';
 

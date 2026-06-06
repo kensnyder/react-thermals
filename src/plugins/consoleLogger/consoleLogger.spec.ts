@@ -1,13 +1,21 @@
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  type Mock,
+} from 'bun:test';
 import Store from '../../classes/Store/Store';
-import consoleLogger from './consoleLogger';
-import { vitest, SpyInstance } from 'vitest';
 import type { KnownEventNames } from '../../types';
+import consoleLogger from './consoleLogger';
 
 describe('consoleLogger plugin', () => {
-  let spy: SpyInstance;
+  let spy: Mock;
   let store: Store;
   beforeEach(() => {
-    spy = vitest.spyOn(console, 'log');
+    spy = spyOn(console, 'log');
     spy.mockImplementation(() => {});
     store = new Store({}, { id: 'myStore' });
   });

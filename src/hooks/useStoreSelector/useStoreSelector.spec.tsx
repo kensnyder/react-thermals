@@ -1,11 +1,11 @@
+import { act, fireEvent, render } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import React, {
   FunctionComponent,
   MouseEventHandler,
   ReactElement,
   useState,
 } from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import Store from '../../classes/Store/Store';
 import useStoreState from '../useStoreState/useStoreState';
 import useStoreSelector from './useStoreSelector';

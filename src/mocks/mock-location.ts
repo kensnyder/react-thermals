@@ -1,9 +1,9 @@
-import { vitest } from 'vitest';
+import { mock } from 'bun:test';
 
 /* istanbul ignore next @preserve */
 export const MockLocation = {
-  assign: vitest.fn(),
+  assign: mock(),
   search: '',
 };
 
-vitest.stubGlobal('location', MockLocation);
+globalThis.location = MockLocation as unknown as Location;

@@ -1,4 +1,13 @@
-import { vitest, Mock, SpyInstance } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+  type Mock,
+} from 'bun:test';
 import React, { FunctionComponent } from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -26,11 +35,11 @@ describe('persistState()', () => {
     const setPage = page => store.mergeState({ page });
     storage = {
       value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
+      getItem: mock(() => storage.value),
+      setItem: mock((id, val) => (storage.value = val)),
+      removeItem: mock(),
+      clear: mock(),
+      key: mock(),
       length: 0,
     };
     store.plugin(persistState({ key: 'foo', path: '@', storage }));
@@ -79,11 +88,11 @@ describe('persistState() at path', () => {
     const setPage = page => store.mergeStateAt('search', { page });
     storage = {
       value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
+      getItem: mock(() => storage.value),
+      setItem: mock((id, val) => (storage.value = val)),
+      removeItem: mock(),
+      clear: mock(),
+      key: mock(),
       length: 0,
     };
     store.plugin(
@@ -136,11 +145,11 @@ describe('persistState() that defaults id', () => {
     const setPage = page => store.mergeStateAt('search', { page });
     storage = {
       value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
+      getItem: mock(() => storage.value),
+      setItem: mock((id, val) => (storage.value = val)),
+      removeItem: mock(),
+      clear: mock(),
+      key: mock(),
       length: 0,
     };
     store.plugin(
@@ -196,22 +205,22 @@ describe('persistState() plugin error', () => {
 });
 describe('persistState() JSON errors', () => {
   // define store before each test
-  let consoleSpy: SpyInstance;
+  let consoleSpy: Mock;
   let store: Store;
   let storage: StorageMock;
   let Component: FunctionComponent;
   beforeEach(() => {
-    consoleSpy = vitest.spyOn(console, 'error');
+    consoleSpy = spyOn(console, 'error');
     consoleSpy.mockImplementation(() => {});
     const state = { page: 1, sort: '-date' };
     store = new Store(state);
     storage = {
       value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
+      getItem: mock(() => storage.value),
+      setItem: mock((id, val) => (storage.value = val)),
+      removeItem: mock(),
+      clear: mock(),
+      key: mock(),
       length: 0,
     };
     Component = () => {
@@ -275,11 +284,11 @@ describe('persistState() with custom parse and stringify', () => {
     store = new Store(state);
     storage = {
       value: undefined,
-      getItem: vitest.fn(() => storage.value),
-      setItem: vitest.fn((id, val) => (storage.value = val)),
-      removeItem: vitest.fn(),
-      clear: vitest.fn(),
-      key: vitest.fn(),
+      getItem: mock(() => storage.value),
+      setItem: mock((id, val) => (storage.value = val)),
+      removeItem: mock(),
+      clear: mock(),
+      key: mock(),
       length: 0,
     };
     parse = (query: string): any => {

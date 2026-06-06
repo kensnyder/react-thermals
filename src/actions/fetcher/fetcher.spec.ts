@@ -1,37 +1,32 @@
-import { vitest } from 'vitest';
-import { fetcher } from './fetcher';
+import { afterAll, beforeAll, describe, expect, it, mock, spyOn } from 'bun:test';
 import Store from '../../classes/Store/Store';
+import { fetcher } from './fetcher';
 
 const testData = [
   { id: 1, name: 'Josh' },
   { id: 2, name: 'Jim' },
 ];
 
-// @ts-expect-error
-globalThis.fetch = vitest.fn((url, init) => {
+function mockFetch(url: string, init?: RequestInit): Promise<Response> {
   if (url === '/api/users') {
-    if (init && init.method === 'POST') {
-      return Promise.resolve({
-        status: 200,
-        ok: true,
-        json: () =>
-          // @ts-expect-error
-          Promise.resolve({ id: 3, name: JSON.parse(init.body).name }),
-      });
+    if (init?.method === 'POST') {
+      const body = JSON.parse(init.body as string);
+      return Promise.resolve(new Response(JSON.stringify({ id: 3, name: body.name })));
     }
-    return Promise.resolve({
-      status: 200,
-      ok: true,
-      json: () => Promise.resolve(testData),
-    });
+    return Promise.resolve(new Response(JSON.stringify(testData)));
   }
   if (url === '/api/users/2') {
-    return Promise.resolve({
-      status: 200,
-      ok: true,
-      json: () => Promise.resolve(testData[1]),
-    });
+    return Promise.resolve(new Response(JSON.stringify(testData[1])));
   }
+  return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+}
+
+beforeAll(() => {
+  spyOn(globalThis, 'fetch').mockImplementation(mockFetch as unknown as typeof fetch);
+});
+
+afterAll(() => {
+  mock.restore();
 });
 
 describe('fetcher()', () => {
