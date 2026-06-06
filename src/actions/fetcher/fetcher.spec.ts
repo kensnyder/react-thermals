@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it, mock, spyOn } from 'bun:test';
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from 'bun:test';
 import Store from '../../classes/Store/Store';
 import { fetcher } from './fetcher';
 
@@ -11,7 +19,9 @@ function mockFetch(url: string, init?: RequestInit): Promise<Response> {
   if (url === '/api/users') {
     if (init?.method === 'POST') {
       const body = JSON.parse(init.body as string);
-      return Promise.resolve(new Response(JSON.stringify({ id: 3, name: body.name })));
+      return Promise.resolve(
+        new Response(JSON.stringify({ id: 3, name: body.name }))
+      );
     }
     return Promise.resolve(new Response(JSON.stringify(testData)));
   }
@@ -22,7 +32,9 @@ function mockFetch(url: string, init?: RequestInit): Promise<Response> {
 }
 
 beforeAll(() => {
-  spyOn(globalThis, 'fetch').mockImplementation(mockFetch as unknown as typeof fetch);
+  spyOn(globalThis, 'fetch').mockImplementation(
+    mockFetch as unknown as typeof fetch
+  );
 });
 
 afterAll(() => {

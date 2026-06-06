@@ -8,9 +8,12 @@ import {
 describe('composeActions', () => {
   it('should run in series', () => {
     let spiedN = 0;
-    const spies = [jest.fn(n => n * 3), jest.fn(n => {
-      (spiedN = n);
-    })];
+    const spies = [
+      jest.fn(n => n * 3),
+      jest.fn(n => {
+        spiedN = n;
+      }),
+    ];
     const result = composeActions(spies)(7);
     expect(result).toEqual(21);
     expect(spies[0]).toHaveBeenCalledWith(7);
@@ -39,10 +42,7 @@ describe('pipeActionsAsync', () => {
     expect(spies[1]).toHaveBeenCalledWith(21);
   });
   it('should run in parallel, resolving some', async () => {
-    const spies = [
-      jest.fn(n => Promise.resolve(n * 3)),
-      jest.fn(n => n * 5),
-    ];
+    const spies = [jest.fn(n => Promise.resolve(n * 3)), jest.fn(n => n * 5)];
     const result = await pipeActionsAsync(spies)(7);
     expect(result).toBe(105);
     expect(spies[0]).toHaveBeenCalledWith(7);

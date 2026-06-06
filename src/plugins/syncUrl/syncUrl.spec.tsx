@@ -194,19 +194,14 @@ describe('syncUrl()', () => {
       '["2022-05-23T00:00:00.000Z","2022-05-24T00:00:00.000Z"]'
     );
   });
-  it('should throw when casting unknown type', async () => {
-    const spy = spyOn(console, 'error');
-    spy.mockImplementation(() => {});
+  it('should throw when casting unknown type', () => {
     // @ts-ignore
     store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
     store.setState({ age: 14 });
     location.search = '?age=15';
-    render(<Component />);
-    console.log('spy.mock.calls', Object.keys(spy.mock.calls[0][0]));
-    expect(String(spy.mock.calls[0][2])).toMatch(
+    expect(() => store.emit('BeforeInitialize', store.getState())).toThrow(
       /react-thermals: unknown schema type "NOT_A_THING"/
     );
-    spy.mockRestore();
   });
 });
 describe('syncUrl() error', () => {

@@ -24,14 +24,14 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
   if (typeof window === 'undefined') {
     return {
       Value: () => <>{initialValue as ReactNode}</>,
-      set: (_newValue) => {},
+      set: _newValue => {},
       get: () => initialValue,
       store,
     } as Signal<T>;
   }
 
   const Value: FC = () => {
-    const [, reRender] = useReducer((x) => x + 1, 0);
+    const [, reRender] = useReducer(x => x + 1, 0);
     useEffect(() => {
       store.on('AfterUpdate', reRender);
       return () => {
@@ -73,7 +73,7 @@ export function createComputed<T>(
   compute: ComputedCallback<T>,
   options: {
     equals?: (a: T, b: T) => boolean;
-  } = {},
+  } = {}
 ) {
   const equals = options.equals ?? Object.is;
   const signal = createSignal<T>(undefined as unknown as T);
@@ -82,7 +82,7 @@ export function createComputed<T>(
 
   const runEffect = () => {
     // Unsubscribe old dependencies before re-running
-    subscribedStores.forEach((s) => {
+    subscribedStores.forEach(s => {
       s.off('AfterUpdate', runEffect);
     });
     subscribedStores.clear();
@@ -108,7 +108,7 @@ export function createComputed<T>(
     }
 
     // Subscribe to newly discovered dependencies
-    tracking.forEach((s) => {
+    tracking.forEach(s => {
       s.on('AfterUpdate', runEffect);
       subscribedStores.add(s);
     });
@@ -127,7 +127,7 @@ export function effect(callback: () => any): () => void {
 
   const run = () => {
     // Unsubscribe old dependencies before re-running
-    subscribedStores.forEach((s) => {
+    subscribedStores.forEach(s => {
       s.off('AfterUpdate', run);
     });
     subscribedStores.clear();
@@ -141,7 +141,7 @@ export function effect(callback: () => any): () => void {
       computingStack.pop();
     }
 
-    tracking.forEach((s) => {
+    tracking.forEach(s => {
       s.on('AfterUpdate', run);
       subscribedStores.add(s);
     });
@@ -150,7 +150,7 @@ export function effect(callback: () => any): () => void {
   run();
 
   return () => {
-    subscribedStores.forEach((s) => {
+    subscribedStores.forEach(s => {
       s.off('AfterUpdate', run);
     });
     subscribedStores.clear();
