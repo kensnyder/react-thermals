@@ -1,9 +1,9 @@
-import { act, fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'bun:test';
+import { act, fireEvent, render } from '@testing-library/react';
 import React, {
-  FunctionComponent,
-  MouseEventHandler,
-  ReactElement,
+  type FunctionComponent,
+  type MouseEventHandler,
+  type ReactElement,
   useState,
 } from 'react';
 import Store from '../../classes/Store/Store';
@@ -243,7 +243,9 @@ describe('store.on(type, handler)', () => {
     let mountCount = 0;
     let unmountCount = 0;
     let lastUnmountCount = 0;
-    store.on('AfterFirstUse', () => (afterFirstUse = true));
+    store.on('AfterFirstUse', () => {
+      afterFirstUse = true;
+    });
     store.on('AfterFirstMount', () => firstMountCount++);
     store.on('AfterMount', () => mountCount++);
     store.on('AfterUnmount', () => unmountCount++);
@@ -304,11 +306,14 @@ describe('store.on(type, handler)', () => {
       </>
     );
     let rejection = null;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });
     await new Promise(r => setTimeout(r, 0));
+    // @ts-expect-error We are throwing a string
     expect(rejection).toBe('foobar');
   });
   it('should return used count', async () => {

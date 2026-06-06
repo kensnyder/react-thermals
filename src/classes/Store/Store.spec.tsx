@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom';
-import { act, fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { FunctionComponent, MouseEventHandler, useState } from 'react';
+import { act, fireEvent, render } from '@testing-library/react';
+import {
+  type FunctionComponent,
+  type MouseEvent,
+  type MouseEventHandler,
+  useState,
+} from 'react';
 import {
   composeActions,
   pipeActions,
@@ -60,14 +65,14 @@ describe('Store setState sync', () => {
   it('should set entire with function', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     expect(store.getState()).toEqual({ a: 2 });
   });
   it('should set entire with function twice', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     store.setState(newState);
     expect(store.getState()).toEqual({ a: 3 });
@@ -75,7 +80,7 @@ describe('Store setState sync', () => {
   it('should fire AfterUpdate on next tick', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     const next = await store.nextState();
     expect(next).toEqual({ a: 2 });
@@ -85,12 +90,16 @@ describe('Store middleware', () => {
   it('should run pass correct context to middleware', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let context;
+    let context: {
+      prev: typeof state;
+      next: typeof state;
+      store: Store<typeof state>;
+    } = { prev: { a: 0 }, next: { a: 0 }, store };
     store.use((ctx, done) => {
       context = ctx;
       done();
     });
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     expect(context).toEqual({
       prev: { a: 1 },
@@ -105,20 +114,20 @@ describe('Store middleware', () => {
       ctx.next = { a: 10 };
       done();
     });
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     expect(store.getState()).toEqual({ a: 10 });
   });
   it('should allow altering new state twice', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const times10 = (ctx, done) => {
+    const times10 = (ctx: any, done: any) => {
       ctx.next.a *= 10;
       done();
     };
     store.use(times10);
     store.use(times10);
-    const newState = old => ({ a: old.a + 1 });
+    const newState = (old: typeof state) => ({ a: old.a + 1 });
     store.setState(newState);
     expect(store.getState()).toEqual({ a: 200 });
   });
@@ -137,17 +146,18 @@ describe('Store middleware', () => {
   it('should freeze context.prev object', () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let error;
+    let error: Error = new Error('none');
     store.use((ctx, done) => {
       try {
         ctx.prev.a = 100;
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
       done();
     });
     store.setState({ a: 2 });
     expect(error).toBeInstanceOf(Error);
+    expect(error.message).not.toBe('none');
     expect(store.getState()).toEqual({ a: 2 });
   });
   it('should allow bypassing middleware', () => {
@@ -173,7 +183,7 @@ describe('Store setState async', () => {
   it('should resolve functions that return promises', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    const newState = old => Promise.resolve({ a: old.a * 10 });
+    const newState = (old: typeof state) => Promise.resolve({ a: old.a * 10 });
     store.setState(newState);
     const next = await store.nextState();
     expect(next).toEqual({ a: 10 });
@@ -219,8 +229,10 @@ describe('Store setState async', () => {
   it('should fire SetterRejection when setState callback throws', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let rejection;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    let rejection: any;
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     store.setState(old => {
       return Promise.reject('my rejection');
     });
@@ -230,8 +242,10 @@ describe('Store setState async', () => {
   it('should fire SetterRejection when setState callback throws', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let rejection;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    let rejection: any;
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     store.setStateAt('a', old => {
       return Promise.reject('my rejection 2');
     });
@@ -241,8 +255,10 @@ describe('Store setState async', () => {
   it('should fire SetterRejection on rejected promise', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let rejection;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    let rejection: any;
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     store.setState(Promise.reject('my rejection 3'));
     await new Promise(r => setTimeout(r, 15));
     expect(rejection).toBe('my rejection 3');
@@ -250,8 +266,10 @@ describe('Store setState async', () => {
   it('should fire SetterRejection on function returning rejected promise', async () => {
     const state = { a: 1 };
     const store = new Store(state);
-    let rejection;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    let rejection: any;
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     store.setState(() => {
       return Promise.reject('my rejection 4');
     });
@@ -313,7 +331,7 @@ describe('Store setStateAt', () => {
     const state = { primes: [2, 3, 5, 7] };
     const store = new Store(state);
     // type-fest's Get<> doesn't understand asterisks, so we have to suppress error
-    // @ts-ignore
+    // @ts-expect-error
     store.setStateAt('primes.*', old => old * 11);
     const next = await store.nextState();
     expect(next).toEqual({ primes: [22, 33, 55, 77] });
@@ -322,7 +340,7 @@ describe('Store setStateAt', () => {
     const state = { primes: [2, 3, 5, 7] };
     const store = new Store(state);
     // type-fest's Get<> doesn't understand asterisks, so we have to suppress error
-    // @ts-ignore
+    // @ts-expect-error
     store.setStateAt('primes.*', old => Promise.resolve(old * 11));
     const next = await store.nextState();
     expect(next).toEqual({ primes: [22, 33, 55, 77] });
@@ -453,9 +471,9 @@ describe('Store mergeState', () => {
 
 describe('Store plugins', () => {
   it('should allow plugins', () => {
-    const spy: Function = mock();
+    const spy: PluginFunctionType = mock();
     const store = new Store();
-    store.plugin(spy as PluginFunctionType);
+    store.plugin(spy);
     expect(spy).toHaveBeenCalledWith(store);
     expect(store.getPlugins()).toEqual([spy]);
   });
@@ -480,17 +498,22 @@ describe('Store() with components', () => {
   let store: Store;
   let ListComponent: FunctionComponent;
   let PageComponent: FunctionComponent;
-  let setPage;
+  let setPage: (args: any) => void;
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
-    store = new Store(state);
+    store = new Store<{
+      page: number;
+      sort: string;
+    }>(state);
     setPage = store.connect('page', setter());
     ListComponent = () => {
       const state = useStoreState(store);
       return (
         <div className="List">
           <span>page={state.page}</span>
-          <button onClick={() => setPage(old => old + 1)}>Next</button>
+          <button onClick={() => setPage((old: number) => old + 1)}>
+            Next
+          </button>
         </div>
       );
     };
@@ -526,9 +549,9 @@ describe('Store() with components - auto reset', () => {
   let store: Store;
   let ListComponent: FunctionComponent;
   let PageComponent: FunctionComponent;
-  let setPage;
-  let setSort;
-  let thrower;
+  let setPage: ((...args: any[]) => void) | ((arg0: (old: any) => any) => void);
+  let setSort: ((...args: any[]) => void) | ((arg0: (old: any) => any) => void);
+  let thrower: { (): void; (event: MouseEvent<Element, MouseEvent>): void };
   beforeEach(() => {
     const state = { page: 1, sort: '-date' };
     store = new Store(state, {
@@ -593,12 +616,16 @@ describe('Store() with components - auto reset', () => {
     expect(store.getState().page).toBe(2);
   });
   it('should fire SetterRejection', async () => {
+    // biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
     let rejection;
-    store.on('SetterRejection', evt => (rejection = evt.data));
+    store.on('SetterRejection', evt => {
+      rejection = evt.data;
+    });
     const { getByText } = render(<ListComponent />);
     await act(() => {
       fireEvent.click(getByText('Throw'));
     });
+    // @ts-expect-error We are throwing a string
     expect(rejection).toBe('my error');
   });
 });
@@ -606,8 +633,8 @@ describe('Store() with composed actions', () => {
   // define store before each test
   let store: Store;
   let ListComponent: FunctionComponent;
-  let setPage;
-  let setSort;
+  let setPage: ((...args: any[]) => void) | ((arg0: (old: any) => any) => void);
+  let setSort: ((old: any) => any) | ((arg0: (old: any) => any) => void);
   const spy1 = mock(k => k);
   const spy2 = mock(k => k);
   beforeEach(() => {
@@ -617,7 +644,7 @@ describe('Store() with composed actions', () => {
       'page',
       composeActions([
         setter(),
-        updater => spy1(updater(store.getState().page)),
+        (updater: (arg0: any) => any) => spy1(updater(store.getState().page)),
       ])
     );
     setSort = store.connect('sort', pipeActions([setter(), spy2]));
@@ -629,6 +656,7 @@ describe('Store() with composed actions', () => {
           <span>sort={state.sort}</span>
           <button onClick={() => setPage(old => old + 1)}>Next</button>
           <button onClick={() => setPage(old => old - 1)}>Prev</button>
+          {/* @ts-expect-error Passing string is ok */}
           <button onClick={() => setSort('name')}>Sort by name</button>
         </div>
       );

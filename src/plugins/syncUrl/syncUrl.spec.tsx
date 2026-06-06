@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
+import { beforeEach, describe, expect, it, type Mock } from 'bun:test';
 import { act, fireEvent, render } from '@testing-library/react';
-import { FunctionComponent } from 'react';
-import { beforeEach, describe, expect, it, spyOn, type Mock } from 'bun:test';
+import type { FunctionComponent } from 'react';
 import Store from '../../classes/Store/Store';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import '../../mocks/mock-history';
@@ -13,7 +13,7 @@ describe('syncUrl()', () => {
   let store: Store;
   let Component: FunctionComponent;
   let setPage: ((page: number) => Store<any>) | ((arg0: any) => void);
-  let setSort;
+  let setSort: ((page: number) => Store<any>) | ((arg0: any) => void);
   beforeEach(() => {
     document.title = 'My Page';
     location.search = '';
@@ -39,7 +39,7 @@ describe('syncUrl()', () => {
     expect(getByText('page=1')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect((history.replaceState as Mock).mock.lastCall).toEqual([
+    expect((history.replaceState as Mock<any>).mock.lastCall).toEqual([
       {},
       'My Page',
       '?page=1&sort=-date',
@@ -52,7 +52,7 @@ describe('syncUrl()', () => {
     expect(getByText('page=1')).toBeInTheDocument();
     expect(getByText('sort=-date')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect((history.replaceState as Mock).mock.lastCall).toEqual([
+    expect((history.replaceState as Mock<any>).mock.lastCall).toEqual([
       {},
       'My Page',
       '?answer=42&page=1&sort=-date',
@@ -84,13 +84,13 @@ describe('syncUrl()', () => {
     expect(getByText('page=3')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect((history.pushState as Mock).mock.lastCall).toEqual([
+    expect((history.pushState as Mock<any>).mock.lastCall).toEqual([
       {},
       'My Page',
       '?foo=bar&page=3&sort=-modified',
     ]);
     await act(unmount);
-    expect((history.pushState as Mock).mock.lastCall).toEqual([
+    expect((history.pushState as Mock<any>).mock.lastCall).toEqual([
       {},
       'My Page',
       '?foo=bar',
@@ -111,7 +111,7 @@ describe('syncUrl()', () => {
     expect(getByText('page=21')).toBeInTheDocument();
     expect(getByText('sort=-modified')).toBeInTheDocument();
     expect(getByText('foo=')).toBeInTheDocument();
-    expect((history.replaceState as Mock).mock.lastCall).toEqual([
+    expect((history.replaceState as Mock<any>).mock.lastCall).toEqual([
       {},
       'My Page',
       '?foo=baz&page=21&sort=-modified',
@@ -195,7 +195,7 @@ describe('syncUrl()', () => {
     );
   });
   it('should throw when casting unknown type', () => {
-    // @ts-ignore
+    // @ts-expect-error
     store.plugin(syncUrl({ schema: { age: 'NOT_A_THING' } }));
     store.setState({ age: 14 });
     location.search = '?age=15';
