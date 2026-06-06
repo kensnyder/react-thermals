@@ -12,8 +12,10 @@
     "sourceMap": false,
     "skipLibCheck": true,
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
+    "typeRoots": ["./node_modules", "./node_modules/@types"],
     "types": ["bun-types"]
   },
   "include": [

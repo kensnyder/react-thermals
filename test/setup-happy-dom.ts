@@ -1,6 +1,10 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import '@testing-library/jest-dom';
+import { afterEach } from 'bun:test';
+import { cleanup } from '@testing-library/react';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(cleanup);
 
 const serverGlobals = [
   'AbortController',
