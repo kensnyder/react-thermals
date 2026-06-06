@@ -23,15 +23,15 @@ Six exports cover everything:
 
 `createSignal<T>(defaultValue)` returns a `Signal<T>` object with five members:
 
-- **`get()`** – returns the current value and registers the signal as a
+- **`.get()`** – returns the current value and registers the signal as a
   dependency of the surrounding `effect` or `createComputed`
-- **`peek()`** – returns the current value *without* registering a dependency
+- **`.peek()`** – returns the current value *without* registering a dependency
   (shorthand for `untrack(() => signal.get())`)
-- **`set(value | updater)`** – updates the value (accepts a plain value or a
+- **`.set(value | updater)`** – updates the value (accepts a plain value or a
   function of the previous value)
-- **`Value`** – a zero-prop React component that renders the current value and
+- **`.Value`** – a zero-prop React component that renders the current value and
   re-renders automatically when it changes
-- **`store`** – the underlying `Store<T>` instance (gives access to events,
+- **`.store`** – the underlying `Store<T>` instance (gives access to events,
   `nextState()`, etc.)
 
 ### Counter
@@ -65,62 +65,6 @@ export default function Counter() {
   );
 }
 ```
-
-### User session
-
-Signals work great for global singleton state like the logged-in user. Any
-component that mounts `<session.Value />` will update automatically when the
-user logs in or out.
-
-```tsx
-// signals/session.ts
-import { createSignal } from 'react-thermals';
-
-type User = { id: string; name: string; role: 'admin' | 'user' };
-
-export const session = createSignal<User | null>(null);
-
-export async function login(email: string, password: string) {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!res.ok) throw new Error('Login failed');
-  session.set(await res.json());
-}
-
-export function logout() {
-  session.set(null);
-}
-```
-
-```tsx
-// components/NavBar.tsx
-import { session, logout } from '../signals/session';
-
-export default function NavBar() {
-  const user = session.get();   // read once for logic inside this render
-  return (
-    <nav>
-      <a href="/">Home</a>
-      {user ? (
-        <>
-          <span>Hello, <session.Value /></span>
-          <button onClick={logout}>Log out</button>
-        </>
-      ) : (
-        <a href="/login">Log in</a>
-      )}
-    </nav>
-  );
-}
-```
-
-> **Note:** `session.get()` inside a plain function component does *not*
-> subscribe the component to changes — only `<session.Value />` does. If you
-> need the whole component to react to signal changes, combine signals with
-> `createComputed` + `effect`, or use a store.
 
 ### Lazy initializer
 
@@ -545,7 +489,7 @@ and picks up new ones automatically:
 import { createSignal, effect } from 'react-thermals';
 
 const activeTab = createSignal<'posts' | 'comments'>('posts');
-const postsFilter  = createSignal('');
+const postsFilter = createSignal('');
 const commentsFilter = createSignal('');
 
 effect(() => {
@@ -598,8 +542,8 @@ const searchQuery = createSignal('');
 const pageSize    = createSignal(20);
 
 effect(() => {
-  const query = searchQuery.get();           // tracked: triggers re-run
-  const size  = untrack(() => pageSize.get()); // read but NOT tracked
+  const query = searchQuery.get(); // tracked: triggers re-run
+  const size  = pageSize.peek();   // read but NOT tracked
 
   if (!query) return;
   fetch(`/api/search?q=${query}&limit=${size}`)
@@ -619,8 +563,8 @@ const score = createSignal(0);
 const previousScore = createSignal(0);
 
 effect(() => {
-  const next = score.get();                        // tracked
-  const prev = untrack(() => previousScore.get()); // not tracked — avoids loop
+  const next = score.get();          // tracked
+  const prev = previousScore.peek(); // not tracked — avoids loop
 
   if (next > prev) {
     console.log(`Score improved by ${next - prev}!`);
@@ -641,14 +585,14 @@ const userActivity = createSignal<string | null>(null);
 const lastLoggedAt = createSignal(0);
 
 effect(() => {
-  const action = userActivity.get();                // tracked
-  const last   = untrack(() => lastLoggedAt.get()); // not tracked
+  const action = userActivity.get();  // tracked
+  const last   = lastLoggedAt.peek(); // not tracked
 
   if (!action) return;
-  if (Date.now() - last < 1_000) return;            // throttle
+  if (Date.now() - last < 1_000) return; // throttle
 
   console.log('[activity]', action);
-  lastLoggedAt.set(Date.now());                     // safe: called outside untrack
+  lastLoggedAt.set(Date.now()); // safe: called outside untrack
 });
 
 // Simulate activity
@@ -753,12 +697,12 @@ whenever the signal changes.
 
 **When to prefer `useSignalValue` over `<signal.Value />`:**
 
-| | `<signal.Value />` | `useSignalValue` |
-|---|---|---|
-| Renders a primitive inline | ✓ (ideal) | Works but verbose |
-| Drives conditional rendering | ✗ | ✓ |
-| Accesses the value in component logic | ✗ | ✓ |
-| Works with object-valued signals | ✗ | ✓ |
+|                                       | `<signal.Value />` | `useSignalValue`  |
+|---------------------------------------|--------------------|-------------------|
+| Renders a primitive inline            | ✓ (ideal)          | Works but verbose |
+| Drives conditional rendering          | ✗                  | ✓                 |
+| Accesses the value in component logic | ✗                  | ✓                 |
+| Works with object-valued signals      | ✗                  | ✓                 |
 
 ### Conditional rendering based on a signal
 
@@ -909,8 +853,8 @@ when the user changes notification preferences.
 import { createSignal, createComputed, effect, untrack } from 'react-thermals';
 
 // --- raw signals ---
-export const btcPrice   = createSignal(0);
-export const ethPrice   = createSignal(0);
+export const btcPrice     = createSignal(0);
+export const ethPrice     = createSignal(0);
 export const notifyOnDrop = createSignal(true);   // user preference
 
 // --- computed ---
@@ -947,18 +891,24 @@ ws.addEventListener('message', (e: MessageEvent) => {
 ```tsx
 // components/Dashboard.tsx
 import { btcLabel, ethLabel, ratio, notifyOnDrop } from '../signals/dashboard';
+import { useSignalValue } from "./reactSignals";
 
 export default function Dashboard() {
+  const hasDropNotification = useSignalValue(notifyOnDrop);
   return (
     <main>
       <h1>Crypto Prices</h1>
-      <p><btcLabel.Value /></p>
-      <p><ethLabel.Value /></p>
+      <p>
+        <btcLabel.Value />
+      </p>
+      <p>
+        <ethLabel.Value />
+      </p>
       <p>BTC/ETH ratio: <ratio.Value /></p>
       <label>
         <input
           type="checkbox"
-          checked={notifyOnDrop.get()}
+          checked={hasDropNotification}
           onChange={e => notifyOnDrop.set(e.target.checked)}
         />
         Notify on price drop
@@ -972,7 +922,7 @@ export default function Dashboard() {
 
 ## Signals with object values
 
-When your signal holds a complex object, use `createComputed` to derive
+When your signal holds a complex object, you can use `createComputed` to derive
 individual fields from it. Each computed becomes its own reactive leaf — only
 the component that mounts `<computed.Value />` re-renders when that specific
 derived value changes, not any parent component.
