@@ -33,6 +33,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
 > {
   readonly #autoReset: boolean;
   #hasInitialized = false;
+  #hasMounted = false;
   #idx: number;
   readonly #initialState: StateType;
   #middlewares: MiddlewareType<StateType>[] = [];
@@ -42,6 +43,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
   #usedCount = 0;
   #waitingQueue: SettableStateType<StateType>[] = [];
   #isWaiting = false;
+  #pendingLastUnmount = false;
 
   /**
    * A string to identify the store by
@@ -82,10 +84,12 @@ export default class Store<StateType = any> extends SimpleEmitter<
    * @note private but used by useStoreSelector()
    */
   attachComponent = (setState: SetterType<StateType, any>): void => {
+    this.#pendingLastUnmount = false;
     if (this.#usedCount++ === 0) {
       this.emit('BeforeFirstUse', this.#state);
     }
-    if (this.#setters.length === 0) {
+    if (this.#setters.length === 0 && !this.#hasMounted) {
+      this.#hasMounted = true;
       this.emit('AfterFirstMount');
     }
     if (!this.#setters.includes(setState)) {
@@ -106,14 +110,22 @@ export default class Store<StateType = any> extends SimpleEmitter<
     const idx = this.#setters.indexOf(setState);
     if (idx > -1) {
       this.#setters.splice(idx, 1);
+      this.#usedCount--;
     }
     this.emit('AfterUnmount', this.#setters.length);
     if (this.#setters.length === 0) {
-      if (this.#autoReset) {
-        this.reset();
-        this.emit('AfterReset');
-      }
-      this.emit('AfterLastUnmount');
+      this.#pendingLastUnmount = true;
+      Promise.resolve().then(() => {
+        if (!this.#pendingLastUnmount) return;
+        this.#pendingLastUnmount = false;
+        if (this.#setters.length === 0) {
+          if (this.#autoReset) {
+            this.reset();
+            this.emit('AfterReset');
+          }
+          this.emit('AfterLastUnmount');
+        }
+      });
     }
   };
 
@@ -162,6 +174,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
   reset = (options: SetStateOptionsType = {}) => {
     this.resetState(options);
     this.#hasInitialized = false;
+    this.#hasMounted = false;
     this.#usedCount = 0;
     return this;
   };
