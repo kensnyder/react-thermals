@@ -31,6 +31,7 @@ export {
   type ComputedCallback,
   type ComputedSignal,
   createComputed,
+  createRoot,
   createSignal,
   effect,
   type Getter,

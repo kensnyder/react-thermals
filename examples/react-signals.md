@@ -6,7 +6,7 @@ store-based state, signals let you sprinkle reactive values anywhere in your
 codebase and bind them directly into JSX — no context providers, no hooks
 wiring, no selector boilerplate.
 
-Six exports cover everything:
+Seven exports cover everything:
 
 | Export            | Purpose                                                             |
 |-------------------|---------------------------------------------------------------------|
@@ -15,6 +15,7 @@ Six exports cover everything:
 | `effect`          | Run a callback whenever its signal reads change; supports teardown  |
 | `untrack`         | Read signals inside an effect without subscribing                   |
 | `batch`           | Commit multiple signal writes atomically                            |
+| `createRoot`      | Create a reactive root that manages lifecycle cleanup               |
 | `useSignalValue`  | React hook that subscribes a component to a signal's current value  |
 
 ---
@@ -514,9 +515,6 @@ them as dependencies of the surrounding `effect` or `createComputed`. Use it
 when you need to sample a value at effect-run time but you don't want that
 signal to be a trigger.
 
-**Important:** you cannot call `signal.set()` inside `untrack` — doing so
-throws `"Cannot set signal while frozen"`.
-
 **Tip — single-signal shorthand:** every signal exposes `peek()`, which is
 equivalent to `untrack(() => signal.get())` but more concise:
 
@@ -569,7 +567,7 @@ effect(() => {
   if (next > prev) {
     console.log(`Score improved by ${next - prev}!`);
   }
-  previousScore.set(next); // fine — set is allowed outside untrack
+  previousScore.set(next);
 });
 ```
 
@@ -592,7 +590,7 @@ effect(() => {
   if (Date.now() - last < 1_000) return; // throttle
 
   console.log('[activity]', action);
-  lastLoggedAt.set(Date.now()); // safe: called outside untrack
+  lastLoggedAt.set(Date.now());
 });
 
 // Simulate activity
@@ -612,6 +610,8 @@ happens on the outermost exit.
 > two separate `AfterUpdate` microtasks. An effect that reads both signals will
 > run once per changed signal. `batch` collapses the commits so the first
 > effect run already sees the fully-updated picture.
+>
+> **Architectural Limitation:** If you modify a dependency inside a batch and immediately call `get()` on a computed that relies on it, the computed will return a stale value because the dependency's `AfterUpdate` event hasn't fired yet. Do not read derived computations inside the same synchronous batch where their dependencies are modified.
 
 ### Updating related signals together
 
@@ -891,7 +891,7 @@ ws.addEventListener('message', (e: MessageEvent) => {
 ```tsx
 // components/Dashboard.tsx
 import { btcLabel, ethLabel, ratio, notifyOnDrop } from '../signals/dashboard';
-import { useSignalValue } from "./reactSignals";
+import { useSignalValue } from 'react-thermals';
 
 export default function Dashboard() {
   const hasDropNotification = useSignalValue(notifyOnDrop);
@@ -916,6 +916,28 @@ export default function Dashboard() {
     </main>
   );
 }
+```
+
+---
+
+## createRoot
+
+`createRoot<T>(fn)` creates a reactive boundary that tracks any `createComputed` or `effect` calls made inside `fn` and automatically cleans them up when the provided `dispose` function is called.
+
+```tsx
+import { createRoot, createSignal, createComputed } from 'react-thermals';
+
+const count = createSignal(0);
+
+const disposeAll = createRoot(dispose => {
+  const doubled = createComputed(() => count.get() * 2);
+  const tripled = createComputed(() => count.get() * 3);
+  
+  return dispose;
+});
+
+// Later, clean up both computeds at once to prevent memory leaks
+disposeAll();
 ```
 
 ---
