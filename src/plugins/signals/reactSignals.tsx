@@ -4,16 +4,59 @@ import Store from '../../classes/Store/Store';
 // see https://github.com/tc39/proposal-signals for details about signal behavior
 export type Setter<T> = (newValue: T | ((old: T) => T)) => void;
 export type Getter<T> = () => T;
-export type Signal<T> = {
+
+export type ReadonlySignal<T> = {
   Value: FC;
-  set: Setter<T>;
   get: Getter<T>;
+  /** Read current value without registering a dependency. */
+  peek: Getter<T>;
   store: Store<T>;
 };
-// used to allow reading without triggering listeners
-let frozen = false;
-// stack of dependency-tracking Sets for nested computeds
+
+export type Signal<T> = ReadonlySignal<T> & {
+  set: Setter<T>;
+};
+
+/** Returned by createComputed — writable only internally, exposes dispose(). */
+export type ComputedSignal<T> = ReadonlySignal<T> & {
+  dispose: () => void;
+};
+
+// depth counter so nested untrack() calls are re-entrant
+let frozenDepth = 0;
+// stack of dependency-tracking Sets for nested computeds/effects
 const computingStack: Array<Set<Store<any>>> = [];
+// batch state: pending store writes flushed at the outermost batch exit
+let batchDepth = 0;
+const pendingBatchUpdates = new Map<Store<any>, any>();
+
+function resolveCurrentValue<T>(store: Store<T>): T {
+  if (batchDepth > 0 && pendingBatchUpdates.has(store)) {
+    return pendingBatchUpdates.get(store) as T;
+  }
+  return store.getState() as T;
+}
+
+/**
+ * Defer all signal writes inside fn until the outermost batch exits.
+ * Effects and computeds only see fully-committed state when they run,
+ * preventing partial-update reads. Nested batch() calls are supported.
+ */
+export function batch(fn: () => void): void {
+  batchDepth++;
+  try {
+    fn();
+  } finally {
+    batchDepth--;
+    if (batchDepth === 0) {
+      const updates = [...pendingBatchUpdates];
+      pendingBatchUpdates.clear();
+      for (const [store, value] of updates) {
+        store.setState(value);
+      }
+    }
+  }
+}
 
 export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
   const initialValue =
@@ -26,6 +69,7 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
       Value: () => <>{initialValue as ReactNode}</>,
       set: _newValue => {},
       get: () => initialValue,
+      peek: () => initialValue,
       store,
     } as Signal<T>;
   }
@@ -42,29 +86,37 @@ export function createSignal<T>(defaultValue: T | (() => T)): Signal<T> {
   };
   Value.displayName = 'SignalValue';
 
-  const get: Getter<T> = () => {
-    const current = computingStack[computingStack.length - 1];
-    if (!frozen && current) {
-      current.add(store);
-    }
-    const value = store.getState();
-    if (value instanceof Error) {
-      throw value;
-    }
+  const peek: Getter<T> = () => {
+    const value = resolveCurrentValue(store);
+    if (value instanceof Error) throw value;
     return value as T;
   };
 
+  const get: Getter<T> = () => {
+    const current = computingStack[computingStack.length - 1];
+    if (frozenDepth === 0 && current) {
+      current.add(store);
+    }
+    return peek();
+  };
+
   const set: Setter<T> = (newValue: T | ((old: T) => T)) => {
-    if (frozen) {
+    if (frozenDepth > 0) {
       throw new Error('Cannot set signal while frozen');
     }
+    const current = resolveCurrentValue(store);
     const value =
       typeof newValue === 'function'
-        ? (newValue as (old: T) => T)(store.getState())
+        ? (newValue as (old: T) => T)(current)
         : newValue;
-    store.setState(value);
+    if (batchDepth > 0) {
+      pendingBatchUpdates.set(store, value);
+    } else {
+      store.setState(value);
+    }
   };
-  return { Value, set, get, store };
+
+  return { Value, set, get, peek, store };
 }
 
 export type ComputedCallback<T> = () => T;
@@ -74,20 +126,18 @@ export function createComputed<T>(
   options: {
     equals?: (a: T, b: T) => boolean;
   } = {}
-) {
+): ComputedSignal<T> {
   const equals = options.equals ?? Object.is;
   const signal = createSignal<T>(undefined as unknown as T);
   let lastValue: T | Error;
   const subscribedStores = new Set<Store<any>>();
 
   const runEffect = () => {
-    // Unsubscribe old dependencies before re-running
     subscribedStores.forEach(s => {
       s.off('AfterUpdate', runEffect);
     });
     subscribedStores.clear();
 
-    // Push a new tracking Set onto the stack for this computation
     const tracking = new Set<Store<any>>();
     computingStack.push(tracking);
 
@@ -107,7 +157,6 @@ export function createComputed<T>(
       computingStack.pop();
     }
 
-    // Subscribe to newly discovered dependencies
     tracking.forEach(s => {
       s.on('AfterUpdate', runEffect);
       subscribedStores.add(s);
@@ -115,18 +164,37 @@ export function createComputed<T>(
   };
 
   runEffect();
-  return signal;
+
+  const dispose = () => {
+    subscribedStores.forEach(s => {
+      s.off('AfterUpdate', runEffect);
+    });
+    subscribedStores.clear();
+  };
+
+  return {
+    Value: signal.Value,
+    get: signal.get,
+    peek: signal.peek,
+    store: signal.store,
+    dispose,
+  };
 }
 
 /**
  * Run a callback immediately and re-run it whenever any signal it reads changes.
- * Returns a cleanup function that disposes the effect.
+ * The callback may return a teardown function called before each re-run and on dispose.
+ * Returns a dispose function that cleans up all subscriptions.
  */
-export function effect(callback: () => any): () => void {
+export function effect(callback: () => (() => void) | void): () => void {
   const subscribedStores = new Set<Store<any>>();
+  let teardown: (() => void) | void;
 
   const run = () => {
-    // Unsubscribe old dependencies before re-running
+    if (teardown) {
+      teardown();
+      teardown = undefined;
+    }
     subscribedStores.forEach(s => {
       s.off('AfterUpdate', run);
     });
@@ -136,7 +204,7 @@ export function effect(callback: () => any): () => void {
     computingStack.push(tracking);
 
     try {
-      callback();
+      teardown = callback();
     } finally {
       computingStack.pop();
     }
@@ -150,6 +218,7 @@ export function effect(callback: () => any): () => void {
   run();
 
   return () => {
+    if (teardown) teardown();
     subscribedStores.forEach(s => {
       s.off('AfterUpdate', run);
     });
@@ -159,12 +228,29 @@ export function effect(callback: () => any): () => void {
 
 /**
  * Read signals inside a callback without registering them as dependencies.
+ * Calls are re-entrant; throws if signal.set() is called inside.
  */
 export function untrack<T>(callback: () => T): T {
-  frozen = true;
+  frozenDepth++;
   try {
     return callback();
   } finally {
-    frozen = false;
+    frozenDepth--;
   }
+}
+
+/**
+ * Subscribe a React component to a signal and return its current value.
+ * Re-renders whenever the signal changes. Unlike <signal.Value />, this works
+ * for non-primitive values and enables conditional rendering based on signal state.
+ */
+export function useSignalValue<T>(signal: ReadonlySignal<T>): T {
+  const [, reRender] = useReducer(x => x + 1, 0);
+  useEffect(() => {
+    signal.store.on('AfterUpdate', reRender);
+    return () => {
+      signal.store.off('AfterUpdate', reRender);
+    };
+  }, [signal.store]);
+  return signal.peek();
 }

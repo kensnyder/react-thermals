@@ -2,7 +2,14 @@ import '@testing-library/jest-dom';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import Store from '../../classes/Store/Store';
-import { createComputed, createSignal, effect, untrack } from './reactSignals';
+import {
+  batch,
+  createComputed,
+  createSignal,
+  effect,
+  untrack,
+  useSignalValue,
+} from './reactSignals';
 
 // Helper: wait for the next async tick(s)
 const nextTick = () => new Promise<void>(r => setTimeout(r, 0));
@@ -323,11 +330,12 @@ describe('effect()', () => {
 });
 
 describe('createComputed()', () => {
-  it('should return a Signal', () => {
+  it('should return a ComputedSignal with get, peek, dispose, Value, and store', () => {
     const a = createSignal(1);
     const computed = createComputed(() => a.get() * 2);
     expect(typeof computed.get).toBe('function');
-    expect(typeof computed.set).toBe('function');
+    expect(typeof computed.peek).toBe('function');
+    expect(typeof computed.dispose).toBe('function');
     expect(typeof computed.Value).toBe('function');
     expect(computed.store).toBeInstanceOf(Store);
   });
@@ -514,5 +522,363 @@ describe('createComputed()', () => {
       await nextTick(); // doubled AfterUpdate → Value re-renders
     });
     expect(container.textContent).toBe('10');
+  });
+});
+
+describe('signal.peek()', () => {
+  it('should return the current value', () => {
+    const signal = createSignal(42);
+    expect(signal.peek()).toBe(42);
+  });
+
+  it('should reflect updates from set()', () => {
+    const signal = createSignal(1);
+    signal.set(99);
+    expect(signal.peek()).toBe(99);
+  });
+
+  it('should not register as a dependency inside effect()', async () => {
+    const a = createSignal(0);
+    const b = createSignal(10);
+    const spy = mock();
+
+    const cleanup = effect(() => {
+      const aVal = a.get();     // tracked
+      const bVal = b.peek();    // NOT tracked
+      spy(aVal + bVal);
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenLastCalledWith(10);
+
+    // changing b (peeked) should NOT re-run effect
+    b.set(20);
+    await b.store.nextState();
+    await nextTick();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // changing a (tracked) should re-run; reads updated b value
+    a.set(1);
+    await a.store.nextState();
+    await nextTick();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenLastCalledWith(21);
+
+    cleanup();
+  });
+
+  it('should not register as a dependency inside createComputed()', async () => {
+    const a = createSignal(5);
+    const b = createSignal(10);
+    const computed = createComputed(() => a.get() + b.peek());
+
+    expect(computed.get()).toBe(15);
+
+    // changing b (peeked) should NOT trigger recompute
+    b.set(20);
+    await b.store.nextState();
+    await nextTick();
+    expect(computed.get()).toBe(15);
+
+    // changing a (tracked) should recompute; reads updated b
+    a.set(1);
+    await a.store.nextState();
+    await nextTick();
+    expect(computed.get()).toBe(21);
+
+    computed.dispose();
+  });
+
+  it('should throw if the underlying value is an Error', async () => {
+    const signal = createSignal(1);
+    const errored = createComputed(() => {
+      if (signal.get() < 0) throw new Error('negative');
+      return signal.get();
+    });
+    signal.set(-1);
+    await signal.store.nextState();
+    await nextTick();
+    expect(() => errored.peek()).toThrow('negative');
+    errored.dispose();
+  });
+});
+
+describe('batch()', () => {
+  it('should apply all writes before effects run', async () => {
+    const x = createSignal(0);
+    const y = createSignal(0);
+    const seen: Array<[number, number]> = [];
+
+    const cleanup = effect(() => {
+      seen.push([x.get(), y.get()]);
+    });
+    seen.length = 0; // discard initial run
+
+    batch(() => {
+      x.set(1);
+      y.set(2);
+    });
+
+    await x.store.nextState();
+    await nextTick();
+
+    // every recorded snapshot should show both values committed
+    for (const [xv, yv] of seen) {
+      expect(xv).toBe(1);
+      expect(yv).toBe(2);
+    }
+
+    cleanup();
+  });
+
+  it('should make pending writes visible to get() inside the batch', () => {
+    const count = createSignal(0);
+
+    batch(() => {
+      count.set(5);
+      expect(count.get()).toBe(5);
+    });
+  });
+
+  it('should support functional updaters chained inside a batch', () => {
+    const count = createSignal(0);
+
+    batch(() => {
+      count.set(n => n + 1);
+      count.set(n => n + 1);
+    });
+
+    expect(count.get()).toBe(2);
+  });
+
+  it('should support nested batch() calls, flushing on the outermost exit', () => {
+    const a = createSignal(0);
+    const b = createSignal(0);
+
+    batch(() => {
+      a.set(1);
+      batch(() => {
+        b.set(2);
+        expect(a.get()).toBe(1);
+        expect(b.get()).toBe(2);
+      });
+      // still inside outer batch; stores not yet committed
+      expect(a.store.getState()).toBe(0);
+    });
+    // after outermost exit
+    expect(a.store.getState()).toBe(1);
+    expect(b.store.getState()).toBe(2);
+  });
+
+  it('should commit all values even if batch fn throws', () => {
+    const x = createSignal(0);
+
+    try {
+      batch(() => {
+        x.set(7);
+        throw new Error('mid-batch error');
+      });
+    } catch (_) {}
+
+    expect(x.store.getState()).toBe(7);
+  });
+});
+
+describe('effect() teardown', () => {
+  it('should call the returned teardown before re-running', async () => {
+    const signal = createSignal(0);
+    const teardownSpy = mock();
+
+    const cleanup = effect(() => {
+      signal.get(); // track
+      return teardownSpy;
+    });
+
+    expect(teardownSpy).toHaveBeenCalledTimes(0);
+
+    signal.set(1);
+    await signal.store.nextState();
+    await nextTick();
+
+    // teardown called before the re-run
+    expect(teardownSpy).toHaveBeenCalledTimes(1);
+
+    cleanup();
+  });
+
+  it('should call the returned teardown on dispose', () => {
+    const signal = createSignal(0);
+    const teardownSpy = mock();
+
+    const dispose = effect(() => {
+      signal.get();
+      return teardownSpy;
+    });
+
+    dispose();
+    expect(teardownSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call teardown if callback returns undefined', async () => {
+    const signal = createSignal(0);
+    const spy = mock(() => undefined);
+
+    const cleanup = effect(() => {
+      signal.get();
+      spy();
+      // no return value
+    });
+
+    signal.set(1);
+    await signal.store.nextState();
+    await nextTick();
+
+    expect(() => cleanup()).not.toThrow();
+    cleanup();
+  });
+
+  it('should clean up async resources via teardown', async () => {
+    const signal = createSignal('a');
+    const aborted: string[] = [];
+
+    const cleanup = effect(() => {
+      const val = signal.get();
+      const controller = { aborted: false, abort: () => aborted.push(val) };
+      return () => controller.abort();
+    });
+
+    signal.set('b');
+    await signal.store.nextState();
+    await nextTick();
+    // teardown for 'a' fired before re-run for 'b'
+    expect(aborted).toEqual(['a']);
+
+    cleanup();
+    expect(aborted).toEqual(['a', 'b']);
+  });
+});
+
+describe('createComputed() dispose()', () => {
+  it('should stop recomputing after dispose()', async () => {
+    const base = createSignal(1);
+    const computed = createComputed(() => base.get() * 2);
+    expect(computed.get()).toBe(2);
+
+    computed.dispose();
+
+    base.set(5);
+    await base.store.nextState();
+    await nextTick();
+
+    // value is stale — computed stopped tracking
+    expect(computed.get()).toBe(2);
+  });
+
+  it('should not throw when dispose() is called multiple times', () => {
+    const base = createSignal(0);
+    const computed = createComputed(() => base.get());
+    expect(() => {
+      computed.dispose();
+      computed.dispose();
+    }).not.toThrow();
+  });
+});
+
+describe('untrack() nesting', () => {
+  it('should remain frozen through nested untrack() calls', () => {
+    const signal = createSignal(0);
+    expect(() => {
+      untrack(() => {
+        untrack(() => {
+          signal.set(1); // should still throw
+        });
+      });
+    }).toThrow('Cannot set signal while frozen');
+  });
+
+  it('should restore frozen state correctly after nested calls', () => {
+    const signal = createSignal(0);
+    untrack(() => {
+      untrack(() => {
+        // inner exits, outer still running
+      });
+      // still inside outer — set should still throw
+      expect(() => signal.set(1)).toThrow('Cannot set signal while frozen');
+    });
+    // fully restored — set should work
+    expect(() => signal.set(2)).not.toThrow();
+    expect(signal.get()).toBe(2);
+  });
+});
+
+describe('useSignalValue()', () => {
+  it('should return the current signal value', () => {
+    const signal = createSignal('hello');
+    function Comp() {
+      const val = useSignalValue(signal);
+      return <span>{val}</span>;
+    }
+    const { container } = render(<Comp />);
+    expect(container.textContent).toBe('hello');
+  });
+
+  it('should re-render the component when the signal changes', async () => {
+    const signal = createSignal(1);
+
+    function Comp() {
+      const val = useSignalValue(signal);
+      return <span>{val}</span>;
+    }
+
+    const { container } = render(<Comp />);
+    expect(container.textContent).toBe('1');
+
+    await act(async () => {
+      signal.set(42);
+      await signal.store.nextState();
+    });
+
+    expect(container.textContent).toBe('42');
+  });
+
+  it('should unsubscribe on unmount', async () => {
+    const signal = createSignal(0);
+    let renderCount = 0;
+
+    function Comp() {
+      renderCount++;
+      const val = useSignalValue(signal);
+      return <span>{val}</span>;
+    }
+
+    const { unmount } = render(<Comp />);
+    const countBeforeUnmount = renderCount;
+
+    unmount();
+
+    signal.set(99);
+    await signal.store.nextState();
+    await nextTick();
+
+    expect(renderCount).toBe(countBeforeUnmount);
+  });
+
+  it('should work with object-valued signals for conditional rendering', async () => {
+    const session = createSignal<{ name: string } | null>(null);
+
+    function Comp() {
+      const user = useSignalValue(session);
+      return <span>{user ? user.name : 'logged out'}</span>;
+    }
+
+    const { container } = render(<Comp />);
+    expect(container.textContent).toBe('logged out');
+
+    await act(async () => {
+      session.set({ name: 'Alice' });
+      await session.store.nextState();
+    });
+
+    expect(container.textContent).toBe('Alice');
   });
 });
