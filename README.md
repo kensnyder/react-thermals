@@ -4,7 +4,7 @@
 [![Language](https://badgen.net/static/language/TS?v=4.1.0)](https://github.com/search?q=repo:kensnyder/react-thermals++language:TypeScript&type=code)
 [![Build Status](https://github.com/kensnyder/react-thermals/actions/workflows/workflow.yml/badge.svg?v=4.1.0)](https://github.com/kensnyder/react-thermals/actions)
 [![Code Coverage](https://codecov.io/gh/kensnyder/react-thermals/branch/main/graph/badge.svg?v=4.1.0)](https://codecov.io/gh/kensnyder/react-thermals)
-[![Gzipped Size](https://badgen.net/static/minzipped/20kb)](https://npmjs.com/package/react-thermals)
+[![Gzipped Size](https://badgen.net/static/minzipped/11kb)](https://npmjs.com/package/react-thermals)
 [![Dependencies](https://badgen.net/static/dependencies/0)](https://www.npmjs.com/package/react-thermals?activeTab=dependencies)
 [![Tree shakeable](https://badgen.net/static/tree-shakeable/Yes)](https://www.npmjs.com/package/react-thermals)
 [![ISC License](https://badgen.net/github/license/kensnyder/react-thermals?v=4.1.0)](https://opensource.org/licenses/ISC)

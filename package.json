@@ -41,11 +41,12 @@
     "lint": "bunx biome lint .",
     "format": "bunx biome format --write .",
     "check": "bunx biome check --write .",
-    "build": "npm run build:clean && npm run build:dts && npm run build:esm && npm run build:cjs",
+    "build": "npm run build:clean && npm run build:dts && npm run build:esm && npm run build:cjs && npm run build:gzip-size",
     "build:clean": "rimraf dist/ && mkdir dist",
     "build:dts": "yes | bunx dts-bundle-generator --project tsconfig.bundle-generator.json -o dist/index.d.ts ./index.ts",
-    "build:esm": "bun build ./index.ts --bundle --minify --platform=node --format=esm --external:react --external:any-date-parser --outfile=dist/index.mjs",
-    "build:cjs": "bun build ./index.ts --bundle --minify --platform=node --format=cjs --external:react --external:any-date-parser --outfile=dist/index.cjs",
+    "build:esm": "bunx esbuild ./index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.mjs",
+    "build:cjs": "bunx esbuild ./index.ts --bundle --platform=node --format=cjs --packages=external --outfile=dist/index.cjs",
+    "build:gzip-size": "echo 'gzipped savings and size:' && gzip -cv dist/index.mjs | wc -c",
     "release": "npm install && npm test && npm run build && npm publish"
   },
   "peerDependencies": {
