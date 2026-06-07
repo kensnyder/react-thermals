@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import selectPath from './selectPath';
 
 describe('selectPath()', () => {

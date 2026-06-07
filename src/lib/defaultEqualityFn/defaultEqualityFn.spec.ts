@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import isEqual from './defaultEqualityFn.js';
 
 describe('defaultEqualityFn', () => {

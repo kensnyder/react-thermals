@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import shallowCopy from './shallowCopy';
 
 describe('shallowCopy()', () => {

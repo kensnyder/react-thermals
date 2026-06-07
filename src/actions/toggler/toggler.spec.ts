@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import Store from '../../classes/Store/Store';
 import toggler from './toggler';
 

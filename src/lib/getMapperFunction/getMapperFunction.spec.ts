@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import getMapperFunction from './getMapperFunction';
 
 describe('getMapperFunction(function|string|int|array)', () => {
@@ -33,7 +34,7 @@ describe('getMapperFunction(function|string|int|array)', () => {
   });
   it('should throw errors on boolean', () => {
     const tryIt = () => {
-      // @ts-ignore
+      // @ts-expect-error
       getMapperFunction(false);
     };
     expect(tryIt).toThrowError();

@@ -1,5 +1,6 @@
+import { describe, expect, it } from 'bun:test';
 import Store from '../../classes/Store/Store';
-import { setter, setterInput, setterFn } from './setter';
+import { setter, setterFn, setterInput } from './setter';
 
 describe('setter()', () => {
   it('should set scalar value', async () => {

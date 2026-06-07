@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import SimpleEmitter from './SimpleEmitter';
 
 describe('SimpleEmitter', () => {

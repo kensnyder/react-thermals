@@ -1,8 +1,9 @@
+import { describe, expect, it } from 'bun:test';
 import updatePath from './updatePath';
 
 describe('deepUpdater', () => {
   it('should throw exceptions on non-string path', () => {
-    // @ts-ignore
+    // @ts-expect-error
     const thrower = () => updatePath(5);
     expect(thrower).toThrow(/must be a string/);
   });

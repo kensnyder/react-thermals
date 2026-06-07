@@ -1,6 +1,7 @@
-import React, { FunctionComponent, MouseEventHandler } from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
+import React, { type FunctionComponent, type MouseEventHandler } from 'react';
 import '@testing-library/jest-dom';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import Store from '../../classes/Store/Store';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
 import undo from './undo';

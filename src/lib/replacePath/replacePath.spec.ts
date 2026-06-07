@@ -1,10 +1,11 @@
+import { describe, expect, it } from 'bun:test';
 import replacePath from './replacePath';
 
 describe('replacePath()', () => {
   it('should throw if path is not a string', () => {
     const thrower = () => {
       const oldObj = { hello: 'world' };
-      // @ts-ignore
+      // @ts-expect-error
       const newObj = replacePath(oldObj, 8, 'people');
     };
     expect(thrower).toThrow(Error);
