@@ -24,4 +24,11 @@ describe('getUpdateRunner()', () => {
     const transform = getUpdateRunner((p: number) => p + 1);
     expect(transform(2, (p: number) => p * 7)).toBe(15);
   });
+  it('should throw if transform is invalid', () => {
+    const thrower = () => {
+      // @ts-expect-error Testing invalid input
+      const transform = getUpdateRunner(42);
+    };
+    expect(thrower).toThrow(/must be a function/);
+  });
 });

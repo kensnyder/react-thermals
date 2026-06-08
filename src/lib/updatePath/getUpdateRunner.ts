@@ -14,24 +14,24 @@ import isFunction from '../isFunction/isFunction';
  */
 export default function getUpdateRunner<T = any>(
   transform:
-    | ((old: T, next: T, ...args: any[]) => T)
-    | Array<(old: T, next: T, ...args: any[]) => T>
+    | ((old: T, ...args: any[]) => T)
+    | Array<(old: T, ...args: any[]) => T>
     | undefined = undefined
-): (old: T, next: T, ...args: any[]) => T {
+): (old: T, ...args: any[]) => T {
   if (isFunction(transform)) {
     // run transform directly
     return function runTransform(old: any, next: any, ...args: any[]) {
       if (isFunction(next)) {
         old = next(old, ...args);
       }
-      return transform(old, next, ...args);
+      return transform(old, ...args);
     };
   } else if (isArray(transform) && transform.every(isFunction)) {
     // run each transform function in sequence
-    return function pipeTransforms(old: any, next: any, ...args: any[]) {
+    return function pipeTransforms(old: any, ...args: any[]) {
       let newVal = old;
       for (const fn of transform) {
-        newVal = fn(newVal, next, ...args);
+        newVal = fn(newVal, ...args);
       }
       return newVal;
     };
@@ -41,13 +41,12 @@ export default function getUpdateRunner<T = any>(
     // the old value
     return defaultTransform;
   } else {
-    /* istanbul ignore next @preserve */
     throw new Error(
       'react-thermals: updatePath(path,transform) - transform must be a function, an array of functions or undefined'
     );
   }
 }
 
-function defaultTransform(old: any, newValue: any) {
+function defaultTransform<T>(old: T, newValue: T | ((old: T) => T)) {
   return isFunction(newValue) ? newValue(old) : newValue;
 }

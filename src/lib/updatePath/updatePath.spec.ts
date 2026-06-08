@@ -29,10 +29,13 @@ describe('deepUpdater', () => {
   });
   it('should handle 2 levels with arrays', () => {
     const state = { posts: [{ id: 125, likes: 5 }] };
-    const likePost = updatePath('posts[0]', (post: { id: number; likes: number }) => ({
-      ...post,
-      likes: post.likes + 1,
-    }));
+    const likePost = updatePath(
+      'posts[0]',
+      (post: { id: number; likes: number }) => ({
+        ...post,
+        likes: post.likes + 1,
+      })
+    );
     const updated = likePost(state);
     expect(updated).not.toBe(state);
     expect(updated.posts).not.toBe(state.posts);
@@ -61,7 +64,10 @@ describe('deepUpdater', () => {
   });
   it('should ignore non-existent paths on scalar', () => {
     const state = 5;
-    const greetWorld = updatePath('hello', (greeting: string) => greeting + ' world');
+    const greetWorld = updatePath(
+      'hello',
+      (greeting: string) => greeting + ' world'
+    );
     const updated = greetWorld(state);
     expect(updated).toBe(5);
   });
@@ -146,7 +152,10 @@ describe('deepUpdater', () => {
   });
   it('should handle root path', () => {
     const state = { url: 'https://example.com' };
-    const addPort = updatePath('@', (old: { url: string }) => ({ ...old, port: 1337 }));
+    const addPort = updatePath('@', (old: { url: string }) => ({
+      ...old,
+      port: 1337,
+    }));
     const updated = addPort(state);
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ url: 'https://example.com', port: 1337 });
@@ -173,6 +182,7 @@ describe('deepUpdater', () => {
     expect(updated).toEqual({ cart: [{ price: 18 }] });
   });
   it('should only update relevant parts of state', () => {
+    type Recipient = { id: number; name: string };
     const state = {
       email: {
         subject: 'hello',
@@ -185,7 +195,7 @@ describe('deepUpdater', () => {
     };
     const addRecipient = updatePath(
       'email.recipients',
-      (recipients: object[], newRecipient: object) => {
+      (recipients: Recipient[], newRecipient: Recipient) => {
         return [...recipients, newRecipient];
       }
     );

@@ -5,6 +5,7 @@ import Store from '../../classes/Store/Store';
 import {
   batch,
   createComputed,
+  createRoot,
   createSignal,
   effect,
   untrack,
@@ -805,6 +806,196 @@ describe('untrack() nesting', () => {
 
     // Dependency tracking was disabled, so computed should not update when base changes
     expect(computed.get()).toBe(0);
+  });
+});
+
+describe('createRoot()', () => {
+  it('should return the value returned by fn', () => {
+    const result = createRoot(() => 42);
+    expect(result).toBe(42);
+  });
+
+  it('should pass a dispose function to fn', () => {
+    createRoot(dispose => {
+      expect(typeof dispose).toBe('function');
+    });
+  });
+
+  it('should dispose computeds created inside the root', async () => {
+    const base = createSignal(1);
+    let computed!: ReturnType<typeof createComputed<number>>;
+
+    const dispose = createRoot(d => {
+      computed = createComputed(() => base.get() * 2);
+      return d;
+    });
+
+    expect(computed.get()).toBe(2);
+    dispose();
+
+    base.set(5);
+    await base.store.nextState();
+    await nextTick();
+
+    // computed stopped tracking after root dispose
+    expect(computed.get()).toBe(2);
+  });
+
+  it('should dispose effects created inside the root', async () => {
+    const signal = createSignal(0);
+    const spy = mock();
+
+    const dispose = createRoot(d => {
+      effect(() => spy(signal.get()));
+      return d;
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    dispose();
+
+    signal.set(1);
+    await signal.store.nextState();
+    await nextTick();
+
+    // effect stopped after root dispose
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should dispose multiple computeds and effects at once', async () => {
+    const base = createSignal(0);
+    const effectSpy = mock();
+
+    const dispose = createRoot(d => {
+      createComputed(() => base.get() + 1);
+      createComputed(() => base.get() * 2);
+      effect(() => effectSpy(base.get()));
+      return d;
+    });
+
+    expect(effectSpy).toHaveBeenCalledTimes(1);
+    dispose();
+
+    base.set(99);
+    await base.store.nextState();
+    await nextTick();
+
+    expect(effectSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not affect computeds created outside the root when disposed', async () => {
+    const base = createSignal(1);
+    const outside = createComputed(() => base.get() * 3);
+
+    const dispose = createRoot(d => {
+      createComputed(() => base.get() + 100);
+      return d;
+    });
+
+    dispose();
+
+    base.set(4);
+    await base.store.nextState();
+    await nextTick();
+
+    // outside computed is unaffected by root dispose
+    expect(outside.get()).toBe(12);
+    outside.dispose();
+  });
+
+  it('should support nested createRoot — inner disposables belong only to inner root', async () => {
+    const base = createSignal(0);
+    const outerSpy = mock();
+    const innerSpy = mock();
+
+    const outerDispose = createRoot(outerD => {
+      effect(() => outerSpy(base.get()));
+
+      createRoot(innerD => {
+        effect(() => innerSpy(base.get()));
+        innerD(); // dispose inner root immediately
+      });
+
+      return outerD;
+    });
+
+    expect(outerSpy).toHaveBeenCalledTimes(1);
+    expect(innerSpy).toHaveBeenCalledTimes(1);
+
+    base.set(1);
+    await base.store.nextState();
+    await nextTick();
+
+    expect(outerSpy).toHaveBeenCalledTimes(2); // outer still active
+    expect(innerSpy).toHaveBeenCalledTimes(1); // inner disposed, no re-run
+
+    outerDispose();
+  });
+
+  it('should restore the parent root context after fn returns', async () => {
+    const base = createSignal(0);
+    const spy = mock();
+
+    // effect created in outer root
+    const outerDispose = createRoot(outerD => {
+      // inner root runs and exits
+      createRoot(() => {});
+
+      // effect created after inner root exits should still belong to outer root
+      effect(() => spy(base.get()));
+
+      return outerD;
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    outerDispose();
+
+    base.set(5);
+    await base.store.nextState();
+    await nextTick();
+
+    expect(spy).toHaveBeenCalledTimes(1); // cleaned up with outer root
+  });
+
+  it('should restore parent root context even if fn throws', () => {
+    const base = createSignal(0);
+
+    expect(() => {
+      createRoot(() => {
+        throw new Error('fn error');
+      });
+    }).toThrow('fn error');
+
+    // After the throw, signals/effects should work normally (no lingering root state)
+    const spy = mock();
+    const cleanup = effect(() => spy(base.get()));
+    expect(spy).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('should allow dispose to be called multiple times without throwing', () => {
+    const dispose = createRoot(d => d);
+    expect(() => {
+      dispose();
+      dispose();
+    }).not.toThrow();
+  });
+
+  it('should allow dispose to be called inside fn', async () => {
+    const base = createSignal(0);
+    const spy = mock();
+
+    createRoot(dispose => {
+      effect(() => spy(base.get()));
+      dispose(); // dispose immediately inside fn
+    });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    base.set(1);
+    await base.store.nextState();
+    await nextTick();
+
+    expect(spy).toHaveBeenCalledTimes(1); // effect was disposed inside fn
   });
 });
 

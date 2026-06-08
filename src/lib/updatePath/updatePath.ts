@@ -14,8 +14,8 @@ const cache = new SimpleCache(5000);
  */
 export default function updatePath<T = any>(
   path: string,
-  transform: undefined | ((old: T, next: T, ...args: any[]) => T) = undefined
-): (old: T, next: T, ...args: any[]) => T {
+  transform: undefined | ((old: T, ...args: any[]) => T) = undefined
+): (object: any, ...callTimeArgs: any[]) => any {
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: updatePath(path,transform) - path must be a string'
@@ -53,9 +53,7 @@ export default function updatePath<T = any>(
   return updater;
 }
 
-function createDescender<T>(
-  runTransform: (old: T, next: T, ...args: any[]) => T
-) {
+function createDescender<T>(runTransform: (old: T, ...args: any[]) => T) {
   // the recursive copy/update function
   return function descend(object: any, segments: string[], args: any[]): any {
     const copy = shallowCopy(object);
@@ -65,7 +63,7 @@ function createDescender<T>(
       return copy.map(leaf => {
         if (segments.length === 0) {
           // star is at the end of path
-          return runTransform(leaf, args[0], ...args.slice(1));
+          return runTransform(leaf, ...args);
         } else {
           // we can recurse further
           return descend(leaf, segments, args);
@@ -75,11 +73,7 @@ function createDescender<T>(
       // we need to apply the transform or recurse
       if (segments.length === 1) {
         // last segment
-        copy[segments[0]] = runTransform(
-          copy[segments[0]],
-          args[0],
-          ...args.slice(1)
-        );
+        copy[segments[0]] = runTransform(copy[segments[0]], ...args);
       } else {
         // recurse to next level
         copy[segments[0]] = descend(copy[segments[0]], segments.slice(1), args);
@@ -88,7 +82,7 @@ function createDescender<T>(
       // When path doesn't exist, create empty objects along the way
       if (segments.length === 1) {
         // @ts-expect-error Expected path doesn't exist: state is invalid
-        copy[segments[0]] = runTransform(undefined, args[0], ...args.slice(1));
+        copy[segments[0]] = runTransform(undefined, ...args);
       } else {
         if (segments[1] === '*') {
           copy[segments[0]] = [];
