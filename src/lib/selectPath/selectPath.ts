@@ -1,7 +1,7 @@
 import SimpleCache from '../../classes/SimpleCache/SimpleCache';
 import isArray from '../isArray/isArray';
 
-const identity = state => state;
+const identity = (state: any) => state;
 
 /**
  * Build a function that will return state at a certain path
@@ -12,7 +12,7 @@ export function doSelect(path: string): Function {
   if (path === '@') {
     return identity;
   }
-  const allSegments = path.split(/[\[\].]/).filter(Boolean);
+  const allSegments = path.split(/[[\].]/).filter(Boolean);
   if (allSegments.length === 1) {
     // simplified function for the trivial case when path is just a prop name
     return function get(state: any): any {
@@ -29,7 +29,7 @@ export function doSelect(path: string): Function {
     } else if (segments[0] === '*' && isArray(state)) {
       // we need to map over array items and recurse
       segments = segments.slice(1); // remove that * segment
-      return state.map((item: any) => descend(item, segments)).flat();
+      return state.flatMap((item: any) => descend(item, segments));
     } else if (state && segments[0] in state) {
       return descend(state[segments[0]], segments.slice(1));
     } else {

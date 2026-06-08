@@ -12,7 +12,7 @@ import type { KnownEventNames } from '../../types';
 import consoleLogger from './consoleLogger';
 
 describe('consoleLogger plugin', () => {
-  let spy: Mock;
+  let spy: Mock<(...args: any[]) => void>;
   let store: Store;
   beforeEach(() => {
     spy = spyOn(console, 'log');

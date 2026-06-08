@@ -13,11 +13,9 @@
  * cyclePosition();
  * // => state "alignment" cycles through "left", "center", and "right", wrapping from "right" to "left" if applicable
  */
-export default function cycler<PossibleValue extends any>(
-  values: PossibleValue[]
-) {
+export default function cycler<PossibleValue>(values: PossibleValue[]) {
   return function updater() {
-    return (old: PossibleValue) => {
+    return (old: PossibleValue): PossibleValue => {
       const currIdx = values.indexOf(old);
       return values[(currIdx + 1) % values.length];
     };

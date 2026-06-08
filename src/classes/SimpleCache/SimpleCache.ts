@@ -23,7 +23,9 @@ export default class SimpleCache {
   }
   #_prune(): void {
     const oldestKey = this.#_stack.shift();
-    this.#_cache[oldestKey] = undefined;
+    if (oldestKey !== undefined) {
+      delete this.#_cache[oldestKey];
+    }
   }
   static memoize(maxSize: number, fn: Function): Function {
     const cache = new SimpleCache(maxSize);

@@ -1,5 +1,4 @@
 import Store from '../../classes/Store/Store';
-import type { EventType } from '../../types';
 
 //
 // Basic usage:
@@ -22,7 +21,7 @@ export default function undo<StateType>({ maxSize = 100 } = {}) {
       history.length = 0;
       currIndex = 0;
     });
-    store.on('AfterUpdate', (evt: EventType<StateType, 'AfterUpdate'>) => {
+    store.on('AfterUpdate', evt => {
       if (isUpdating) {
         isUpdating = false;
         return;
@@ -32,7 +31,7 @@ export default function undo<StateType>({ maxSize = 100 } = {}) {
         // delete all the future stale states
         history.length = currIndex + 1;
       }
-      history.push(evt.data.next);
+      history.push((evt.data as { next: StateType }).next);
       if (history.length > maxSize) {
         history.shift();
       } else {

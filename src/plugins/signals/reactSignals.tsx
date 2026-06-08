@@ -8,7 +8,6 @@ export type Getter<T> = () => T;
 export type ReadonlySignal<T> = {
   Value: FC;
   get: Getter<T>;
-  /** Read current value without registering a dependency. */
   peek: Getter<T>;
   store: Store<T>;
 };
@@ -298,7 +297,9 @@ export function createRoot<T>(fn: (dispose: () => void) => T): T {
   currentRoot = root;
 
   const dispose = () => {
-    root.forEach(cleanup => cleanup());
+    root.forEach(cleanup => {
+      cleanup();
+    });
     root.clear();
   };
 

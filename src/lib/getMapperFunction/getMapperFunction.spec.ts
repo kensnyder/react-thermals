@@ -3,7 +3,7 @@ import getMapperFunction from './getMapperFunction';
 
 describe('getMapperFunction(function|string|int|array)', () => {
   it('should pass through functions', () => {
-    const fn = state => state.count;
+    const fn = (state: { count: number }) => state.count;
     const mapper = getMapperFunction(fn);
     expect(mapper).toBe(fn);
   });
@@ -52,7 +52,7 @@ describe('getMapperFunction(function|string|int|array)', () => {
     expect(slice).toEqual(['John', '867-5309']);
   });
   it('should accept nested arrays', () => {
-    type MyState = Record<'phone', string>;
+    type MyState = { name: string; phone: string };
     const mapper = getMapperFunction([
       [['name'], [(state: MyState) => state.phone]],
     ]);

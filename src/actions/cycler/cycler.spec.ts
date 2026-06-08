@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import cycler from './cycler';
 import Store from '../../classes/Store/Store';
+import cycler from './cycler';
 
 describe('cycler()', () => {
   it('should handle 1 value', () => {
@@ -18,7 +18,8 @@ describe('cycler()', () => {
     expect(store.getState()).toEqual({ color: 'black' });
   });
   it('should handle 2 values with invalid starting value', () => {
-    const store = new Store({ color: null });
+    // @ts-expect-error Testing an invalid init value
+    const store = new Store<{ color: 'black' | 'red' }>({ color: null });
     const cycleColor = store.connect('color', cycler(['black', 'red']));
     cycleColor();
     expect(store.getState()).toEqual({ color: 'black' });

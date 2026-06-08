@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
+import { act, render } from '@testing-library/react';
 import Store from '../../classes/Store/Store';
 import {
   batch,
@@ -126,11 +126,10 @@ describe('createSignal()', () => {
     expect(container.textContent).toBe('');
   });
 
-
   it('should work in SSR mode when window is undefined', () => {
     const originalWindow = globalThis.window;
     try {
-      // @ts-ignore
+      // @ts-expect-error
       globalThis.window = undefined;
       const signal = createSignal(55);
       // get() returns the initial value
@@ -148,7 +147,7 @@ describe('createSignal()', () => {
   it('should return a Value component in SSR mode', () => {
     const originalWindow = globalThis.window;
     try {
-      // @ts-ignore
+      // @ts-expect-error
       globalThis.window = undefined;
       const signal = createSignal('ssr-content');
       // In SSR mode, Value is a simple FC (no hooks); just verify it exists
@@ -315,7 +314,9 @@ describe('effect()', () => {
 
   it('should return a cleanup function that is callable', () => {
     const signal = createSignal(0);
-    const cleanup = effect(() => signal.get());
+    const cleanup = effect(() => {
+      signal.get();
+    });
     expect(typeof cleanup).toBe('function');
     expect(() => cleanup()).not.toThrow();
   });
@@ -535,8 +536,8 @@ describe('signal.peek()', () => {
     const spy = mock();
 
     const cleanup = effect(() => {
-      const aVal = a.get();     // tracked
-      const bVal = b.peek();    // NOT tracked
+      const aVal = a.get(); // tracked
+      const bVal = b.peek(); // NOT tracked
       spy(aVal + bVal);
     });
 
@@ -801,7 +802,7 @@ describe('untrack() nesting', () => {
 
     expect(computed.get()).toBe(0);
     base.set(1);
-    
+
     // Dependency tracking was disabled, so computed should not update when base changes
     expect(computed.get()).toBe(0);
   });

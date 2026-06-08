@@ -1,7 +1,8 @@
 import isArray from '../isArray/isArray';
 import isFunction from '../isFunction/isFunction';
 import selectPath from '../selectPath/selectPath';
-const identity = <StateType>(state: StateType) => state;
+
+const identity = <StateType>(state: StateType) => state as any;
 
 type MapFunction<StateType> =
   | string
@@ -24,18 +25,18 @@ type MapFunctions<StateType> =
  *   - null|undefined to return the full state
  *   - An array of any of the items above
  */
-export default function getMapperFunction<StateType>(
+export default function getMapperFunction<StateType, ReturnType = any>(
   mapState: MapFunction<StateType> | MapFunctions<StateType>
-): Function {
+): (state: StateType) => ReturnType {
   if (typeof mapState === 'string') {
     if (mapState.includes('.')) {
       return selectPath(mapState);
     }
-    return (state: StateType): any => state[mapState];
+    return (state: StateType): any => (state as Record<string, any>)[mapState];
   } else if (typeof mapState === 'number') {
-    return (state: StateType): any => state[mapState];
+    return (state: StateType): any => (state as any[])[mapState];
   } else if (isArray(mapState as any)) {
-    const mappers = (mapState as Array<any>).map(getMapperFunction);
+    const mappers = (mapState as any[]).map(getMapperFunction);
     return (state: StateType): any => {
       return mappers.map(mapper => mapper(state));
     };

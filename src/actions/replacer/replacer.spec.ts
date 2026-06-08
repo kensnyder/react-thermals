@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'bun:test';
 import Store from '../../classes/Store/Store';
 import replacer from './replacer';
 
@@ -29,7 +30,7 @@ describe('replacer()', () => {
     const favorites = ['Pumpkin Pie', 'Brownies', 'Donuts'];
     const store = new Store({ favorites });
     const changeFavorite = store.connect('favorites', replacer());
-    changeFavorite('Pumpkin Pie', old => `Custard ${old}`);
+    changeFavorite('Pumpkin Pie', (old: string) => `Custard ${old}`);
     await store.nextState();
     expect(store.getState().favorites).toEqual([
       'Custard Pumpkin Pie',

@@ -11,11 +11,11 @@ import isArray from '../../lib/isArray/isArray';
  * removePrime(5, 7);
  * // => primes is now set to [2, 11]
  */
-export default function remover<Item extends any>() {
+export default function remover<Item = any>() {
   return function updater(...itemsToRemove: Item[]) {
-    return (old: Item[]) => {
+    return (old: Item[]): Item[] => {
       if (!old || !isArray(old)) {
-        return old;
+        return old as any;
       }
       return old.filter(value => !itemsToRemove.includes(value));
     };

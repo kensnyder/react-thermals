@@ -13,11 +13,11 @@ import isArray from '../../lib/isArray/isArray';
  */
 export default function appender<Item extends any>() {
   return function updater(...newItems: Item[]) {
-    return (old: Item[]) => {
+    return <T extends Item[] | null | undefined>(old: T): T extends Item[] ? Item[] : T => {
       if (!old || !isArray(old)) {
-        return old;
+        return old as any;
       }
-      return [...old, ...newItems];
+      return [...old, ...newItems] as any;
     };
   };
 }

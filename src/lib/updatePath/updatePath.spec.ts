@@ -13,14 +13,14 @@ describe('deepUpdater', () => {
   });
   it('should handle 1 level', () => {
     const state = { movie: 'Cars' };
-    const makeSequel = updatePath('movie', title => title + ' 2');
+    const makeSequel = updatePath('movie', (title: string) => title + ' 2');
     const updated = makeSequel(state);
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ movie: 'Cars 2' });
   });
   it('should handle 2 levels', () => {
     const state = { player: { xp: 123 } };
-    const levelUp = updatePath('player.xp', xp => xp + 1);
+    const levelUp = updatePath('player.xp', (xp: number) => xp + 1);
     const updated = levelUp(state);
     expect(updated).not.toBe(state);
     expect(updated.player).not.toBe(state.player);
@@ -29,7 +29,7 @@ describe('deepUpdater', () => {
   });
   it('should handle 2 levels with arrays', () => {
     const state = { posts: [{ id: 125, likes: 5 }] };
-    const likePost = updatePath('posts[0]', post => ({
+    const likePost = updatePath('posts[0]', (post: { id: number; likes: number }) => ({
       ...post,
       likes: post.likes + 1,
     }));
@@ -61,19 +61,19 @@ describe('deepUpdater', () => {
   });
   it('should ignore non-existent paths on scalar', () => {
     const state = 5;
-    const greetWorld = updatePath('hello', greeting => greeting + ' world');
+    const greetWorld = updatePath('hello', (greeting: string) => greeting + ' world');
     const updated = greetWorld(state);
     expect(updated).toBe(5);
   });
   it('should handle only asterisk', () => {
     const state = [2, 3, 5, 7];
-    const primesTimes9 = updatePath('*', prime => prime * 9);
+    const primesTimes9 = updatePath('*', (prime: number) => prime * 9);
     const updated = primesTimes9(state);
     expect(updated).toEqual([18, 27, 45, 63]);
   });
   it('should handle asterisk at end', () => {
     const state = { ids: [1, 2, 3] };
-    const squareIds = updatePath('ids.*', greeting => greeting * 2);
+    const squareIds = updatePath('ids.*', (greeting: number) => greeting * 2);
     const updated = squareIds(state);
     expect(updated).toEqual({ ids: [2, 4, 6] });
   });
@@ -111,7 +111,7 @@ describe('deepUpdater', () => {
     };
     const doubleRatings = updatePath(
       'books.*.authors.*.rating',
-      old => old * 2
+      (old: number) => old * 2
     );
     const updated = doubleRatings(state);
     expect(updated).toEqual({
@@ -146,20 +146,20 @@ describe('deepUpdater', () => {
   });
   it('should handle root path', () => {
     const state = { url: 'https://example.com' };
-    const addPort = updatePath('@', old => ({ ...old, port: 1337 }));
+    const addPort = updatePath('@', (old: { url: string }) => ({ ...old, port: 1337 }));
     const updated = addPort(state);
     expect(updated).not.toBe(state);
     expect(updated).toEqual({ url: 'https://example.com', port: 1337 });
   });
   it('should handle scalars at the root', () => {
     const state = 5;
-    const double = updatePath('@', score => score * 2);
+    const double = updatePath('@', (score: number) => score * 2);
     const updated = double(state);
     expect(updated).toBe(10);
   });
   it('should handle scalars in Array', () => {
     const state = [5];
-    const triple = updatePath('@[0]', score => score * 3);
+    const triple = updatePath('@[0]', (score: number) => score * 3);
     const updated = triple(state);
     expect(updated).not.toBe(state);
     expect(updated).toEqual([15]);
@@ -167,7 +167,7 @@ describe('deepUpdater', () => {
   it('should allow transforming with a function at run time', () => {
     const state = { cart: [{ price: 36 }] };
     const applyDiscount = updatePath('cart[0].price');
-    const updated = applyDiscount(state, old => old / 2);
+    const updated = applyDiscount(state, (old: number) => old / 2);
     expect(updated).not.toBe(state);
     expect(updated.cart).not.toBe(state.cart);
     expect(updated).toEqual({ cart: [{ price: 18 }] });
@@ -185,7 +185,7 @@ describe('deepUpdater', () => {
     };
     const addRecipient = updatePath(
       'email.recipients',
-      (recipients, newRecipient) => {
+      (recipients: object[], newRecipient: object) => {
         return [...recipients, newRecipient];
       }
     );

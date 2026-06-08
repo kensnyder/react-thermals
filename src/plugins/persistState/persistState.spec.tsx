@@ -4,22 +4,22 @@ import {
   describe,
   expect,
   it,
+  type Mock,
   mock,
   spyOn,
-  type Mock,
 } from 'bun:test';
-import React, { FunctionComponent } from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
+import React, { type FunctionComponent } from 'react';
 import '@testing-library/jest-dom';
 import Store from '../../classes/Store/Store';
-import persistState from './persistState';
 import useStoreState from '../../hooks/useStoreState/useStoreState';
-import { ParseType, StringifyType } from './parseAndStringify';
+import type { ParseType, StringifyType } from './parseAndStringify';
+import persistState from './persistState';
 
 interface StorageMock extends Storage {
   value: any;
-  getItem: Mock;
-  setItem: Mock;
+  getItem: Mock<(key: string) => any>;
+  setItem: Mock<(key: string, value: string) => void>;
 }
 
 describe('persistState()', () => {
@@ -32,11 +32,13 @@ describe('persistState()', () => {
     store = new Store(state, {
       id: 'myStore',
     });
-    const setPage = page => store.mergeState({ page });
+    const setPage = (page: number) => store.mergeState({ page });
     storage = {
       value: undefined,
       getItem: mock(() => storage.value),
-      setItem: mock((id, val) => (storage.value = val)),
+      setItem: mock((_id: string, val: string) => {
+        storage.value = val;
+      }),
       removeItem: mock(),
       clear: mock(),
       key: mock(),
@@ -85,11 +87,13 @@ describe('persistState() at path', () => {
   beforeEach(() => {
     const state = { search: { page: 1, sort: '-date' } };
     store = new Store(state);
-    const setPage = page => store.mergeStateAt('search', { page });
+    const setPage = (page: number) => store.mergeStateAt('search', { page });
     storage = {
       value: undefined,
       getItem: mock(() => storage.value),
-      setItem: mock((id, val) => (storage.value = val)),
+      setItem: mock((_id: string, val: string) => {
+        storage.value = val;
+      }),
       removeItem: mock(),
       clear: mock(),
       key: mock(),
@@ -142,11 +146,13 @@ describe('persistState() that defaults id', () => {
   beforeEach(() => {
     const state = { search: { page: 1, sort: '-date' } };
     store = new Store(state, { id: 'myStore' });
-    const setPage = page => store.mergeStateAt('search', { page });
+    const setPage = (page: number) => store.mergeStateAt('search', { page });
     storage = {
       value: undefined,
       getItem: mock(() => storage.value),
-      setItem: mock((id, val) => (storage.value = val)),
+      setItem: mock((_id: string, val: string) => {
+        storage.value = val;
+      }),
       removeItem: mock(),
       clear: mock(),
       key: mock(),
@@ -180,7 +186,7 @@ describe('persistState() plugin error', () => {
   it('should throw on strings', () => {
     const store = new Store({});
     const shouldThrow = () => {
-      // @ts-ignore
+      // @ts-expect-error
       store.plugin(persistState({ storage: 'foo' }));
     };
     expect(shouldThrow).toThrowError();
@@ -188,16 +194,15 @@ describe('persistState() plugin error', () => {
   it('should throw on null', () => {
     const store = new Store({});
     const shouldThrow = () => {
-      // @ts-ignore
+      // @ts-expect-error
       store.plugin(persistState(null));
     };
     expect(shouldThrow).toThrowError();
   });
   it('should throw on empty objects', () => {
-    // @ts-ignore
     const store = new Store({});
     const shouldThrow = () => {
-      // @ts-ignore
+      // @ts-expect-error
       store.plugin(persistState({ storage: {} }));
     };
     expect(shouldThrow).toThrowError();
@@ -205,7 +210,7 @@ describe('persistState() plugin error', () => {
 });
 describe('persistState() JSON errors', () => {
   // define store before each test
-  let consoleSpy: Mock;
+  let consoleSpy: Mock<(...args: any[]) => void>;
   let store: Store;
   let storage: StorageMock;
   let Component: FunctionComponent;
@@ -217,7 +222,9 @@ describe('persistState() JSON errors', () => {
     storage = {
       value: undefined,
       getItem: mock(() => storage.value),
-      setItem: mock((id, val) => (storage.value = val)),
+      setItem: mock((_id: string, val: string) => {
+        storage.value = val;
+      }),
       removeItem: mock(),
       clear: mock(),
       key: mock(),
@@ -285,7 +292,9 @@ describe('persistState() with custom parse and stringify', () => {
     storage = {
       value: undefined,
       getItem: mock(() => storage.value),
-      setItem: mock((id, val) => (storage.value = val)),
+      setItem: mock((_id: string, val: string) => {
+        storage.value = val;
+      }),
       removeItem: mock(),
       clear: mock(),
       key: mock(),

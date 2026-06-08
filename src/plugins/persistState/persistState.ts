@@ -1,11 +1,11 @@
+import type Store from '../../classes/Store/Store';
+import selectPath from '../../lib/selectPath/selectPath';
 import {
+  type ParseType,
+  type StringifyType,
   tryParse,
   tryStringify,
-  ParseType,
-  StringifyType,
 } from './parseAndStringify';
-import Store from '../../classes/Store/Store';
-import selectPath from '../../lib/selectPath/selectPath';
 
 export type PersistStateConfig = {
   key?: string;
@@ -61,8 +61,8 @@ export default function persistState({
       key = store.id;
     }
     store.on('BeforeInitialize', evt => {
-      const item = storage.getItem(key);
-      let initial;
+      const item = storage.getItem(key!);
+      let initial: any;
       if (item) {
         initial = tryParse(parse, item);
       }
@@ -80,6 +80,6 @@ export default function persistState({
   };
   // some helper functions
   function write(newValue: any): void {
-    storage.setItem(key, tryStringify(stringify, newValue));
+    storage.setItem(key!, tryStringify(stringify, newValue));
   }
 }

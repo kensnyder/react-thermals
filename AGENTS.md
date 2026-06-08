@@ -26,7 +26,8 @@ This is a **published npm library** (`react-thermals`) for React state managemen
 - `bun run coverage` — test coverage report.
 - `bun run build` - create build files (types + ESM + CJS).
 - `bunx biome format --write <path>` — format.
-- `bunx tsc --noEmit` — typecheck.
+- `bun run typecheck` — typecheck entire project.
+- `bun run typecheck-one <filename>` — typecheck with grep to target single file.
 
 ### Entry point
 

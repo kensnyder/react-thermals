@@ -4,7 +4,7 @@ import merger from './merger';
 
 describe('merger(path)', () => {
   it('should merge state', async () => {
-    const store = new Store({ door: 'A', open: false });
+    const store = new Store<{ door: string; open: boolean; color?: string; finish?: string }>({ door: 'A', open: false });
     const addPaint = store.connect('@', merger());
     addPaint({ color: 'red', finish: 'matte' });
     await store.nextState();
@@ -16,8 +16,9 @@ describe('merger(path)', () => {
     });
   });
   it('should merge state at path', async () => {
-    const store = new Store({ doors: [{ door: 'A', open: false }] });
-    const addPaint = store.connect('doors[0]', merger());
+    type DoorType = { door: string; open: boolean; color?: string; finish?: string };
+    const store = new Store({ doors: [{ door: 'A', open: false }] as DoorType[] });
+    const addPaint = store.connect('doors[0]', merger<DoorType>());
     addPaint({ color: 'blue', finish: 'gloss', open: true });
     await store.nextState();
     expect(store.getState()).toEqual({

@@ -2,7 +2,7 @@ import type { EventHandlerType, EventType, EventDataType } from '../../types';
 
 export default class SimpleEmitter<StateType, KnownEventNames extends string> {
   #_handlers: Partial<
-    Record<KnownEventNames, EventHandlerType<StateType, KnownEventNames>[]>
+    Record<KnownEventNames | '*', EventHandlerType<StateType, KnownEventNames>[]>
   > = {};
 
   /**
@@ -58,7 +58,7 @@ export default class SimpleEmitter<StateType, KnownEventNames extends string> {
     type: EventName,
     handler: EventHandlerType<StateType, KnownEventNames>
   ) => {
-    const onceHandler = event => {
+    const onceHandler = (event: EventType<StateType, KnownEventNames>) => {
       this.off(type, onceHandler);
       handler.call(this, event);
     };
@@ -73,18 +73,18 @@ export default class SimpleEmitter<StateType, KnownEventNames extends string> {
    */
   emit = <EventName extends KnownEventNames>(
     type: EventName,
-    data: EventDataType<StateType, EventName> = undefined
-  ): EventType<StateType, KnownEventNames> => {
+    data: EventDataType<StateType, EventName> = undefined as unknown as EventDataType<StateType, EventName>
+  ): EventType<StateType, EventName> => {
     const event = { target: this, type, data };
-    if (this.#_handlers['*']?.length > 0) {
+    if ((this.#_handlers['*']?.length ?? 0) > 0) {
       // run callbacks registered to both "*" and "type"
-      for (const handler of this.#_handlers['*']) {
+      for (const handler of this.#_handlers['*']!) {
         handler.call(this, event);
       }
     }
-    if (this.#_handlers[type]?.length > 0) {
+    if ((this.#_handlers[type]?.length ?? 0) > 0) {
       // run callbacks registered to both "*" and "type"
-      for (const handler of this.#_handlers[type]) {
+      for (const handler of this.#_handlers[type]!) {
         handler.call(this, event);
       }
     }

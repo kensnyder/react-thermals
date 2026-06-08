@@ -46,8 +46,8 @@ export function fetcher(
 ) {
   return function updater(...args: any[]) {
     return () => {
-      let finalUrl;
-      let finalInit;
+      let finalUrl: string | URL;
+      let finalInit: RequestInit;
       if (isFunction(url)) {
         finalUrl = url(...args);
       } else {

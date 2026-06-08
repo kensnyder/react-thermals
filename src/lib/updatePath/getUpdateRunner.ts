@@ -1,5 +1,5 @@
-import isFunction from '../isFunction/isFunction';
 import isArray from '../isArray/isArray';
+import isFunction from '../isFunction/isFunction';
 
 /**
  * Build a function that accepts a value or a setState handler that receives
@@ -12,23 +12,26 @@ import isArray from '../isArray/isArray';
  * @return A function that will update state
  * @throws  If transform is not a valid type
  */
-export default function getUpdateRunner(
-  transform: Function | Function[] | undefined = undefined
-): Function {
+export default function getUpdateRunner<T = any>(
+  transform:
+    | ((old: T, next: T, ...args: any[]) => T)
+    | Array<(old: T, next: T, ...args: any[]) => T>
+    | undefined = undefined
+): (old: T, next: T, ...args: any[]) => T {
   if (isFunction(transform)) {
     // run transform directly
-    return function runTransform(old: any, newValue: any, ...args: any[]) {
-      if (isFunction(newValue)) {
-        old = newValue(old, ...args);
+    return function runTransform(old: any, next: any, ...args: any[]) {
+      if (isFunction(next)) {
+        old = next(old, ...args);
       }
-      return transform(old, newValue, ...args);
+      return transform(old, next, ...args);
     };
   } else if (isArray(transform) && transform.every(isFunction)) {
     // run each transform function in sequence
-    return function pipeTransforms(old: any, ...args: any[]) {
+    return function pipeTransforms(old: any, next: any, ...args: any[]) {
       let newVal = old;
       for (const fn of transform) {
-        newVal = fn(newVal, ...args);
+        newVal = fn(newVal, next, ...args);
       }
       return newVal;
     };

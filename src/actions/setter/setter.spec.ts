@@ -5,7 +5,7 @@ import { setter, setterFn, setterInput } from './setter';
 describe('setter()', () => {
   it('should set scalar value', async () => {
     const store = new Store({ genre: 'classical', century: 16 });
-    const setCentury = store.connect('century', setter());
+    const setCentury = store.connect('century', setter<number>());
     setCentury(17);
     const final = await store.nextState();
     expect(final).toEqual({ genre: 'classical', century: 17 });

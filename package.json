@@ -41,6 +41,8 @@
     "lint": "bunx biome lint .",
     "format": "bunx biome format --write .",
     "check": "bunx biome check --write .",
+    "typecheck": "bunx tsc --noEmit --pretty false",
+    "typecheck-one": "bunx tsc --noEmit --pretty false 2>&1 | grep -A2 -B1",
     "build": "npm run build:clean && npm run build:dts && npm run build:esm && npm run build:cjs && npm run build:gzip-size",
     "build:clean": "rimraf dist/ && mkdir dist",
     "build:dts": "yes | bunx dts-bundle-generator --project tsconfig.bundle-generator.json -o dist/index.d.ts ./index.ts",

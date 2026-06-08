@@ -1,6 +1,6 @@
+import SimpleCache from '../../classes/SimpleCache/SimpleCache';
 import shallowCopy from '../shallowCopy/shallowCopy';
 import getUpdateRunner from './getUpdateRunner';
-import SimpleCache from '../../classes/SimpleCache/SimpleCache';
 
 const cache = new SimpleCache(5000);
 
@@ -12,10 +12,10 @@ const cache = new SimpleCache(5000);
  * @param transform  Transform function(s) to update the value at the given path
  * @return
  */
-export default function updatePath(
+export default function updatePath<T = any>(
   path: string,
-  transform: undefined | Function = undefined
-): Function {
+  transform: undefined | ((old: T, next: T, ...args: any[]) => T) = undefined
+): (old: T, next: T, ...args: any[]) => T {
   if (typeof path !== 'string') {
     throw new Error(
       'react-thermals: updatePath(path,transform) - path must be a string'
@@ -27,7 +27,7 @@ export default function updatePath(
   // split path string on dots and brackets
   // e.g. 'users[0].isActive' => ['users', '0', 'isActive']
   // e.g. '@[1].isActive' => ['1', 'isActive']
-  const allSegments = path.split(/[\[\].]/).filter(Boolean);
+  const allSegments = path.split(/[[\].]/).filter(Boolean);
   // empty string or only separators might make segments empty
   if (allSegments.length === 0) {
     throw new Error('updatePath path string cannot be empty');
@@ -53,7 +53,9 @@ export default function updatePath(
   return updater;
 }
 
-function createDescender(runTransform: Function) {
+function createDescender<T>(
+  runTransform: (old: T, next: T, ...args: any[]) => T
+) {
   // the recursive copy/update function
   return function descend(object: any, segments: string[], args: any[]): any {
     const copy = shallowCopy(object);
@@ -63,7 +65,7 @@ function createDescender(runTransform: Function) {
       return copy.map(leaf => {
         if (segments.length === 0) {
           // star is at the end of path
-          return runTransform(leaf, ...args);
+          return runTransform(leaf, args[0], ...args.slice(1));
         } else {
           // we can recurse further
           return descend(leaf, segments, args);
@@ -73,7 +75,11 @@ function createDescender(runTransform: Function) {
       // we need to apply the transform or recurse
       if (segments.length === 1) {
         // last segment
-        copy[segments[0]] = runTransform(copy[segments[0]], ...args);
+        copy[segments[0]] = runTransform(
+          copy[segments[0]],
+          args[0],
+          ...args.slice(1)
+        );
       } else {
         // recurse to next level
         copy[segments[0]] = descend(copy[segments[0]], segments.slice(1), args);
@@ -81,7 +87,8 @@ function createDescender(runTransform: Function) {
     } else if (typeof copy === 'object') {
       // When path doesn't exist, create empty objects along the way
       if (segments.length === 1) {
-        copy[segments[0]] = runTransform(undefined, ...args);
+        // @ts-expect-error Expected path doesn't exist: state is invalid
+        copy[segments[0]] = runTransform(undefined, args[0], ...args.slice(1));
       } else {
         if (segments[1] === '*') {
           copy[segments[0]] = [];

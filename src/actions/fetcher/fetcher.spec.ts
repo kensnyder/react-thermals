@@ -43,7 +43,7 @@ afterAll(() => {
 
 describe('fetcher()', () => {
   it('should fetch items', async () => {
-    const store = new Store({ users: null });
+    const store = new Store({ users: null as Array<{ id: number; name: string }> | null });
     const loadUsers = store.connect('users', fetcher('/api/users'));
     await loadUsers();
     const finalState = await store.nextState();
@@ -55,11 +55,11 @@ describe('fetcher()', () => {
     });
   });
   it('should call an extractor', async () => {
-    const store = new Store({ userIds: null });
+    const store = new Store({ userIds: null as number[] | null });
     const loadUserIds = store.connect(
       'userIds',
       fetcher('/api/users', {}, response =>
-        response.json().then(users => users.map(user => user.id))
+        response.json().then((users: { id: number }[]) => users.map(user => user.id))
       )
     );
     await loadUserIds();
@@ -69,7 +69,7 @@ describe('fetcher()', () => {
     });
   });
   it('should accept dynamic URL', async () => {
-    const store = new Store({ user: null });
+    const store = new Store({ user: null as { id: number; name: string } | null });
     const loadUserById = store.connect(
       'user',
       fetcher(id => `/api/users/${id}`)
@@ -81,7 +81,7 @@ describe('fetcher()', () => {
     });
   });
   it('should accept dynamic init', async () => {
-    const store = new Store({ newUser: null });
+    const store = new Store({ newUser: null as { id: number; name: string } | null });
     const createUser = store.connect(
       'newUser',
       fetcher('/api/users', name => ({

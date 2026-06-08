@@ -10,7 +10,7 @@
  */
 export default function merger<StateShape>() {
   return function updater(withValues: Partial<StateShape>) {
-    return (old): StateShape => ({
+    return (old: StateShape): StateShape => ({
       ...old,
       ...withValues,
     });

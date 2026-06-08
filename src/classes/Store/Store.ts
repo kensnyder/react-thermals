@@ -62,7 +62,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
    * @property options.id  An identifier that could be used by plugins or event listeners
    */
   constructor(
-    initialState: StateType = undefined,
+    initialState: StateType = undefined as unknown as StateType,
     { autoReset = false, id = '' }: StoreConfigType = {}
   ) {
     super();
@@ -208,8 +208,8 @@ export default class Store<StateType = any> extends SimpleEmitter<
    */
   nextState = (): Promise<StateType> => {
     return new Promise(resolve => {
-      this.once('AfterUpdate', (evt: EventType<StateType, 'AfterUpdate'>) =>
-        resolve(evt.data.next)
+      this.once('AfterUpdate', evt =>
+        resolve((evt.data as { next: StateType }).next)
       );
     });
   };
@@ -231,12 +231,10 @@ export default class Store<StateType = any> extends SimpleEmitter<
    */
   connect = <Path extends string>(
     path: Path,
-    updater:
-      | ((...args: any) => FunctionStateAtType<Path, StateType>)
-      | ((...args: any) => StateAtType<Path, StateType>),
-    callback: (finalState: StateAtType<Path, StateType>) => void = null
+    updater: (...args: any) => SettableStateAtPathType<Path, StateType>,
+    callback?: (finalState: StateAtType<Path, StateType>) => void
   ) => {
-    return (...args) => {
+    return (...args: any[]) => {
       this.setStateAt(path, updater(...args));
       if (!callback) {
         return;
@@ -343,7 +341,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     done();
   };
 
-  #updateState = (newState: StateType, options?: SetStateOptionsType): void => {
+  #updateState = (newState: StateType, options: SetStateOptionsType = {}): void => {
     if (
       (this.#middlewares.length === 0 && !this.hasSubscriber('AfterUpdate')) ||
       options.bypassMiddleware ||
@@ -368,7 +366,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
         if (this.#waitingQueue.length === 0) {
           this.#isWaiting = false;
         }
-        this.setState(nextInQueue, options);
+        this.setState(nextInQueue!, options);
       } else {
         this.#notifyComponents(context.prev, context.next, options);
       }
@@ -421,7 +419,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     options: SetStateOptionsType = {}
   ) => {
     if (path === '@') {
-      return this.setState(newStateOrUpdater, options);
+      return this.setState(newStateOrUpdater as unknown as SettableStateType<StateType>, options);
     }
     let stateAt = this.getStateAt(path);
     if (
@@ -533,7 +531,7 @@ export default class Store<StateType = any> extends SimpleEmitter<
     options: SetStateOptionsType = {}
   ) => {
     if (path === '@') {
-      return this.mergeState(newStateOrUpdater, options);
+      return this.mergeState(newStateOrUpdater as unknown as MergeableStateType<StateType>, options);
     }
     this.setStateAt(
       path,
